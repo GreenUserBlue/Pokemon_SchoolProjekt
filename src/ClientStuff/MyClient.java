@@ -64,6 +64,7 @@ public class MyClient extends Application {
                     if (keys.contains(Keys.menu) && client.getPlayers().get(0).getActivity() != Player.Activity.menu) {
                         if (timeTillClosedMenu < System.currentTimeMillis()) {
                             client.getPlayers().get(0).setActivity(Player.Activity.menu);
+                            client.send(MessageType.toStr(MessageType.keysPres));
                             showMenu();
                         }
                     }
@@ -108,7 +109,7 @@ public class MyClient extends Application {
                 synchronized (client.getPlayers()) {
                     client.getPlayers().get(0).setActivity(Player.Activity.moving);
                     p.setVisible(false);
-                    timeTillClosedMenu = System.currentTimeMillis() + 100;
+                    timeTillClosedMenu = System.currentTimeMillis() + 400;
                 }
             }
         });
