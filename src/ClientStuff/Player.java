@@ -166,6 +166,7 @@ public class Player {
                 updateShownDir(getPos(), newVec);
             }
         }
+        System.out.println("hallo Test");
         setPos(newVec);
         House h = c.getWorld().getHouse(newVec);
         if (houseEntrancePos == null) {
