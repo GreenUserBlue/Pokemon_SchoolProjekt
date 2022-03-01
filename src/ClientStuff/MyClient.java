@@ -46,6 +46,8 @@ public class MyClient extends Application {
 
         private int count = 0;
 
+        List<Keys> lastKeysPressed;
+
 
         @Override
         public void handle(long l) {
@@ -72,7 +74,8 @@ public class MyClient extends Application {
                         client.getPlayers().forEach(Player::updateHands);
                         if (client.getPlayers().get(0).getActivity() == Player.Activity.moving || client.getPlayers().get(0).getActivity() == Player.Activity.standing) {
                             StringBuilder res = new StringBuilder();
-                            keys.stream().filter(e -> e == Keys.up || e == Keys.down || e == Keys.left || e == Keys.right || e == Keys.decline).forEach(e -> res.append(e.ordinal()));
+                            keys = getUpdatedKeysToSendAndUpdatePlayerDir(lastKeysPressed, keys, client.getPlayers().get(0));
+                            keys.stream().forEach(e -> res.append(e.ordinal()));
                             client.send(MessageType.toStr(MessageType.keysPres) + res);
                         } else if (client.getPlayers().get(0).getActivity() == Player.Activity.menu) {
                             Pane p = (Pane) stage.getScene().getRoot().getChildrenUnmodifiable().get(1);
@@ -88,10 +91,21 @@ public class MyClient extends Application {
                             p.setVisible(true);
                         }
                     }
+                    lastKeysPressed = keys;
                 }
             }
         }
     };
+
+    private List<Keys> getUpdatedKeysToSendAndUpdatePlayerDir(List<Keys> lastKeysPressed, List<Keys> keys, Player p) {
+        List<Keys> k = new ArrayList<>();
+        if (keys.stream().anyMatch(a -> p.getDir().toString().equalsIgnoreCase(a.toString()))) {
+            return keys;
+        } else {
+            //TODO some stuff
+           return keys.stream().filter(e -> lastKeysPressed.contains(e) && (e == Keys.up || e == Keys.down || e == Keys.left || e == Keys.right || e == Keys.decline)).toList();
+        }
+    }
 
     private void showMenu() {
         Pane p = (Pane) stage.getScene().getRoot().getChildrenUnmodifiable().get(1);
