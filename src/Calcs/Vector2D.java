@@ -95,31 +95,31 @@ public class Vector2D {
     }
 
     /**
-     * @return die X-Koordinate
+     * @return die X-Coordinates
      */
     public double getX() {
         return x;
     }
 
     /**
-     * setzt die X-Koordinate
+     * setzt die X-Coordinates
      */
-    public double setX(double x) {
-        return this.x = x;
+    public void setX(double x) {
+        this.x = x;
     }
 
     /**
-     * @return die Y-Koordinate
+     * @return die Y-Coordinates
      */
     public double getY() {
         return y;
     }
 
     /**
-     * setzt die Y-Koordinate
+     * setzt die Y-Coordinates
      */
-    public double setY(double y) {
-        return this.y = y;
+    public void setY(double y) {
+        this.y = y;
     }
 
     /**
@@ -164,14 +164,10 @@ public class Vector2D {
                 '}';
     }
 
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
     public Vector2D clone() {
         return new Vector2D(x, y);
-    }
-
-    public void mod(double v) {
-        x %= v;
-        y %= v;
     }
 
     /**
@@ -188,24 +184,30 @@ public class Vector2D {
                 Math.abs(y - vector2D.y) < e;
     }
 
-    public void mult(double d) {
-        x *= d;
-        y *= d;
-    }
 
-    public boolean equalsAny(double d, double e) {
-        return Math.abs(Math.abs(x) - d) < e || Math.abs(Math.abs(y) - d) < e;
-    }
-
+    /**
+     * checks if either x or y absolute value is bigger than d
+     * @param d the min for either value
+     */
     public boolean anyBigger(double d) {
         return Math.abs(x) >= d || Math.abs(y) >= d;
     }
 
+    /**
+     * rounds the value to specific number of decimal-points
+     * @param decimalPoints the number of decimal-points
+     */
     public void round(int decimalPoints) {
         x = round(x, decimalPoints);
         y = round(y, decimalPoints);
     }
 
+    /**
+     * rounds a single value to a single number of points
+     * @param value the value which needs to be rounded
+     * @param decimalPoints the number of decimal-points
+     * @return tthe new rounded value
+     */
     private static double round(double value, int decimalPoints) {
         double d = Math.pow(10, decimalPoints);
         return Math.round(value * d) / d;

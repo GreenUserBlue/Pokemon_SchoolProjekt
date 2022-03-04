@@ -99,7 +99,7 @@ public class GameCont {
         resize();
         drawEnvironmentAndPlayer();
 
-//            gc.drawImage(new Image(String.valueOf(Paths.get("res/Screen.jpg").toUri().toURL())), 0, 0, canvas.getWidth(), canvas.getHeight());
+//            gc.drawImage(new Image(String.valueOf(Paths.getMyClient("res/Screen.jpg").toUri().toURL())), 0, 0, canvas.getWidth(), canvas.getHeight());
     }
 
     private void drawEnvironmentAndPlayer() {

@@ -32,7 +32,7 @@ public class MyServer {
         initServer();
     }
 
-    private static void initServer() throws IOException {
+private static void initServer() throws IOException {
         server = new Server(33333, "localhost", 5);
         server.setAcceptAll(true);
         server.startUpdates();

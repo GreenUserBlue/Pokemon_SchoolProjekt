@@ -8,15 +8,11 @@ import ServerStuff.MessageType;
 import ServerStuff.User;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
-import javafx.collections.ObservableList;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
-import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 import java.math.BigInteger;
@@ -30,24 +26,57 @@ import java.util.stream.Collectors;
 //--module-path "C:\Program Files\Java\openjfx-16_windows-x64_bin-sdk\javafx-sdk-16\lib" --add-modules javafx.controls,javafx.fxml
 public class MyClient extends Application {
 
+    /**
+     * the client which communicates with the server
+     */
     private Client client;
 
+
+    public Client getClient() {
+        return client;
+    }
+
+    public Stage getStage() {
+        return stage;
+    }
+
+    /**
+     * the stage where the program runs on
+     */
     private Stage stage;
 
-    private long timeTillClosedMenu = 0;
+    /**
+     * the inGame menu for the player
+     */
+    private Menu menu;
 
+    /**
+     * all Images which are needed for graphics
+     */
     private final Map<String, Image> allImgs = new HashMap<>();
 
+    private MyClient getMyClient() {
+        return this;
+    }
+
+    /**
+     * sends updates and changes the positions for all Players
+     */
     private final AnimationTimer animationTimer = new AnimationTimer() {
         /**
          * min Time which needs to Pass till the animationTimer is called the next time
          */
         private long timeTillNextUse = 0;
 
+        /**
+         * counts the current loops
+         */
         private int count = 0;
 
-        List<Keys> lastKeysPressed;
-
+        /**
+         * all keys which were pressed on the last check
+         */
+        private List<Keys> lastKeysPressed = new ArrayList<>();
 
         @Override
         public void handle(long l) {
@@ -64,31 +93,18 @@ public class MyClient extends Application {
                     }
                     List<Keys> keys = (Keys.getSmartKeys(keysPressed));
                     if (keys.contains(Keys.menu) && client.getPlayers().get(0).getActivity() != Player.Activity.menu) {
-                        if (timeTillClosedMenu < System.currentTimeMillis()) {
-                            client.getPlayers().get(0).setActivity(Player.Activity.menu);
-                            client.send(MessageType.toStr(MessageType.keysPres));
-                            showMenu();
-                        }
+                        menu = new Menu(getMyClient());
+                        menu.showMenu();
                     }
                     if (((count++) & 0b11) == 0) {
                         client.getPlayers().forEach(Player::updateHands);
                         if (client.getPlayers().get(0).getActivity() == Player.Activity.moving || client.getPlayers().get(0).getActivity() == Player.Activity.standing) {
                             StringBuilder res = new StringBuilder();
                             keys = getUpdatedKeysToSendAndUpdatePlayerDir(lastKeysPressed, keys, client.getPlayers().get(0));
-                            keys.stream().forEach(e -> res.append(e.ordinal()));
+                            keys.forEach(e -> res.append(e.ordinal()));
                             client.send(MessageType.toStr(MessageType.keysPres) + res);
                         } else if (client.getPlayers().get(0).getActivity() == Player.Activity.menu) {
-                            Pane p = (Pane) stage.getScene().getRoot().getChildrenUnmodifiable().get(1);
-                            ObservableList<Node> child = p.getChildren();
-                            for (int i = 0; i < child.size(); i++) {
-                                if (child.get(i) instanceof Button b) {
-                                    b.setLayoutX(stage.getScene().getWidth() - 100);
-                                    b.setLayoutY((i + 1) * 40);
-                                    b.setPrefWidth(80);
-                                    b.setPrefHeight(35);
-                                }
-                            }
-                            p.setVisible(true);
+                            menu.updatePlayerMenuPos();
                         }
                     }
                     lastKeysPressed = keys;
@@ -97,38 +113,24 @@ public class MyClient extends Application {
         }
     };
 
+
     private List<Keys> getUpdatedKeysToSendAndUpdatePlayerDir(List<Keys> lastKeysPressed, List<Keys> keys, Player p) {
-        List<Keys> k = new ArrayList<>();
         if (keys.stream().anyMatch(a -> p.getDir().toString().equalsIgnoreCase(a.toString()))) {
             return keys;
         } else {
-            //TODO some stuff
-           return keys.stream().filter(e -> lastKeysPressed.contains(e) && (e == Keys.up || e == Keys.down || e == Keys.left || e == Keys.right || e == Keys.decline)).toList();
+            keys = keys.stream().filter(e -> (e == Keys.up || e == Keys.down || e == Keys.left || e == Keys.right || e == Keys.decline)).toList();
+            List<Keys> k = new ArrayList<>(keys);
+            k.remove(Keys.decline);
+            if ((k.size() == 1)) {
+                p.setDir(Player.Dir.valueOf(k.get(0).toString()));
+            }
+            return keys.stream().filter(lastKeysPressed::contains).toList();
         }
     }
 
-    private void showMenu() {
-        Pane p = (Pane) stage.getScene().getRoot().getChildrenUnmodifiable().get(1);
-        ObservableList<Node> child = p.getChildren();
-        p.setVisible(false);
-        child.clear();
-        Button pokemon = new Button("Pokemon");
-        Button map = new Button("Map");
-        Button items = new Button("Items");
-        p.getChildren().addAll(pokemon, map, items);
-        p.setPrefWidth(800);
-        p.setPrefHeight(800);
-        p.setOnKeyPressed(e -> {
-            if (Keys.getKeys(Collections.singletonList(e.getCode())).contains(Keys.menu)) {
-                synchronized (client.getPlayers()) {
-                    client.getPlayers().get(0).setActivity(Player.Activity.moving);
-                    p.setVisible(false);
-                    timeTillClosedMenu = System.currentTimeMillis() + 400;
-                }
-            }
-        });
-    }
-
+    /**
+     * initializes allImgs
+     */
     private void initImgs() {
         try {
             for (int i = 0; i < 4; i++)
@@ -136,6 +138,7 @@ public class MyClient extends Application {
             allImgs.put("BigGrass", new Image(String.valueOf(Paths.get("res/Envir/BigGrass.png").toUri().toURL())));
             allImgs.put("Tree", new Image(String.valueOf(Paths.get("res/Envir/Tree.png").toUri().toURL())));
             allImgs.put("Water", new Image(String.valueOf(Paths.get("res/Envir/Water.png").toUri().toURL())));
+            allImgs.put("WaterEdge", new Image(String.valueOf(Paths.get("res/Envir/WaterEdge.png").toUri().toURL())));
             for (int i = 0; i < 1; i++) {
                 for (String dir : Arrays.stream(Player.Dir.values()).map(Enum::toString).collect(Collectors.toList())) {
                     for (String h : Arrays.stream(Player.Hands.values()).map(Enum::toString).collect(Collectors.toList())) {
@@ -144,7 +147,7 @@ public class MyClient extends Application {
                 }
             }
             for (String type : Arrays.stream(House.Type.values()).map(Enum::toString).toList()) {
-                for (String view : List.of("Outside", "Floor", "Wall")) {
+                for (String view : List.of("Outside", "Floor", "Wall", "Door")) {
                     allImgs.put("House" + type + view, new Image(String.valueOf(Paths.get("res/Buildings/" + type + "/" + view + ".png").toUri().toURL())));
                 }
             }
@@ -154,8 +157,16 @@ public class MyClient extends Application {
         }
     }
 
+    /**
+     * saves all KEys which are currently pressed
+     */
     private final List<KeyCode> keysPressed = new ArrayList<>();
 
+    /**
+     * Starts the program
+     *
+     * @param args CommandLine parameter
+     */
     public static void main(String[] args) {
         launch(args);
     }
@@ -180,6 +191,9 @@ public class MyClient extends Application {
         stage.show();
     }
 
+    /**
+     * adds all the listeners to the stage/client
+     */
     private void addListener() {
         stage.getScene().setOnKeyPressed(e -> {
             if (!keysPressed.contains(e.getCode())) keysPressed.add(e.getCode());
@@ -212,6 +226,11 @@ public class MyClient extends Application {
         });
     }
 
+    /**
+     * updates the positions for all Players
+     *
+     * @param s the String from the server
+     */
     private void updatePos(String s) {
         Matcher m = Pattern.compile("\\{(.*?)}").matcher(s.substring(3));
         List<String> curNames = new ArrayList<>();
@@ -232,6 +251,12 @@ public class MyClient extends Application {
         }
     }
 
+    /**
+     * processes all Login data which are sent by the server
+     *
+     * @param mT the type of message which was sent
+     * @param s  the String which was sent
+     */
     private void doLogin(MessageType mT, String s) {
         switch (mT) {
             case hellman:

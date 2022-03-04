@@ -17,7 +17,7 @@ import java.util.*;
 public class World {
 
     /**
-     * zaehlt alle aktuelle Welten
+     * counts all worlds
      */
     private static int worldCount = 1;
 
@@ -71,7 +71,7 @@ public class World {
         rnd = new Random(seed);
         Random cities = new Random(135);
         int last = 0;
-        int houseIDs = 1;//wegen Datenbank mit 1
+        int houseIDs = 1;//because the database starts counting with one
         for (int i = 0; i < 2; i++) {
             last += cities.nextInt(15) + 10;
             int rad = cities.nextInt();
@@ -99,7 +99,7 @@ public class World {
      * @param size    how big the scene/Canvas is
      */
     public void drawEnvir(Canvas canvas, List<Player> players, Vector2D size, Map<String, Image> allImgs) {
-        if (size.getX() > 100_000) System.out.println(rnd);
+        if (size.getX() > 100_000) System.out.println(rnd + " " + id);
         double blockSize;
 
         GraphicsContext gc = canvas.getGraphicsContext2D();
@@ -123,6 +123,16 @@ public class World {
                 int y = (j + (int) players.get(0).getPos().getY() - (maxY / 2));
                 if (blocks[i][j] == Block.Water) {
                     gc.drawImage(allImgs.get("Water"), blockSize * (i - 0.05), blockSize * (j - 0.05), blockSize * 1.1, blockSize * 1.1);
+
+                    if (i - 1 >= 0 && i + 1 < maxX && j - 1 >= 0 && j + 1 < maxY) {
+                        List<WaterBlock> l = getWaterBlocks(i, j, blocks);
+                        int finalJ = j;
+                        int finalI = i;
+                        l.forEach(e -> {
+                            double[] curVal = e.getValues();
+                            gc.drawImage(allImgs.get("WaterEdge"), curVal[0], curVal[1], curVal[2], curVal[3], (finalI + curVal[4] - 0.05) * blockSize, (finalJ + curVal[5] - 0.05) * blockSize, blockSize * 1.1 * curVal[6], blockSize * 1.1 * curVal[7]);
+                        });
+                    }
                 } else {
                     gc.drawImage(allImgs.get("Grass" + getGrassGround(x, y)), i * blockSize, j * blockSize, blockSize + 1, blockSize + 1);
                 }
@@ -240,7 +250,7 @@ public class World {
         if (!rec && isTreeL(x, y)) return Block.TreeL;
         if (!rec && isTree(x, y)) return Block.Tree;
         double d = getNoise(x, y);
-        return d > 0 && d < 0.6 ? Block.Free : d > 0.9 ? Block.Water : d > -0.4 ? Block.Grass : Block.Tree;
+        return d > 0 && d < 0.6 ? Block.Free : d > 0.75 ? Block.Water : d > -0.4 ? Block.Grass : Block.Tree;//Block.Water;//
     }
 
     public void drawInsideHouse(Canvas canvas, List<Player> players, Vector2D size, Map<String, Image> allImgs) {
@@ -303,6 +313,11 @@ public class World {
                         gc.setFill(Color.BLACK);
                         gc.fillPolygon(new double[]{blockSize * (finalI) - 10, blockSize * (finalI + 1) + 10, blockSize * (finalI + 1) + 10}, new double[]{blockSize * (finalJ + 1) + 10, blockSize * (finalJ) - 10, blockSize * (finalJ + 1) + 10}, 3);
                     }
+                }
+                if (house.getBlockInside(x, y + 2) == Block.HouseDoor) {
+                    Image img = allImgs.get("House" + house.getType() + "Door");
+                    double sizeImgY = (img.getHeight() / img.getWidth() * 1.6);
+                    gc.drawImage(img, blockSize * (finalI - 0.3), blockSize * (finalJ - sizeImgY + 2.2), blockSize * (1.6), blockSize * (sizeImgY));
                 }
                 players.stream().filter(e -> (int) e.getPos().getX() == x && (int) e.getPos().getY() == y).forEach(e -> {
                     if (e.getActivity() == Player.Activity.standing) {
@@ -382,7 +397,7 @@ public class World {
         List<Block> notWalkableBlocks = Arrays.asList(Block.Water, Block.House, Block.HouseL);
         if (!notWalkableBlocks.contains(cur) && !isTree((int) pos.getX(), (int) pos.getY())) {
             House finalH = h;
-            //Todoas maybe wenn man sich bewegt, und dazu geht, koennte es zu Problemen kommen, wenn man aus dem Haus kommt oder hineingeht
+            //to do maybe if someone moves to a block where a house starts or ends, and someone enters it it might be a problem
             Optional<Player> op = MyServer.getServer().getClients().entrySet().stream().filter(c -> c != null && c.getValue() != null).map(c -> c.getValue().getPlayer()).filter(c -> c != null && c != p && (c.getHouseEntrancePos() == null ? p.getHouseEntrancePos() == null : (finalH == null ? c.getHouseEntrancePos().equals(p.getHouseEntrancePos()) : c.getHouseEntrancePos().equals(Vector2D.add(finalH.getPos(), finalH.getType().getDoorPos())))) && (c.getPos().equals(pos) || (c.getActivity() == Player.Activity.moving && Vector2D.add(c.getPos(), c.getDir().getVecDir()).equals(pos)))).findAny();
             op.ifPresent(a -> p.setHouseEntrancePos(null));
             return op.isEmpty();
@@ -397,5 +412,61 @@ public class World {
             if (hOp.isPresent()) return hOp.get();
         }
         return null;
+    }
+
+    public static List<WaterBlock> getWaterBlocks(int x, int y, Block[][] blocks) {
+        if (blocks[x][y] != Block.Water) return List.of(WaterBlock.None);
+        List<WaterBlock> res = new ArrayList<>();
+        if (blocks[x][y + 1] != Block.Water) res.add(WaterBlock.Bottom);
+        if (blocks[x][y - 1] != Block.Water) res.add(WaterBlock.Top);
+        if (blocks[x + 1][y] != Block.Water) res.add(WaterBlock.Right);
+        if (blocks[x - 1][y] != Block.Water) res.add(WaterBlock.Left);
+
+        if (res.contains(WaterBlock.Bottom) && res.contains(WaterBlock.Right)) res.add(WaterBlock.BottomRight);
+        if (res.contains(WaterBlock.Bottom) && res.contains(WaterBlock.Left)) res.add(WaterBlock.BottomLeft);
+        if (res.contains(WaterBlock.Top) && res.contains(WaterBlock.Right)) res.add(WaterBlock.TopRight);
+        if (res.contains(WaterBlock.Top) && res.contains(WaterBlock.Left)) res.add(WaterBlock.TopLeft);
+
+        if (!res.contains(WaterBlock.Bottom) && !res.contains(WaterBlock.Right) && blocks[x + 1][y + 1] != Block.Water)
+            res.add(WaterBlock.BottomRightOutside);
+        if (!res.contains(WaterBlock.Bottom) && !res.contains(WaterBlock.Left) && blocks[x + 1][y - 1] != Block.Water)
+            res.add(WaterBlock.BottomLeftOutside);
+        if (!res.contains(WaterBlock.Top) && !res.contains(WaterBlock.Right) && blocks[x - 1][y + 1] != Block.Water)
+            res.add(WaterBlock.TopRightOutside);
+        if (!res.contains(WaterBlock.Top) && !res.contains(WaterBlock.Left) && blocks[x - 1][y - 1] != Block.Water)
+            res.add(WaterBlock.TopLeftOutside);
+        return res;
+    }
+
+    /**
+     * which images will be displayed for the , if there is a block of water
+     */
+    enum WaterBlock {
+        None(0, 0, 0, 0, 0, 0, 0, 0),
+        Left(0, 0, 12, 24, 0, 0, 0.5, 1),
+        Right(13, 0, 12, 24, 0.5, 0, 0.5, 1),
+        Top(26, 0, 25, 12, 0, 0, 1, 0.5),
+        Bottom(26, 13, 25, 12, 0, 0.5, 1, 0.5),
+        TopLeft(0, 25, 12, 12, 0, 0, 0.5, 0.5),
+        TopRight(13, 25, 12, 12, 0.5, 0, 0.5, 0.5),
+        BottomLeft(0, 38, 12, 12, 0, 0.5, 0.5, 0.5),
+        BottomRight(13, 38, 12, 12, 0.5, 0.5, 0.5, 0.5),
+        TopLeftOutside(26, 26, 12, 12, 0, 0, 0.5, 0.5),
+        TopRightOutside(26, 38, 12, 12, 0, 0.5, 0.5, 0.5),
+        BottomLeftOutside(38, 26, 12, 12, 0.5, 0, 0.5, 0.5),
+        BottomRightOutside(38, 38, 12, 12, 0.5, 0.5, 0.5, 0.5);
+
+        /**
+         * saves all the information about the image (posX/Y on original, sizeX/Y on original, posX/Y inside Block, sizeX/Y inside Block)
+         */
+        private final double[] values;
+
+        public double[] getValues() {
+            return values;
+        }
+
+        WaterBlock(double... values) {
+            this.values = values;
+        }
     }
 }

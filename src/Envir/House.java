@@ -22,9 +22,11 @@ public class House {
         if (Database.isConnected()) {
             ResultSet s = Database.get("select * from World inner join House H on World.PK_World_ID = H.FK_World_ID where PK_World_ID = " + worldID + " && H.houseIDInWorld = " + id + ";");
             try {
+                assert s != null;
                 if (s.first()) {
                     s = Database.get("select name\n" +
                             " from User inner join Player on Player.FK_User_ID = PK_User_ID where PK_Player_ID=" + s.getObject("FK_Owner_ID") + ";");
+                    assert s != null;
                     if (s.first()) {
                         this.playerName = s.getString("name");
                     }
@@ -38,7 +40,7 @@ public class House {
 
     private final Vector2D size;
 
-    private Type type;
+    private final Type type;
 
     private final List<Player> players = new ArrayList<>();
 
@@ -145,7 +147,7 @@ public class House {
         return players;
     }
 
-    public static enum Type {
+    public enum Type {
         poke {
             @Override
             public Vector2D getSize() {

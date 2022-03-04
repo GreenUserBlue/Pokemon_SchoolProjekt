@@ -115,7 +115,7 @@ public class SimplexNoise {  // Simplex noise in 2D, 3D and 4D
             t2 *= t2;
             n2 = t2 * t2 * dot(grad3[gi2], x2, y2);
         }
-        // Add contributions from each corner to get the final noise value.
+        // Add contributions from each corner to getMyClient the final noise value.
         // The result is scaled to return values in the interval [-1,1].
         return 70.0 * (n0 + n1 + n2);
     }
@@ -197,7 +197,7 @@ public class SimplexNoise {  // Simplex noise in 2D, 3D and 4D
             t3 *= t3;
             n3 = t3 * t3 * dot(grad3[gi3], x3, y3, z3);
         }
-        // Add contributions from each corner to get the final noise value.
+        // Add contributions from each corner to getMyClient the final noise value.
         // The result is scaled to stay just inside [-1,1]
         return 32.0*(n0 + n1 + n2 + n3);
     }

@@ -145,6 +145,10 @@ public class Player {
         }
     }
 
+    public void setDir(Dir dir) {
+        this.dir = dir;
+    }
+
     public void updateShownDir(Vector2D pos, Vector2D newVec) {
         dir = Dir.getDir(Vector2D.sub(newVec, pos), dir);
     }
@@ -218,6 +222,7 @@ public class Player {
         public Vector2D getVecDir() {
             return var;
         }
+
 
         public static Dir getDir(Vector2D target, Dir cur) {
             if (Math.abs(target.getX()) > Math.abs(target.getY())) {
