@@ -8,8 +8,10 @@ import ServerStuff.MessageType;
 import ServerStuff.User;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
@@ -114,6 +116,36 @@ public class MyClient extends Application {
     };
 
 
+    private final AnimationTimer progressUpdater = new AnimationTimer() {
+        long timeTillNextUse = 0;
+
+        @Override
+        public void handle(long l) {
+            if (timeTillNextUse < System.currentTimeMillis()) {
+                timeTillNextUse = System.currentTimeMillis() + 20;
+                if (stage.getScene().getRoot().getChildrenUnmodifiable().get(0) instanceof ProgressBar bar) {
+                    if (stage.getScene().getRoot().getChildrenUnmodifiable().get(1) instanceof ProgressBar barHidden) {
+                        if (bar.getProgress() < barHidden.getProgress()) {
+                            bar.setProgress(bar.getProgress() + 0.05);
+                            bar.setPrefWidth(stage.getWidth() / 3 * 2);
+                            bar.setLayoutX(stage.getWidth() / 6);
+                            bar.setLayoutY(stage.getScene().getHeight() - 50);
+                            bar.setVisible(true);
+                            if (bar.getProgress() >= 1) {
+                                if (barHidden.getProgress() > 1.05) {
+                                    stage.getScene().setRoot(LoginScreens.getLoginScene(stage, client, null));
+                                } else {
+                                    stage.getScene().setRoot(LoginScreens.getRegionSelectScreen(stage, client));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+
     private List<Keys> getUpdatedKeysToSendAndUpdatePlayerDir(List<Keys> lastKeysPressed, List<Keys> keys, Player p) {
         if (keys.stream().anyMatch(a -> p.getDir().toString().equalsIgnoreCase(a.toString()))) {
             return keys;
@@ -177,17 +209,18 @@ public class MyClient extends Application {
         stage.setX(1000);
         stage.setY(80);
         initImgs();
-        client = new Client(33333, "127.0.0.1", true);
+        client = new Client(33333, "127.0.0.1", false);
         client.onMessage((a, b) -> {
             if (b instanceof String s && !s.startsWith(MessageType.toStr(MessageType.updatePos))) {
                 System.out.println("From Server: '" + b + '\'');
             }
         });
-        stage.setScene(new Scene(LoginScreens.getLoginScene(stage, client, null), 500, 500));
+        stage.setScene(new Scene(LoginScreens.getLoadingScreen(), 300 / 9D * 16, 300));
         addListener();
         stage.setTitle("Pokemon");
         stage.getIcons().add(new Image(String.valueOf(Paths.get("res/icon.png").toUri().toURL())));
         stage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
+        progressUpdater.start();
         stage.show();
     }
 
@@ -214,6 +247,7 @@ public class MyClient extends Application {
                                 client.setUsername(s.substring(s.indexOf(",") + 1));
                                 client.getPlayers().add(new Player(client.getUsername(), new Vector2D(3, 2), 0, client.getErrorTxt().getText()));
                                 animationTimer.start();
+                                // Platform.runLater(()->stage.setFullScreen(true));
                             }
                             case 1 -> client.getErrorTxt().setText("region does not exist");
                             case 2 -> client.getErrorTxt().setText("you are not logged in");
@@ -260,6 +294,7 @@ public class MyClient extends Application {
     private void doLogin(MessageType mT, String s) {
         switch (mT) {
             case hellman:
+                Platform.runLater(() -> ((ProgressBar) (stage.getScene().getRoot().getChildrenUnmodifiable().get(1))).setProgress(0.1));
                 Matcher maP = Pattern.compile("p=([0-9]+)[,}]").matcher(s);
                 Matcher maG = Pattern.compile("g=([0-9]+)[,}]").matcher(s);
                 Matcher maPub = Pattern.compile("serPub=([0-9]+)[,}]").matcher(s);
@@ -267,6 +302,16 @@ public class MyClient extends Application {
                 client.setCrypto(new Crypto(new BigInteger(maP.find() ? maP.group(1) : "1"), new BigInteger(maG.find() ? maG.group(1) : "1"), maIv.find() ? maIv.group(1) : "[1,2]"));
                 client.getCrypto().createKey(new BigInteger(maPub.find() ? maPub.group(1) : "1"), new BigInteger(maPub.group(1)).intValue());
                 client.send(MessageType.toStr(MessageType.hellman) + "{pub=" + client.getCrypto().getPub() + "}");
+                String login = User.getLogin();
+                if (login == null)
+                    Platform.runLater(() -> ((ProgressBar) (stage.getScene().getRoot().getChildrenUnmodifiable().get(1))).setProgress(1.1));
+                else {
+                    Platform.runLater(() -> ((ProgressBar) (stage.getScene().getRoot().getChildrenUnmodifiable().get(1))).setProgress(0.5));
+                    client.setUsername(login.split(";")[0]);
+                    client.send(MessageType.toStr(MessageType.login) + "{name='" + login.split(";")[0] + "', pwd='" + client.getCrypto().encrypt(login.split(";", 2)[1]) + "'}");
+                    Platform.runLater(() -> ((ProgressBar) (stage.getScene().getRoot().getChildrenUnmodifiable().get(1))).setProgress(0.7));
+
+                }
                 break;
             case register:
                 switch (s.charAt(3) - '0') {
@@ -282,12 +327,20 @@ public class MyClient extends Application {
                 break;
             case login:
                 switch (s.charAt(3) - '0') {
-                    case 0 -> stage.getScene().setRoot(LoginScreens.getRegionSelectScreen(stage, client));
+                    case 0 -> {
+                        if (stage.getScene().getRoot().getChildrenUnmodifiable().get(0) instanceof ProgressBar) {
+                            Platform.runLater(() -> ((ProgressBar) (stage.getScene().getRoot().getChildrenUnmodifiable().get(1))).setProgress(1));
+                        } else {
+                            stage.getScene().setRoot(LoginScreens.getRegionSelectScreen(stage, client));
+                        }
+                        return;
+                    }
                     case 1 -> client.getErrorTxt().setText("username/email not found");
                     case 2 -> client.getErrorTxt().setText("wrong password");
                     case 3 -> client.getErrorTxt().setText("someone is already logged in");
                     default -> client.getErrorTxt().setText("Something went wrong. Please check if your program is on the latest version.");
                 }
+                Platform.runLater(() -> ((ProgressBar) (stage.getScene().getRoot().getChildrenUnmodifiable().get(1))).setProgress(1.1));
                 break;
             case delete:
                 switch (s.charAt(3) - '0') {

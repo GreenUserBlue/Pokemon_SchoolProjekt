@@ -3,20 +3,22 @@ package ClientStuff;
 import ServerStuff.MessageType;
 import ServerStuff.User;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+
+import java.net.MalformedURLException;
+import java.nio.file.Path;
 
 /**
  * @author Zwickelstorfer Felix
  * creates a login, register and delete screen
  */
 public class LoginScreens {
+
 
     public static Pane getLoginScene(Stage stage, Client c, String s) {
         Pane p = new Pane();
@@ -191,4 +193,20 @@ public class LoginScreens {
         p.getChildren().addAll(can, menu);
         return p;
     }
+
+    public static Pane getLoadingScreen() throws MalformedURLException {
+        Pane p = new Pane();
+        Image img = new Image(String.valueOf(Path.of("./res/Intro.png").toUri().toURL()));
+        BackgroundSize fullSize = new BackgroundSize(-1.0D, -1.0D, true, true, true, true);
+        p.setBackground(new Background(new BackgroundImage(img, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, fullSize)));
+        ProgressBar bar = new ProgressBar();
+        ProgressBar barHidden = new ProgressBar();
+        bar.setProgress(0);
+        bar.setVisible(false);
+        barHidden.setVisible(false);
+        p.getChildren().addAll(bar, barHidden);
+        return p;
+    }
 }
+
+// c18104176
