@@ -274,7 +274,7 @@ public class World {
      */
     private double getBlockSizeAndResize(Canvas canvas, List<Player> pos, Vector2D size, double w, double h) {
         double blockSize;
-        if (w / h > World.format.getX() / World.format.getY()) {      // bigger smaller char change to reverse the effect
+        if (w / h > World.format.getX() / World.format.getY()) {        // bigger smaller char change to reverse the effect
             h = w / World.format.getX() * World.format.getY();
         } else if (w / h < World.format.getX() / World.format.getY()) {
             w = h * World.format.getX() / World.format.getY();

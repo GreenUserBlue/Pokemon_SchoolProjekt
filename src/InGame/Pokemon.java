@@ -5,6 +5,16 @@ import Envir.World;
 
 public class Pokemon {
 
+    private String name;
+
+    private int id;
+
+    private EvolveType evolveType;
+
+    private Attack[] attacks;
+
+    private Nature nature;
+
     public static void main(String[] args) {
         Pokemon p = createPokemon(new Vector2D(200, 300), World.Block.Grass);
         p.addExp(23);
@@ -18,12 +28,36 @@ public class Pokemon {
         }
     }
 
-
     private void levelUp() {
 
     }
 
     private static Pokemon createPokemon(Vector2D pos, World.Block block) {
         return new Pokemon();
+    }
+
+    enum EvolveType {
+        //https://www.pokewiki.de/Entwicklung#Entwicklungsmethoden (nicht alle, erste gen reichen die 3)
+        Level,
+        Trade,
+        Item
+    }
+
+    enum Nature {
+        Hardy(1, 1, 1, 1, 1),
+        Lonely(1.1, 1 / 1.1, 1, 1, 1),
+        Adamant(1.1, 1, 1 / 1.1, 1, 1),
+        Naughty(1.1, 1, 1, 1 / 1.1, 1),
+        Brave(1.1, 1, 1, 1, 1 / 1.1);
+
+        private final double[] values;
+
+        Nature(double att, double def, double spAtt, double spDef, double init) {
+            values = new double[]{att, def, spAtt, spDef, init};
+        }
+
+        public double[] getEffect() {
+            return values;
+        }
     }
 }

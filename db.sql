@@ -57,6 +57,7 @@ CREATE TABLE House
     FOREIGN KEY (FK_World_ID) REFERENCES World (PK_World_ID),
     FOREIGN KEY (FK_Owner_ID) REFERENCES Player (PK_Player_ID)
 );
+
 insert into User (name, password, email)
 values ('abcde', 'hallo123', 'a@g.co'),
        ('abcded', 'hallo123', 'a@g.com');
