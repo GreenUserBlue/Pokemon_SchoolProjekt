@@ -9,17 +9,87 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * a player inside the game
+ *
+ * @author Zwickelstorfer Felix
+ */
 public class Player {
 
+    /**
+     * how fast a player walks normally (not fast)
+     */
     private static final double walkingSpeed = 0.1;//0.05;//
 
+    /**
+     * the name of the player
+     */
     private String name;
 
+    /**
+     * the current position of the player
+     */
     private Vector2D pos;
 
+    /**
+     * where the player wants to go (which Block)
+     */
     private Vector2D targetPos;
 
+    /**
+     * the door pos of the house where the player is inside
+     */
     private Vector2D houseEntrancePos = null;
+
+    /**
+     * how much the player has walked in the current block
+     */
+    private Vector2D curWalked = new Vector2D(0, 0);
+
+    /**
+     * the Name of the region the player is inside
+     */
+    private String region;
+
+    /**
+     * the id of the skin
+     */
+    private int skin;
+
+    /**
+     * the direction in which the player is looking
+     */
+    private Dir dir;
+
+    /**
+     * the position of the hands
+     */
+    private Hands hands = Hands.normal;
+
+    /**
+     * what the player is currently doing
+     */
+    private Activity activity = Activity.standing;
+
+    public Player(String raw) {
+        System.out.println(raw);
+    }
+
+    /**
+     * initializes the player
+     *
+     * @param name   {@link Player#name}
+     * @param pos    {@link Player#pos}
+     * @param skin   {@link Player#skin}
+     * @param region {@link Player#region}
+     */
+    public Player(String name, Vector2D pos, int skin, String region) {
+        this.name = name;
+        this.pos = pos;
+        this.skin = skin;
+        this.region = region;
+        dir = Dir.down;
+    }
 
     public Vector2D getHouseEntrancePos() {
         return houseEntrancePos;
@@ -29,36 +99,20 @@ public class Player {
         this.houseEntrancePos = houseEntrancePos;
     }
 
-    private Vector2D curWalked = new Vector2D(0, 0);
-
-    private String region;
-
-    private int skin;
-
-    private Dir dir;
-
-    private Hands hands = Hands.normal;
-
     public Activity getActivity() {
         return activity;
     }
 
-    private Activity activity = Activity.standing;
-
-    public Player(String raw) {
-        System.out.println(raw);
-    }
-
-    public Player(String name, Vector2D pos, int skin, String region) {
-        this.name = name;
-        this.pos = pos;
-        this.skin = skin;
-        this.region = region;
-        dir = Dir.down;
+    public void setActivity(Activity activity) {
+        this.activity = activity;
     }
 
     public Vector2D getPos() {
         return pos;
+    }
+
+    public void setPos(Vector2D pos) {
+        this.pos = pos;
     }
 
     public int getSkin() {
@@ -69,16 +123,16 @@ public class Player {
         return dir;
     }
 
+    public void setDir(Dir dir) {
+        this.dir = dir;
+    }
+
     public void setTargetPos(Vector2D targetPos) {
         this.targetPos = targetPos;
     }
 
     public String getRegion() {
         return region;
-    }
-
-    public void setActivity(Activity activity) {
-        this.activity = activity;
     }
 
     @Override
@@ -98,6 +152,13 @@ public class Player {
         return curWalked;
     }
 
+    /**
+     * moves the player to the next location and updates the position and direction
+     *
+     * @param client        the client from the server
+     * @param isDoubleSpeed if the player is walking fast
+     * @param w             the world the player is in
+     */
     public void updatePos(Server.ClientHandler client, boolean isDoubleSpeed, World w) {
         curWalked.round(4);
         Vector2D targetWay = Vector2D.sub(targetPos, pos);
@@ -145,10 +206,12 @@ public class Player {
         }
     }
 
-    public void setDir(Dir dir) {
-        this.dir = dir;
-    }
-
+    /**
+     * updates the direction the player where he is looking
+     *
+     * @param pos    the old position of the player
+     * @param newVec the new position of the player
+     */
     public void updateShownDir(Vector2D pos, Vector2D newVec) {
         dir = Dir.getDir(Vector2D.sub(newVec, pos), dir);
     }
@@ -161,6 +224,12 @@ public class Player {
         hands = hands.next();
     }
 
+    /**
+     * updates the position for the client
+     *
+     * @param newVec the new position of the player
+     * @param c      the client because of the world data for houses
+     */
     public void updateNewPos(Vector2D newVec, Client c) {
         if (activity == Activity.moving || activity == Activity.standing) {
             if (getPos().equals(newVec, 0.002)) {
@@ -183,9 +252,11 @@ public class Player {
                 houseEntrancePos = null;
             }
         }
-
     }
 
+    /**
+     * what the player is doing
+     */
     public enum Activity {
         fight,
         moving,
@@ -193,10 +264,10 @@ public class Player {
         standing
     }
 
-    public void setPos(Vector2D pos) {
-        this.pos = pos;
-    }
 
+    /**
+     * the direction in which a player is able to look
+     */
     public enum Dir {
         up(new Vector2D(0, -1)),
         down(new Vector2D(0, 1)),
@@ -210,6 +281,10 @@ public class Player {
             this.var = var;
         }
 
+        /**
+         * makes the keys to directions
+         * @param keys the keys which are pressed
+         */
         public static Vector2D getDirFromKeys(List<Keys> keys) {
             Vector2D res = new Vector2D();
             keys.forEach(e -> {
@@ -219,11 +294,12 @@ public class Player {
             return res;
         }
 
-        public Vector2D getVecDir() {
-            return var;
-        }
-
-
+        /**
+         * calculates the new direction which depends on the old direction and the target looking position
+         * @param target the position where the player should be
+         * @param cur the current direction
+         * @return the new calculated direction
+         */
         public static Dir getDir(Vector2D target, Dir cur) {
             if (Math.abs(target.getX()) > Math.abs(target.getY())) {
                 return target.getX() < 0 ? left : right;
@@ -247,8 +323,15 @@ public class Player {
                 else return left;
             }
         }
+
+        public Vector2D getVecDir() {
+            return var;
+        }
     }
 
+    /**
+     * which hands are shown for a player if he is walking
+     */
     public enum Hands {
         left {
             @Override
@@ -271,8 +354,11 @@ public class Player {
             }
         };
 
-        public abstract Hands next();
-
+        /**
+         * if the next shown hand is left
+         */
         protected static boolean nextLeft = false;
+
+        public abstract Hands next();
     }
 }

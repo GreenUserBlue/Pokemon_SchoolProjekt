@@ -17,27 +17,53 @@ import java.util.*;
 public class World {
 
     /**
-     * counts all worlds
+     * counts all worlds (Server)
      */
     private static int worldCount = 1;
 
+    /**
+     * the seed of the world
+     */
     private final int seed;
 
+    /**
+     * the id of the world
+     */
     private final int id;
 
+    /**
+     * the random value of the world (depends on {@link World#seed}
+     */
     private final Random rnd;
 
+    /**
+     * all Cities in this world
+     */
     private final List<City> cities = new ArrayList<>();
 
+    /**
+     * the name of the world
+     */
     private final String name;
 
+    /**
+     * all Houses which are on Screen (Client)
+     */
     private final HashMap<Vector2D, House> curHouses = new HashMap<>();
 
-
+    /**
+     * in which format everything will be displayed (Client)
+     */
     private static final Vector2D format = new Vector2D(16, 9);
 
+    /**
+     * how many blocks are shown for the client
+     */
     private static final int widthBlocks = 28;//80;//150;//8;//;
 
+    /**
+     * how many extra blocks are loaded for the client (for house/tree at the edge)
+     */
     private static final double extraSize = 5;
 
 
@@ -49,6 +75,12 @@ public class World {
         return seed;
     }
 
+    /**
+     * initializes the world and creates all the cities
+     *
+     * @param seed {@link World#seed}
+     * @param name {@link World#name}
+     */
     public World(int seed, String name) {
         id = worldCount++;
         if (Database.isConnected()) {
@@ -106,14 +138,7 @@ public class World {
         gc.clearRect(0, 0, size.getX(), size.getY());
         double w = size.getX();
         double h = size.getY();
-
         blockSize = getBlockSizeAndResize(canvas, players, size, w, h);
-
-        /*a for (int i = 0; i < widthBlocks + extraSize * 2; i++) {
-            for (int j = 0; j < widthBlocks * format.getX() / format.getY() + extraSize * 2; j++) {
-                gc.fillRect(i * blockSize + 10, blockSize * j + 5, blockSize - 20, blockSize - 10);
-            }
-        }*/
         int maxX = (int) (canvas.getWidth() / blockSize) + 1;
         int maxY = (int) (canvas.getHeight() / blockSize) + 1;
         Block[][] blocks = getBlocksEnvir((int) players.get(0).getPos().getX() - (maxX / 2), (int) players.get(0).getPos().getY() - (maxY / 2), maxX, maxY);
@@ -123,7 +148,6 @@ public class World {
                 int y = (j + (int) players.get(0).getPos().getY() - (maxY / 2));
                 if (blocks[i][j] == Block.Water) {
                     gc.drawImage(allImgs.get("Water"), blockSize * (i - 0.05), blockSize * (j - 0.05), blockSize * 1.1, blockSize * 1.1);
-
                     if (i - 1 >= 0 && i + 1 < maxX && j - 1 >= 0 && j + 1 < maxY) {
                         List<WaterBlock> l = getWaterBlocks(i, j, blocks);
                         int finalJ = j;
@@ -138,7 +162,6 @@ public class World {
                 }
             }
         }
-
         for (int i = 0; i < maxX; i++) {
             for (int j = 0; j < maxY; j++) {
                 int x = (i + (int) players.get(0).getPos().getX() - (maxX / 2));
@@ -184,6 +207,14 @@ public class World {
         }
     }
 
+    /**
+     * gets all the blocks in an area
+     *
+     * @param startX the startPos in X-Pos
+     * @param startY the startPos in Y-Pos
+     * @param maxX   the size in X dir
+     * @param maxY   the size in Y dir
+     */
     private Block[][] getBlocksEnvir(int startX, int startY, int maxX, int maxY) {
         World.Block[][] res = new Block[maxX][maxY];
         for (int i = 0; i < maxX; i++) {
@@ -196,6 +227,14 @@ public class World {
         return res;
     }
 
+    /**
+     * gets a Block from the environment
+     * @param i the X coordinate in the array for all Blocks
+     * @param j the Y coordinate in the array for all Blocks
+     * @param x the real X coordinate
+     * @param y the real Y coordinate
+     * @return the right Block
+     */
     private Block getSingleBlockEnvir(int i, int j, int x, int y) {
         Vector2D pos = new Vector2D(x, y);
         Optional<City> op = cities.stream().filter(a -> a.isInCity(pos)).findFirst();
@@ -206,6 +245,15 @@ public class World {
         }
     }
 
+    /**
+     * gets a Block from the environment from a house
+     * @param i the X coordinate in the array for all Blocks
+     * @param j the Y coordinate in the array for all Blocks
+     * @param x the real X coordinate
+     * @param y the real Y coordinate
+     * @param c the city the block is inside
+     * @return the right Block
+     */
     private Block getHouseBlock(int i, int j, int x, int y, City c) {
         Optional<House> hOp = c.getHouses().stream().filter(a -> a.getBlockEnvir(x, y) != Block.none).findFirst();
         if (hOp.isEmpty()) {
@@ -216,6 +264,14 @@ public class World {
         }
     }
 
+    /**
+     * resizes the window and canvas
+     * @param canvas the canvas where everything will be drawn
+     * @param pos all Players which will be displayed
+     * @param size the size of the new window
+     * @param w the width of the new window
+     * @param h the height of the new window
+     */
     private double getBlockSizeAndResize(Canvas canvas, List<Player> pos, Vector2D size, double w, double h) {
         double blockSize;
         if (w / h > World.format.getX() / World.format.getY()) {      // bigger smaller char change to reverse the effect
@@ -231,12 +287,22 @@ public class World {
         return blockSize;
     }
 
+    /**
+     * returns the simplex noise value of the coordinates
+     * @param x the x coordinate
+     * @param y the y coordinate
+     */
     private double getNoise(int x, int y) {
         return SimplexNoise.noise((x) / 27.0 + seed, (y) / 27.0 + seed, 0.4);
     }
 
-    private int getGrassGround(int a, int b) {
-        double target = ((getNoise(a, b) + 1) * 500) % 10;
+    /**
+     * returns the grass type for the coordinates
+     * @param x the x coordinate
+     * @param y the y coordinate
+     */
+    private int getGrassGround(int x, int y) {
+        double target = ((getNoise(x, y) + 1) * 500) % 10;
         if (target < 0.4) return 1;
         if (target < 5.4) return 0;
         if (target < 6) return 2;
@@ -246,6 +312,12 @@ public class World {
 //        return Math.random() < 0.8 ? 0 : (int) (Math.random() * (probs - 1) + 1);
     }
 
+    /**
+     * gets The Block for the coordinates
+     * @param x the x coordinate
+     * @param y the y coordinate
+     * @param rec if it is a recursive call
+     */
     private Block getBlockEnvir(int x, int y, boolean rec) {
         if (!rec && isTreeL(x, y)) return Block.TreeL;
         if (!rec && isTree(x, y)) return Block.Tree;
@@ -253,6 +325,13 @@ public class World {
         return d > 0 && d < 0.6 ? Block.Free : d > 0.75 ? Block.Water : d > -0.4 ? Block.Grass : Block.Tree;//Block.Water;//
     }
 
+    /**
+     * draws the environment inside a house (Client)
+     * @param canvas the canvas to draw on
+     * @param players all Player which will be drawn
+     * @param size the size of the window
+     * @param allImgs {@link ClientStuff.MyClient#allImgs}
+     */
     public void drawInsideHouse(Canvas canvas, List<Player> players, Vector2D size, Map<String, Image> allImgs) {
         double blockSize;
         GraphicsContext gc = canvas.getGraphicsContext2D();
@@ -330,6 +409,11 @@ public class World {
         }
     }
 
+    /**
+     * if it is possible to walk to a specific block inside a house
+     * @param pos the pos to check
+     * @param p the player which wants to go there
+     */
     public boolean isFreeToWalkHouse(Vector2D pos, Player p) {
         House h = getHouse(p.getHouseEntrancePos());
         Block cur = h.getBlockInside((int) pos.getX(), (int) pos.getY());
@@ -346,6 +430,9 @@ public class World {
         return false;
     }
 
+    /**
+     * allPossible Blocks
+     */
     public enum Block {
         Free,
         Grass,
@@ -365,7 +452,11 @@ public class World {
         none
     }
 
-
+    /**
+     * if there is a tree
+     * @param x the x coordinate
+     * @param y the y coordinate
+     */
     private boolean isTree(int x, int y) {
         x -= (Math.abs(x)) % 2;
         y -= (Math.abs(y)) % 2;
@@ -382,10 +473,21 @@ public class World {
         return false;
     }
 
+    /**
+     * if it is the last pos of a tree
+     * @param x the x coordinate
+     * @param y the y coordinate
+     */
     private boolean isTreeL(int x, int y) {
         return isTree(x, y) && x == x + ((Math.abs(x)) % 2 == 0 ? 0 : 1) && y == y + ((Math.abs(y)) % 2 != 0 ? 0 : 1);
     }
 
+
+    /**
+     * if it is possible to walk to a specific block outside a house
+     * @param pos the pos to check
+     * @param p the player which wants to go there
+     */
     public boolean isFreeToWalkEnvir(Vector2D pos, Player p) {
         Block cur = getSingleBlockEnvir(-1, -1, (int) pos.getX(), (int) pos.getY());
         House h = null;
@@ -405,6 +507,10 @@ public class World {
         return false;
     }
 
+    /**
+     * get the house which stands on the position
+     * @param pos the position which will be checked
+     */
     public House getHouse(Vector2D pos) {
         Optional<City> op = cities.stream().filter(a -> a.isInCity(pos)).findFirst();
         if (op.isPresent()) {
@@ -414,6 +520,12 @@ public class World {
         return null;
     }
 
+    /**
+     * gets the correct WaterBlock in relation to
+     * @param x the x coordinate
+     * @param y the y coordinate
+     * @param blocks the blocks to check
+     */
     public static List<WaterBlock> getWaterBlocks(int x, int y, Block[][] blocks) {
         if (blocks[x][y] != Block.Water) return List.of(WaterBlock.None);
         List<WaterBlock> res = new ArrayList<>();

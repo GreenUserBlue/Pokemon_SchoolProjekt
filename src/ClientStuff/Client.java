@@ -56,7 +56,7 @@ public class Client extends Thread {
     /**
      * saves all Consumer which will be accepted if the OldMain receives a message
      */
-    ArrayList<BiConsumer<Client, Object>> allOnMessage = new ArrayList<>();
+    final ArrayList<BiConsumer<Client, Object>> allOnMessage = new ArrayList<>();
 
     /**
      * the socket with whom the server is connected to the server
@@ -130,7 +130,9 @@ public class Client extends Thread {
         try {
             while (!isDisconnected) {
                 Object s = in.readObject();
-                allOnMessage.forEach(e -> e.accept(this, s));
+                synchronized (allOnMessage) {
+                    allOnMessage.forEach(e -> e.accept(this, s));
+                }
             }
         } catch (IOException | ClassNotFoundException e) {
             if (!isDisconnected) System.out.println("Connection from Server lost");
@@ -141,7 +143,9 @@ public class Client extends Thread {
      * what should happen when a message is sent
      */
     public void onMessage(BiConsumer<Client, Object> s) {
-        allOnMessage.add(s);
+        synchronized (allOnMessage){
+            allOnMessage.add(s);
+        }
     }
 
     /**

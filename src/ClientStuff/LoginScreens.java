@@ -189,14 +189,13 @@ public class LoginScreens {
         b.setLayoutX(800);
         menu.getChildren().add(b);
         menu.setVisible(false);
-        //TODO another pane for menu and so on
         p.getChildren().addAll(can, menu);
         return p;
     }
 
     public static Pane getLoadingScreen() throws MalformedURLException {
         Pane p = new Pane();
-        Image img = new Image(String.valueOf(Path.of("./res/Intro.png").toUri().toURL()));
+        Image img = new Image(String.valueOf(Path.of("./res/LogScreen/Intro.png").toUri().toURL()));
         BackgroundSize fullSize = new BackgroundSize(-1.0D, -1.0D, true, true, true, true);
         p.setBackground(new Background(new BackgroundImage(img, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, fullSize)));
         ProgressBar bar = new ProgressBar();
@@ -205,6 +204,19 @@ public class LoginScreens {
         bar.setVisible(false);
         barHidden.setVisible(false);
         p.getChildren().addAll(bar, barHidden);
+        return p;
+    }
+
+    public static Pane getProfileSelectScreen(Stage stage, Client client) {
+        Pane p = new Pane();
+        Image img = null;
+        try {
+            img = new Image(String.valueOf(Path.of("./res/LogScreen/ProfileSelect.png").toUri().toURL()));
+        } catch (MalformedURLException ignored) {
+        }
+        BackgroundSize fullSize = new BackgroundSize(-1.0D, -1.0D, true, true, true, true);
+        assert img != null;
+        p.setBackground(new Background(new BackgroundImage(img, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, fullSize)));
         return p;
     }
 }

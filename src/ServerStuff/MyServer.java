@@ -128,7 +128,7 @@ private static void initServer() throws IOException {
         int error = User.delete(name, pwd);
         if (error == 0) c.setUsername(null);
         c.send(MessageType.toStr(MessageType.delete) + error);
-        System.out.println("User-Delete request resieved: " + name);
+        System.out.println("User-Delete request received: " + name);
     }
 
     private static void doLogin(Server.ClientHandler c, String s) {
