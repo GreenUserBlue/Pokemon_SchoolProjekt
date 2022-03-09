@@ -32,7 +32,7 @@ public class MyServer {
         initServer();
     }
 
-private static void initServer() throws IOException {
+    private static void initServer() throws IOException {
         server = new Server(33333, "localhost", 5);
         server.setAcceptAll(true);
         server.startUpdates();
@@ -52,6 +52,7 @@ private static void initServer() throws IOException {
                     case login -> doLogin(c, s);
                     case logout -> c.setUsername(null);
                     case delete -> doDel(c, s);
+                    case profile -> doProfile(c, s);
                     case region -> doRegion(c, s);
                     case keysPres -> doKeys(c, s.substring(3));
                     case error -> System.out.println("ERROR-Message: " + s);
@@ -61,6 +62,11 @@ private static void initServer() throws IOException {
         server.getRegions().add(new World(696969, "Kanto"));
         server.getRegions().add(new World(187420, "Johto"));
 
+    }
+
+    private static void doProfile(Server.ClientHandler c, String s) {
+        //TODO some Profile stuff
+        ResultSet r = Database.get("");
     }
 
     private static void doKeys(Server.ClientHandler c, String s) {
@@ -140,9 +146,30 @@ private static void initServer() throws IOException {
             c.send(MessageType.toStr(MessageType.login) + 3);
         } else {
             int error = User.isCorrect(name, pwd);
-            if (error == 0) c.setUsername(name);
             c.send(MessageType.toStr(MessageType.login) + error);
+            if (error == 0) sendPlayerProfiles(c, name);
             System.out.println("Login request received: " + name);
+        }
+    }
+
+    private static void sendPlayerProfiles(Server.ClientHandler c, String name) {
+        c.setUsername(name);
+        ResultSet r = Database.get("select PK_Player_ID,Player.name,skinID,language from Player INNER JOIN User U on Player.FK_User_ID = U.PK_User_ID where U.name='" + name + "' OR email='" + name + "';");
+
+        if (r != null) {
+            String msgToSend = MessageType.toStr(MessageType.profile);
+            try {
+                while (r.next()) {
+                    //TODO hallo
+                    msgToSend += "{" + r.getString("name") + ",";
+                    ResultSet badges = Database.get("select  count(PK_Badge_ID) as nbr from Badge inner join Player P on Badge.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID = " + r.getObject("PK_Player_ID") + ";");
+                    if (badges != null && badges.next()) msgToSend += badges.getString("nbr") + ",";
+                    ResultSet poke = Database.get("select count(PK_Poke_ID) as nbr from Pokemon inner join Player P on Pokemon.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID=" + r.getObject("PK_Player_ID") + ";");
+                    if (poke != null && poke.next()) msgToSend += poke.getString("nbr") + "}";
+                }
+            } catch (SQLException ignored) {
+            }
+            System.out.println(msgToSend);
         }
     }
 

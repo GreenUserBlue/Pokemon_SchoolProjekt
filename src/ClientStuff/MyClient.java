@@ -10,6 +10,7 @@ import javafx.animation.AnimationTimer;
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -17,7 +18,9 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -120,7 +123,7 @@ public class MyClient extends Application {
     };
 
 
-    private final AnimationTimer progressUpdater = new AnimationTimer() {
+    private final AnimationTimer designUpdater = new AnimationTimer() {
         long timeTillNextUse = 0;
 
         long timeTillFadeEnds = 0;
@@ -130,43 +133,72 @@ public class MyClient extends Application {
             if (timeTillNextUse < System.currentTimeMillis()) {
                 timeTillNextUse = System.currentTimeMillis() + 20;
                 if (stage.getScene().getRoot().getChildrenUnmodifiable().size() >= 2 && stage.getScene().getRoot().getChildrenUnmodifiable().get(0) instanceof ProgressBar bar) {
-                    if (stage.getScene().getRoot().getChildrenUnmodifiable().get(1) instanceof ProgressBar barHidden) {
-                        bar.setPrefWidth(stage.getWidth() / 3 * 2);
-                        bar.setLayoutX(stage.getWidth() / 6);
-                        bar.setLayoutY(stage.getScene().getHeight() - 50);
-                        bar.setVisible(true);
-                        if (bar.getProgress() < barHidden.getProgress()) {
-                            bar.setProgress(bar.getProgress() + 0.05);
+                    updateBarsAndPos(bar);
+                } else if (stage.getScene().getRoot().getChildrenUnmodifiable().size() >= 3 && stage.getScene().getRoot().getChildrenUnmodifiable().get(0) instanceof javafx.scene.layout.Pane) {
+                    updateProfileSelect();
+                }
+            }
+        }
+
+        private void updateBarsAndPos(ProgressBar bar) {
+            if (stage.getScene().getRoot().getChildrenUnmodifiable().get(1) instanceof ProgressBar barHidden) {
+                bar.setPrefWidth(stage.getWidth() / 3 * 2);
+                bar.setLayoutX(stage.getWidth() / 6);
+                bar.setLayoutY(stage.getScene().getHeight() - 50);
+                bar.setVisible(true);
+                if (bar.getProgress() < barHidden.getProgress()) {
+                    bar.setProgress(bar.getProgress() + 0.05);
+                }
+                if (bar.getProgress() >= 1) {
+                    if (timeTillFadeEnds == 0) {
+                        timeTillFadeEnds = System.currentTimeMillis() + 300;
+                        FadeTransition f = new FadeTransition(Duration.millis(300), stage.getScene().getRoot());
+                        f.setFromValue(1);
+                        f.setToValue(0);
+                        f.play();
+                    }
+                    if (System.currentTimeMillis() > timeTillFadeEnds) {
+                        Parent p;
+                        if (barHidden.getProgress() > 1.05) {
+                            p = (LoginScreens.getLoginScene(stage, client, null));
+                        } else {
+                            p = (LoginScreens.getProfileSelectScreen(stage, client));
                         }
-                        if (bar.getProgress() >= 1) {
-                            if (timeTillFadeEnds == 0) {
-                                timeTillFadeEnds = System.currentTimeMillis() + 300;
-                                FadeTransition f = new FadeTransition(Duration.millis(300), stage.getScene().getRoot());
-                                f.setFromValue(1);
-                                f.setToValue(0);
-                                f.play();
-                            }
-                            if (System.currentTimeMillis() > timeTillFadeEnds) {
-                                Parent p;
-                                if (barHidden.getProgress() > 1.05) {
-                                    p = (LoginScreens.getLoginScene(stage, client, null));
-                                } else {
-                                    p = (LoginScreens.getProfileSelectScreen(stage, client));
-                                }
-                                FadeTransition f = new FadeTransition(Duration.millis(300), p);
-                                p.setOpacity(0);
-                                f.setFromValue(0);
-                                f.setToValue(1);
-                                f.playFromStart();
-                                stage.getScene().setRoot(p);
-                                stop();
-                            }
-                        }
+                        FadeTransition f = new FadeTransition(Duration.millis(300), p);
+                        p.setOpacity(0);
+                        f.setFromValue(0);
+                        f.setToValue(1);
+                        f.playFromStart();
+                        stage.getScene().setRoot(p);
                     }
                 }
             }
         }
     };
+
+    private void updateProfileSelect() {
+        List<Node> l = stage.getScene().getRoot().getChildrenUnmodifiable();
+        Vector2D gaps = new Vector2D(stage.getWidth() * 0.06, stage.getHeight() * 0.06);
+        double gapsEdge = stage.getWidth() * 0.05;
+        Vector2D size = new Vector2D(stage.getWidth() * 0.22, stage.getHeight() * 0.22);
+        for (int i = 0; i < l.size() && l.get(i) instanceof Pane p; i++) {
+            p.setPrefSize(size.getX(), size.getY());
+            p.setLayoutX((i + 1) * gaps.getX() + i * size.getX() + gapsEdge);
+            p.setLayoutY(gaps.getY() + size.getY());
+            if (p.getChildren().get(0) instanceof Rectangle pokeball) {
+                pokeball.setWidth(p.getWidth());
+                pokeball.setHeight(p.getWidth());
+                if (p.getChildren().size() > 1 && p.getChildren().get(1) instanceof Rectangle r) {
+                    r.setLayoutX(p.getWidth() * 0.3);
+                    r.setLayoutY(p.getHeight() * 0.45);
+                    r.setWidth(p.getWidth() * 0.42);
+                    r.setHeight(r.getWidth() * 1200 / 1920);
+                    r.setArcHeight(r.getWidth() * 0.2);
+                    r.setArcWidth(r.getWidth() * 0.2);
+                }
+            }
+        }
+    }
 
     private List<Keys> getUpdatedKeysToSendAndUpdatePlayerDir(List<Keys> lastKeysPressed, List<Keys> keys, Player p) {
         if (keys.stream().anyMatch(a -> p.getDir().toString().equalsIgnoreCase(a.toString()))) return keys;
@@ -239,7 +271,7 @@ public class MyClient extends Application {
         stage.setTitle("Pokemon");
         stage.getIcons().add(new Image(String.valueOf(Paths.get("res/icon.png").toUri().toURL())));
         stage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
-        progressUpdater.start();
+        designUpdater.start();
         stage.getScene().setFill(Color.BLACK);
         stage.show();
     }

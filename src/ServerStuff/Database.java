@@ -30,8 +30,10 @@ public class Database {
     public static ResultSet get(String statement) {
         try {
             if (con == null) init();
-            Statement s = con.createStatement();
-            return s.executeQuery(statement);
+            if (con != null) {
+                Statement s = con.createStatement();
+                return s.executeQuery(statement);
+            }
         } catch (SQLException ignored) {
         }
         return null;

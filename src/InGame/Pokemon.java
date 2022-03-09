@@ -20,6 +20,26 @@ public class Pokemon {
         p.addExp(23);
         p.addExp(60);
         System.out.println(createPokemon(new Vector2D(0, 1), World.Block.Water));
+        System.out.println(p.toMsg());
+        System.out.println(Pokemon.getFromMsg(""));
+    }
+
+    /**
+     * makes a Pokemon from the String which was send to the server
+     * @param msg the message from the server
+     * @return
+     */
+    private static Pokemon getFromMsg(String msg) {
+
+        return new Pokemon();
+    }
+
+    /**
+     * makes a String to send from the server to the client
+     * @return
+     */
+    private String toMsg() {
+        return "Hier ist ein Pokemon namens Ditto mit den Attacken {Tackle,AP4,MAXAP17}{Platcher,AP30,MAXAP30} und dem Wesen usw.";
     }
 
     private void addExp(int newExP) {
@@ -29,7 +49,6 @@ public class Pokemon {
     }
 
     private void levelUp() {
-
     }
 
     private static Pokemon createPokemon(Vector2D pos, World.Block block) {

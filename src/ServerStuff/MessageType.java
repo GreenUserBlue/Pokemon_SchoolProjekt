@@ -6,6 +6,7 @@ public enum MessageType {
     login,               //Client
     logout,              //Client
     delete,              //Client
+    profile,             //Server + Client
     region,              //Client
     keysPres,            //Client
     updatePos,           //Server

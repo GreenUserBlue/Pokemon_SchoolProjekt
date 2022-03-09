@@ -2,16 +2,21 @@ package ClientStuff;
 
 import ServerStuff.MessageType;
 import ServerStuff.User;
+import javafx.animation.FadeTransition;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
+import javafx.scene.paint.ImagePattern;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Zwickelstorfer Felix
@@ -214,9 +219,53 @@ public class LoginScreens {
             img = new Image(String.valueOf(Path.of("./res/LogScreen/ProfileSelect.png").toUri().toURL()));
         } catch (MalformedURLException ignored) {
         }
-        BackgroundSize fullSize = new BackgroundSize(-1.0D, -1.0D, true, true, true, true);
         assert img != null;
+        BackgroundSize fullSize = new BackgroundSize(-1.0D, -1.0D, true, true, true, true);
         p.setBackground(new Background(new BackgroundImage(img, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, fullSize)));
+        Pane[] ps = new Pane[3];
+        ImagePattern pattern = null;
+        try {
+            pattern = new ImagePattern(new Image(String.valueOf(Path.of("./res/LogScreen/ProfileSelectBall.png").toUri().toURL())));
+        } catch (MalformedURLException ignored) {
+        }
+        for (int i = 0; i < ps.length; i++) {
+            ps[i] = new Pane();
+            Rectangle r = new Rectangle();
+            r.setFill(pattern);
+            ps[i].getChildren().add(r);
+            AtomicInteger curState = new AtomicInteger(2);
+            int finalI = i;
+            ps[i].setOnMouseClicked(e -> {
+                if (curState.get() == 0) {
+                    System.out.println("send player data");
+                } else if (curState.get() != 1) {
+                    curState.set(1);
+                    Rectangle rec = new Rectangle();
+                    rec.setOpacity(0);
+                    try {
+                        r.setFill(new ImagePattern(new Image(String.valueOf(Path.of("./res/LogScreen/ProfileSelectBallOpen.gif").toUri().toURL()))));
+                    } catch (MalformedURLException ignored) {
+                    }
+                    try {
+                        rec.setFill(new ImagePattern(new Image(String.valueOf(Path.of("./res/LogScreen/Poke/" + finalI + ".png").toUri().toURL()))));
+                    } catch (MalformedURLException ignored1) {
+                    }
+                    ps[finalI].getChildren().add(rec);
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(400);
+                            curState.set(0);
+                            FadeTransition f = new FadeTransition(Duration.millis(300), rec);
+                            f.setFromValue(0);
+                            f.setToValue(.8);
+                            f.playFromStart();
+                        } catch (InterruptedException ignored) {
+                        }
+                    }).start();
+                }
+            });
+            p.getChildren().add(ps[i]);
+        }
         return p;
     }
 }
