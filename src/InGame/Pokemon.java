@@ -49,6 +49,7 @@ public class Pokemon {
     }
 
     private void levelUp() {
+
     }
 
     private static Pokemon createPokemon(Vector2D pos, World.Block block) {
