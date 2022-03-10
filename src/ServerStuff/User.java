@@ -210,8 +210,7 @@ public class User {
         else if (OS.contains("MAC"))
             workingDirectory = System.getProperty("user.home") + "/Library/Application Support";
         else workingDirectory = System.getProperty("user.home");
-        //TODO . am Anfang wegen Linux
-        return (workingDirectory.endsWith("/") || workingDirectory.endsWith("\\") ? workingDirectory : workingDirectory + "/") + "ZwickelstorferPokemon/";
+        return (workingDirectory.endsWith("/") || workingDirectory.endsWith("\\") ? workingDirectory : workingDirectory + "/") + ".ZwickelstorferPokemon/";
     }
 
     public static int delete(String name, String pwd) {

@@ -8,6 +8,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
@@ -16,6 +17,7 @@ import javafx.util.Duration;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -237,11 +239,34 @@ public class LoginScreens {
             int finalI = i;
             ps[i].setOnMouseClicked(e -> {
                 if (curState.get() == 0) {
-                    System.out.println("send player data");
-                } else if (curState.get() != 1) {
+                    curState.set(-1);
+                    if (client.getProfiles()[finalI].name == null) {
+                        //TODO create player
+                        System.out.println("LoginScreens.getProfileSelectScreen: do some shit with login and so");
+
+                    } else {
+
+                    }
+                } else if (curState.get() == 2) {
                     curState.set(1);
                     Rectangle rec = new Rectangle();
                     rec.setOpacity(0);
+                    Text name = new Text(client.getProfiles()[finalI].name == null ? "Set Username" : client.getProfiles()[finalI].name);
+                    Text poke = new Text("Pokemon: " + client.getProfiles()[finalI].poke);
+                    Text badge = new Text("Badges: " + client.getProfiles()[finalI].badge);
+                    name.setFill(Color.WHITE);
+                    poke.setFill(Color.WHITE);
+                    badge.setFill(Color.WHITE);
+                    Button b = new Button();
+                    name.setOpacity(0);
+                    poke.setOpacity(0);
+                    badge.setOpacity(0);
+                    Button changeName = new Button();
+                    try {
+                        changeName.setBackground(new Background(new BackgroundImage(new Image(String.valueOf(Paths.get("./res/logScreen/ChangeName.png").toUri().toURL())), BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, fullSize)));
+                    } catch (MalformedURLException ignored) {
+                    }
+                    changeName.setOpacity(0);
                     try {
                         r.setFill(new ImagePattern(new Image(String.valueOf(Path.of("./res/LogScreen/ProfileSelectBallOpen.gif").toUri().toURL()))));
                     } catch (MalformedURLException ignored) {
@@ -250,15 +275,25 @@ public class LoginScreens {
                         rec.setFill(new ImagePattern(new Image(String.valueOf(Path.of("./res/LogScreen/Poke/" + finalI + ".png").toUri().toURL()))));
                     } catch (MalformedURLException ignored1) {
                     }
-                    ps[finalI].getChildren().add(rec);
+                    ps[finalI].getChildren().addAll(rec, name, poke, badge, changeName);
+
+                    changeName.setOnMouseClicked(f -> showNameChangeWindow(name));
                     new Thread(() -> {
                         try {
                             Thread.sleep(400);
                             curState.set(0);
-                            FadeTransition f = new FadeTransition(Duration.millis(300), rec);
-                            f.setFromValue(0);
-                            f.setToValue(.8);
-                            f.playFromStart();
+                            FadeTransition[] f = new FadeTransition[]{
+                                    new FadeTransition(Duration.millis(300), rec),
+                                    new FadeTransition(Duration.millis(600), name),
+                                    new FadeTransition(Duration.millis(600), changeName),
+                                    new FadeTransition(Duration.millis(1000), poke),
+                                    new FadeTransition(Duration.millis(1400), badge),
+                            };
+                            for (FadeTransition fadeTransition : f) {
+                                fadeTransition.setFromValue(0);
+                                fadeTransition.setToValue(0.8);
+                                fadeTransition.playFromStart();
+                            }
                         } catch (InterruptedException ignored) {
                         }
                     }).start();
@@ -267,6 +302,40 @@ public class LoginScreens {
             p.getChildren().add(ps[i]);
         }
         return p;
+    }
+
+    private static void showNameChangeWindow(Text name) {
+        String i = ExtraWindows.askQuestionToType("What do you want to be known as?", "Change Name", name.getText(), "[a-zA-Z0-9]+[a-zA-Z0-9_]{3,25}");
+        System.out.println(i);
+    }
+
+    static class PlayerProfile {
+
+        private String name;
+
+        private int poke;
+
+        private int badge;
+
+        @Override
+        public String toString() {
+            return "PlayerProfile{" +
+                    "name='" + name + '\'' +
+                    ", poke=" + poke +
+                    ", badge=" + badge +
+                    '}';
+        }
+
+        public PlayerProfile(String str) {
+            if (str != null && str.length() > 0) {
+                String[] s = str.split(",");
+                if (s.length == 3) {
+                    this.name = s[0];
+                    poke = Integer.parseInt(s[1]);
+                    badge = Integer.parseInt(s[2]);
+                }
+            }
+        }
     }
 }
 

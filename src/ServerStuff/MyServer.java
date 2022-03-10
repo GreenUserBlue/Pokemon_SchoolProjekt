@@ -9,10 +9,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -36,7 +33,6 @@ public class MyServer {
         server = new Server(33333, "localhost", 5);
         server.setAcceptAll(true);
         server.startUpdates();
-//        server.setOnConnect(true, c -> c.send(7708));
         server.setOnConnect(true, a -> a.send(MessageType.toStr(MessageType.hellman) + a.getCrypto()));
         server.setOnMessage(true, (c, msg) -> {
             if (msg instanceof String s && !s.startsWith(MessageType.toStr(MessageType.keysPres))) {
@@ -154,22 +150,24 @@ public class MyServer {
 
     private static void sendPlayerProfiles(Server.ClientHandler c, String name) {
         c.setUsername(name);
-        ResultSet r = Database.get("select PK_Player_ID,Player.name,skinID,language from Player INNER JOIN User U on Player.FK_User_ID = U.PK_User_ID where U.name='" + name + "' OR email='" + name + "';");
+        ResultSet r = Database.get("select PK_Player_ID,Player.name,skinID,startPokID,language from Player INNER JOIN User U on Player.FK_User_ID = U.PK_User_ID where U.name='" + name + "' OR email='" + name + "';");
 
         if (r != null) {
-            String msgToSend = MessageType.toStr(MessageType.profile);
+            StringBuilder msgToSend = new StringBuilder(MessageType.toStr(MessageType.profile));
+            HashMap<Integer, String> hMap = new HashMap<>();
             try {
                 while (r.next()) {
-                    //TODO hallo
-                    msgToSend += "{" + r.getString("name") + ",";
+                    String msgToSendSingle = "{" + r.getString("name") + ",";
                     ResultSet badges = Database.get("select  count(PK_Badge_ID) as nbr from Badge inner join Player P on Badge.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID = " + r.getObject("PK_Player_ID") + ";");
-                    if (badges != null && badges.next()) msgToSend += badges.getString("nbr") + ",";
+                    if (badges != null && badges.next()) msgToSendSingle += badges.getString("nbr") + ",";
                     ResultSet poke = Database.get("select count(PK_Poke_ID) as nbr from Pokemon inner join Player P on Pokemon.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID=" + r.getObject("PK_Player_ID") + ";");
-                    if (poke != null && poke.next()) msgToSend += poke.getString("nbr") + "}";
+                    if (poke != null && poke.next()) msgToSendSingle += poke.getString("nbr") + "}";
+                    hMap.put(r.getInt("startPokID"), msgToSendSingle);
                 }
             } catch (SQLException ignored) {
             }
-            System.out.println(msgToSend);
+            for (int i = 0; i < 3; i++) msgToSend.append(hMap.get(i) == null ? "{}" : hMap.get(i));
+            c.send(msgToSend.toString());
         }
     }
 

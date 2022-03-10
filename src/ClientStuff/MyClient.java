@@ -14,6 +14,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
@@ -21,6 +22,8 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -39,7 +42,6 @@ public class MyClient extends Application {
      * the client which communicates with the server
      */
     private Client client;
-
 
     public Client getClient() {
         return client;
@@ -122,8 +124,8 @@ public class MyClient extends Application {
         }
     };
 
-
     private final AnimationTimer designUpdater = new AnimationTimer() {
+
         long timeTillNextUse = 0;
 
         long timeTillFadeEnds = 0;
@@ -178,9 +180,9 @@ public class MyClient extends Application {
 
     private void updateProfileSelect() {
         List<Node> l = stage.getScene().getRoot().getChildrenUnmodifiable();
-        Vector2D gaps = new Vector2D(stage.getWidth() * 0.06, stage.getHeight() * 0.06);
-        double gapsEdge = stage.getWidth() * 0.05;
-        Vector2D size = new Vector2D(stage.getWidth() * 0.22, stage.getHeight() * 0.22);
+        Vector2D gaps = new Vector2D(stage.getScene().getWidth() * 0.06, stage.getScene().getHeight() * 0.06);
+        double gapsEdge = stage.getScene().getWidth() * 0.05;
+        Vector2D size = new Vector2D(stage.getWidth() * 0.22, stage.getScene().getHeight() * 0.22);
         for (int i = 0; i < l.size() && l.get(i) instanceof Pane p; i++) {
             p.setPrefSize(size.getX(), size.getY());
             p.setLayoutX((i + 1) * gaps.getX() + i * size.getX() + gapsEdge);
@@ -189,12 +191,33 @@ public class MyClient extends Application {
                 pokeball.setWidth(p.getWidth());
                 pokeball.setHeight(p.getWidth());
                 if (p.getChildren().size() > 1 && p.getChildren().get(1) instanceof Rectangle r) {
-                    r.setLayoutX(p.getWidth() * 0.3);
-                    r.setLayoutY(p.getHeight() * 0.45);
-                    r.setWidth(p.getWidth() * 0.42);
+                    r.setLayoutX(p.getWidth() * 0.1);
+                    r.setLayoutY(p.getHeight() * 0.15);
+                    r.setWidth(p.getWidth() * 0.8);
                     r.setHeight(r.getWidth() * 1200 / 1920);
                     r.setArcHeight(r.getWidth() * 0.2);
                     r.setArcWidth(r.getWidth() * 0.2);
+                    if (p.getChildren().size() > 2 && p.getChildren().get(2) instanceof Text name) {
+                        name.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
+                        name.setFont(new Font(r.getHeight() * 0.12));
+                        name.setLayoutY(r.getLayoutY() + r.getHeight() * 0.1 + name.getFont().getSize());
+                        if (p.getChildren().size() > 3 && p.getChildren().get(3) instanceof Text poke) {
+                            poke.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
+                            poke.setFont(new Font(r.getHeight() * 0.1));
+                            poke.setLayoutY(r.getLayoutY() + r.getHeight() * 0.3 + poke.getFont().getSize());
+                            if (p.getChildren().size() > 4 && p.getChildren().get(4) instanceof Text badge) {
+                                badge.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
+                                badge.setFont(new Font(r.getHeight() * 0.1));
+                                badge.setLayoutY(r.getLayoutY() + r.getHeight() * 0.42 + badge.getFont().getSize());
+                                if (p.getChildren().size() > 5 && p.getChildren().get(5) instanceof Button changeName) {
+                                    changeName.setLayoutX(r.getLayoutX() + r.getWidth() * 0.85);
+                                    changeName.setLayoutY(r.getLayoutY() + r.getHeight() * 0.1);
+                                    changeName.setMaxSize(r.getHeight() * 0.15, r.getHeight() * 0.15);
+                                    changeName.setMinSize(r.getHeight() * 0.15, r.getHeight() * 0.15);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -290,26 +313,35 @@ public class MyClient extends Application {
                 MessageType mT = MessageType.getType(s.length() > 2 && Pattern.matches("[0-9]{3}", s.substring(0, 3)) ? Integer.parseInt(s.substring(0, 3)) : 999);
                 switch (mT) {
                     case hellman, register, login, delete -> doLogin(mT, s);
-                    case region -> {
-                        if (s.charAt(3) - '0' != 0) client.getErrorTxt().setVisible(true);
-                        switch (s.charAt(3) - '0') {
-                            case 0 -> {
-                                client.setWorld(new World(Integer.parseInt(s.substring(4, s.indexOf(","))), client.getErrorTxt().getText()));
-                                stage.getScene().setRoot(LoginScreens.getGameScreen());
-                                client.setUsername(s.substring(s.indexOf(",") + 1));
-                                client.getPlayers().add(new Player(client.getUsername(), new Vector2D(3, 2), 0, client.getErrorTxt().getText()));
-                                animationTimer.start();
-                                // Platform.runLater(()->stage.setFullScreen(true));
-                            }
-                            case 1 -> client.getErrorTxt().setText("region does not exist");
-                            case 2 -> client.getErrorTxt().setText("you are not logged in");
-                            default -> client.getErrorTxt().setText("Something went wrong. Please check if your program is on the latest version.");
-                        }
-                    }
+                    case region -> doRegion(s);
+                    case profile -> doProfiles(s.substring(3));
                     case updatePos -> updatePos(s);
                 }
             }
         });
+    }
+
+    private void doProfiles(String str) {
+        Matcher m = Pattern.compile("\\{((.)*?,(.)*?,(.)*?)??}").matcher(str);
+        for (int i = 0; i < 3; i++)
+            client.getProfiles()[i] = new LoginScreens.PlayerProfile(m.find() ? m.group(1) : null);
+    }
+
+    private void doRegion(String s) {
+        if (s.charAt(3) - '0' != 0) client.getErrorTxt().setVisible(true);
+        switch (s.charAt(3) - '0') {
+            case 0 -> {
+                client.setWorld(new World(Integer.parseInt(s.substring(4, s.indexOf(","))), client.getErrorTxt().getText()));
+                stage.getScene().setRoot(LoginScreens.getGameScreen());
+                client.setUsername(s.substring(s.indexOf(",") + 1));
+                client.getPlayers().add(new Player(client.getUsername(), new Vector2D(3, 2), 0, client.getErrorTxt().getText()));
+                animationTimer.start();
+                // Platform.runLater(()->stage.setFullScreen(true));
+            }
+            case 1 -> client.getErrorTxt().setText("region does not exist");
+            case 2 -> client.getErrorTxt().setText("you are not logged in");
+            default -> client.getErrorTxt().setText("Something went wrong. Please check if your program is on the latest version.");
+        }
     }
 
     /**
@@ -362,7 +394,6 @@ public class MyClient extends Application {
                     client.setUsername(login.split(";")[0]);
                     client.send(MessageType.toStr(MessageType.login) + "{name='" + login.split(";")[0] + "', pwd='" + client.getCrypto().encrypt(login.split(";", 2)[1]) + "'}");
                     Platform.runLater(() -> ((ProgressBar) (stage.getScene().getRoot().getChildrenUnmodifiable().get(1))).setProgress(0.7));
-
                 }
                 break;
             case register:

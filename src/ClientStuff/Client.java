@@ -73,6 +73,15 @@ public class Client extends Thread {
      */
     private ObjectInputStream in;
 
+    public LoginScreens.PlayerProfile[] getProfiles() {
+        return profiles;
+    }
+
+    /**
+     * Saves the playerProfile data
+     */
+    private final LoginScreens.PlayerProfile[] profiles = new LoginScreens.PlayerProfile[3];
+
     /**
      * the world in which the player currently is
      */
@@ -143,7 +152,7 @@ public class Client extends Thread {
      * what should happen when a message is sent
      */
     public void onMessage(BiConsumer<Client, Object> s) {
-        synchronized (allOnMessage){
+        synchronized (allOnMessage) {
             allOnMessage.add(s);
         }
     }

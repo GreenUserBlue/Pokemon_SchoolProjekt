@@ -60,7 +60,9 @@ CREATE TABLE World
 (
     PK_World_ID int,
     seed        int,
-    PRIMARY KEY (PK_World_ID)
+    FK_User_ID  int,
+    PRIMARY KEY (PK_World_ID),
+    FOREIGN KEY (FK_User_ID) REFERENCES User (PK_User_ID)
 );
 
 CREATE TABLE House
