@@ -185,46 +185,49 @@ public class MyClient extends Application {
         double gapsEdge = stage.getScene().getWidth() * 0.05;
         Vector2D size = new Vector2D(stage.getWidth() * 0.22, stage.getScene().getHeight() * 0.22);
         for (int i = 0; i < l.size() && l.get(i) instanceof Pane p; i++) {
-            p.setPrefSize(size.getX(), size.getY());
-            p.setLayoutX((i + 1) * gaps.getX() + i * size.getX() + gapsEdge);
-            p.setLayoutY(gaps.getY() + size.getY());
-            if (p.getChildren().get(0) instanceof Rectangle pokeball) {
-                pokeball.setWidth(p.getWidth());
-                pokeball.setHeight(p.getWidth());
-                if (p.getChildren().size() > 1 && p.getChildren().get(1) instanceof Rectangle r) {
-                    r.setLayoutX(p.getWidth() * 0.1);
-                    r.setLayoutY(p.getHeight() * 0.15);
-                    r.setWidth(p.getWidth() * 0.8);
-                    r.setHeight(r.getWidth() * 1200 / 1920);
-                    r.setArcHeight(r.getWidth() * 0.2);
-                    r.setArcWidth(r.getWidth() * 0.2);
-                    if (p.getChildren().size() > 2) {
-                        if (p.getChildren().get(2) instanceof TextField name) {
-                            name.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
-                            name.setFont(new Font(r.getHeight() * 0.12));
-                            name.setLayoutY(r.getLayoutY() + name.getFont().getSize());
-                        } else if (p.getChildren().get(2) instanceof Text name) {
-                            name.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
-                            name.setFont(new Font(r.getHeight() * 0.12));
-                            name.setLayoutY(r.getLayoutY() + r.getHeight() * 0.1 + name.getFont().getSize());
-                        }
-                        if (p.getChildren().size() > 3 && p.getChildren().get(3) instanceof Text poke) {
-                            poke.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
-                            poke.setFont(new Font(r.getHeight() * 0.1));
-                            poke.setLayoutY(r.getLayoutY() + r.getHeight() * 0.3 + poke.getFont().getSize());
-                            if (p.getChildren().size() > 4 && p.getChildren().get(4) instanceof Text badge) {
-                                badge.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
-                                badge.setFont(new Font(r.getHeight() * 0.1));
-                                badge.setLayoutY(r.getLayoutY() + r.getHeight() * 0.42 + badge.getFont().getSize());
-                                if (p.getChildren().size() > 5 && p.getChildren().get(5) instanceof Button changeName) {
-                                    changeName.setLayoutX(r.getLayoutX() + r.getWidth() * 0.85);
-                                    changeName.setLayoutY(r.getLayoutY() + r.getHeight() * 0.1);
-                                    changeName.setMaxSize(r.getHeight() * 0.15, r.getHeight() * 0.15);
-                                    changeName.setMinSize(r.getHeight() * 0.15, r.getHeight() * 0.15);
-                                    if (p.getChildren().size() > 6 && p.getChildren().get(6) instanceof Text error) {
-                                        error.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
-                                        error.setFont(new Font(r.getHeight() * 0.1));
-                                        error.setLayoutY(r.getLayoutY() + r.getHeight() * 0.62 + error.getFont().getSize());
+            synchronized (p.getChildren()) {
+
+                p.setPrefSize(size.getX(), size.getY());
+                p.setLayoutX((i + 1) * gaps.getX() + i * size.getX() + gapsEdge);
+                p.setLayoutY(gaps.getY() + size.getY());
+                if (p.getChildren().get(0) instanceof Rectangle pokeball) {
+                    pokeball.setWidth(p.getWidth());
+                    pokeball.setHeight(p.getWidth());
+                    if (p.getChildren().size() > 1 && p.getChildren().get(1) instanceof Rectangle r) {
+                        r.setLayoutX(p.getWidth() * 0.1);
+                        r.setLayoutY(p.getHeight() * 0.15);
+                        r.setWidth(p.getWidth() * 0.8);
+                        r.setHeight(r.getWidth() * 1200 / 1920);
+                        r.setArcHeight(r.getWidth() * 0.2);
+                        r.setArcWidth(r.getWidth() * 0.2);
+                        if (p.getChildren().size() > 2) {
+                            if (p.getChildren().get(2) instanceof TextField name) {
+                                name.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
+                                name.setFont(new Font(r.getHeight() * 0.12));
+                                name.setLayoutY(r.getLayoutY() + name.getFont().getSize());
+                            } else if (p.getChildren().get(2) instanceof Text name) {
+                                name.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
+                                name.setFont(new Font(r.getHeight() * 0.12));
+                                name.setLayoutY(r.getLayoutY() + r.getHeight() * 0.1 + name.getFont().getSize());
+                            }
+                            if (p.getChildren().size() > 3 && p.getChildren().get(3) instanceof Text poke) {
+                                poke.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
+                                poke.setFont(new Font(r.getHeight() * 0.1));
+                                poke.setLayoutY(r.getLayoutY() + r.getHeight() * 0.3 + poke.getFont().getSize());
+                                if (p.getChildren().size() > 4 && p.getChildren().get(4) instanceof Text badge) {
+                                    badge.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
+                                    badge.setFont(new Font(r.getHeight() * 0.1));
+                                    badge.setLayoutY(r.getLayoutY() + r.getHeight() * 0.42 + badge.getFont().getSize());
+                                    if (p.getChildren().size() > 5 && p.getChildren().get(5) instanceof Button changeName) {
+                                        changeName.setLayoutX(r.getLayoutX() + r.getWidth() * 0.85);
+                                        changeName.setLayoutY(r.getLayoutY() + r.getHeight() * 0.1);
+                                        changeName.setMaxSize(r.getHeight() * 0.15, r.getHeight() * 0.15);
+                                        changeName.setMinSize(r.getHeight() * 0.15, r.getHeight() * 0.15);
+                                        if (p.getChildren().size() > 6 && p.getChildren().get(6) instanceof Text error) {
+                                            error.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
+                                            error.setFont(new Font(r.getHeight() * 0.1));
+                                            error.setLayoutY(r.getLayoutY() + r.getHeight() * 0.62 + error.getFont().getSize());
+                                        }
                                     }
                                 }
                             }
@@ -348,6 +351,7 @@ public class MyClient extends Application {
                         if (p.getChildren().get(2) instanceof TextField txt) {
                             Text t = client.getProfiles()[Integer.parseInt(str.charAt(1) + "")].getTextField();
                             t.setText(txt.getText());
+                            client.getProfiles()[Integer.parseInt(str.charAt(1) + "")].setName(txt.getText());
                             p.getChildren().add(2, t);
                             p.getChildren().remove(txt);
                         }

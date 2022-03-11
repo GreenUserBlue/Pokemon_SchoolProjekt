@@ -3,6 +3,7 @@ package ClientStuff;
 import ServerStuff.MessageType;
 import ServerStuff.User;
 import javafx.animation.FadeTransition;
+import javafx.application.Platform;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -238,14 +239,42 @@ public class LoginScreens {
             AtomicInteger curState = new AtomicInteger(2);
             int finalI = i;
             ps[i].setOnMouseClicked(e -> {
-                if (curState.get() == 0) {
-                    curState.set(-1);
+                if (ps[finalI].getChildren().size() > 1 && ps[finalI].getChildren().get(1) instanceof Rectangle background && curState.get() == 0 && (e.getX()  > background.getWidth()+ background.getLayoutX() || e.getY() > background.getHeight()  + background.getLayoutY() || e.getX() < background.getLayoutX() || e.getY() < background.getLayoutY())) {
+                    curState.set(1);
+                    try {
+                        r.setFill(new ImagePattern(new Image(String.valueOf(Path.of("./res/LogScreen/ProfileSelectBallClose.gif").toUri().toURL()))));
+                    } catch (MalformedURLException ignored) {
+                    }
+                    new Thread(() -> {
+                        try {
+                            ps[finalI].getChildren().stream().skip(1).forEach(f -> {
+                                FadeTransition fadeTransition = new FadeTransition(Duration.millis(400), f);
+                                fadeTransition.setFromValue(0.8);
+                                fadeTransition.setToValue(0);
+                                fadeTransition.playFromStart();
+                            });
+                            Thread.sleep(500);
+                            curState.set(2);
+                            Platform.runLater(() -> {
+                                synchronized (ps[finalI].getChildren()) {
+                                    while (ps[finalI].getChildren().size() > 1) {
+                                        ps[finalI].getChildren().remove(1);
+                                    }
+                                }
+
+                            });
+                        } catch (InterruptedException ignored) {
+                        }
+                    }).start();
+
+                } else if (curState.get() == 0) {
                     if (client.getProfiles()[finalI].name == null) {
-                        //TODO create player
-                        System.out.println("LoginScreens.getProfileSelectScreen: do some shit with login and so");
-
+                        if (ps[finalI].getChildren().get(2) instanceof Text t) {
+                            showNameChangeWindow(t, client, finalI, ps[finalI], stage);
+                        }
                     } else {
-
+                        System.out.println("LoginScreens.getProfileSelectScreen: do some shit with login and so");
+//                        curState.set(-1);
                     }
                 } else if (curState.get() == 2) {
                     curState.set(1);
@@ -257,7 +286,6 @@ public class LoginScreens {
                     name.setFill(Color.WHITE);
                     poke.setFill(Color.WHITE);
                     badge.setFill(Color.WHITE);
-                    Button b = new Button();
                     name.setOpacity(0);
                     poke.setOpacity(0);
                     badge.setOpacity(0);
@@ -265,16 +293,10 @@ public class LoginScreens {
                     changeName.setFocusTraversable(false);
                     try {
                         changeName.setBackground(new Background(new BackgroundImage(new Image(String.valueOf(Paths.get("./res/logScreen/ChangeName.png").toUri().toURL())), BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, fullSize)));
-                    } catch (MalformedURLException ignored) {
-                    }
-                    changeName.setOpacity(0);
-                    try {
+                        changeName.setOpacity(0);
                         r.setFill(new ImagePattern(new Image(String.valueOf(Path.of("./res/LogScreen/ProfileSelectBallOpen.gif").toUri().toURL()))));
-                    } catch (MalformedURLException ignored) {
-                    }
-                    try {
                         rec.setFill(new ImagePattern(new Image(String.valueOf(Path.of("./res/LogScreen/Poke/" + finalI + ".png").toUri().toURL()))));
-                    } catch (MalformedURLException ignored1) {
+                    } catch (MalformedURLException ignored) {
                     }
                     ps[finalI].getChildren().addAll(rec, name, poke, badge, changeName);
                     client.getProfiles()[finalI].textField = name;
@@ -374,6 +396,10 @@ public class LoginScreens {
                     badge = Integer.parseInt(s[2]);
                 }
             }
+        }
+
+        public void setName(String name) {
+            this.name = name;
         }
     }
 }

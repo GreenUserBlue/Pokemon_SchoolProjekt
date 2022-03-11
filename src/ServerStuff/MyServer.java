@@ -61,12 +61,10 @@ public class MyServer {
     }
 
     private static void doProfile(Server.ClientHandler c, String s) {
-        //TODO some Profile stuff
         if (s.startsWith("0")) {
-            System.out.println(s);
             ResultSet exists = Database.get("select count(*) as nbr from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = 1 && User.name = 'Name';");
             try {
-                if (exists.next() && exists.getInt("nbr") > 0) {
+                if (exists != null && exists.next() && exists.getInt("nbr") > 0) {
                     String error = Database.execute("update Player set name='" + s.substring(2) + "' where (select count(*) from User inner join Player P on User.PK_User_ID = Player.FK_User_ID where Player.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "') > 0;");
                     if (error == null) c.send(MessageType.toStr(MessageType.profile) + 1 + s.charAt(1));
                     else if (error.contains("Data too long")) c.send(MessageType.toStr(MessageType.profile) + 4);
@@ -76,6 +74,7 @@ public class MyServer {
                         else c.send(MessageType.toStr(MessageType.profile) + 5);
                     }
                 } else {
+                    // TODO add A pokemon to the new Player
                     String error = Database.execute("insert into player (name, posX, posY, skinID, startPokID, FK_User_ID, language) VALUE ('" + s.substring(2) + "', 0, 0, 0, " + s.charAt(1) + ", (select PK_User_ID from User where name='" + c.getUsername() + "'), 'eng');");
                     if (error == null) c.send(MessageType.toStr(MessageType.profile) + 1 + s.charAt(1));
                     else if (error.contains("Data too long")) c.send(MessageType.toStr(MessageType.profile) + 4);

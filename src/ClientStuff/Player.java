@@ -19,7 +19,7 @@ public class Player {
     /**
      * how fast a player walks normally (not fast)
      */
-    private static final double walkingSpeed = 0.1;//0.05;//
+    private static final double walkingSpeed = 0.1;
 
     /**
      * the name of the player
