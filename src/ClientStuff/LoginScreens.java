@@ -262,6 +262,7 @@ public class LoginScreens {
                     poke.setOpacity(0);
                     badge.setOpacity(0);
                     Button changeName = new Button();
+                    changeName.setFocusTraversable(false);
                     try {
                         changeName.setBackground(new Background(new BackgroundImage(new Image(String.valueOf(Paths.get("./res/logScreen/ChangeName.png").toUri().toURL())), BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, fullSize)));
                     } catch (MalformedURLException ignored) {
@@ -276,8 +277,8 @@ public class LoginScreens {
                     } catch (MalformedURLException ignored1) {
                     }
                     ps[finalI].getChildren().addAll(rec, name, poke, badge, changeName);
-
-                    changeName.setOnMouseClicked(f -> showNameChangeWindow(name));
+                    client.getProfiles()[finalI].textField = name;
+                    changeName.setOnMouseClicked(f -> showNameChangeWindow(name, client, finalI, ps[finalI], stage));
                     new Thread(() -> {
                         try {
                             Thread.sleep(400);
@@ -304,9 +305,41 @@ public class LoginScreens {
         return p;
     }
 
-    private static void showNameChangeWindow(Text name) {
-        String i = ExtraWindows.askQuestionToType("What do you want to be known as?", "Change Name", name.getText(), "[a-zA-Z0-9]+[a-zA-Z0-9_]{3,25}");
-        System.out.println(i);
+    private static void showNameChangeWindow(Text name, Client client, int indexOfArray, Pane p, Stage stage) {
+        TextField t = new TextField(name.getText());
+        t.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                if (client.getErrorTxt() != null && client.getErrorTxt().getParent() != null) {
+                    for (int i = 0; i < stage.getScene().getRoot().getChildrenUnmodifiable().size() && stage.getScene().getRoot().getChildrenUnmodifiable().get(i) instanceof Pane pane; i++) {
+                        pane.getChildren().remove(client.getErrorTxt());
+                    }
+                }
+                client.setErrorTxt(new Text("Please wait ..."));
+                client.getErrorTxt().setFill(Color.WHITE);
+                client.send(MessageType.toStr(MessageType.profile) + '0' + indexOfArray + t.getText());
+                if (!p.getChildren().contains(client.getErrorTxt())) p.getChildren().add(client.getErrorTxt());
+            } else if (e.getCode() == KeyCode.ESCAPE) {
+                int index = p.getChildren().indexOf(t);
+                p.getChildren().remove(index);
+                p.getChildren().remove(client.getErrorTxt());
+                p.getChildren().add(index, name);
+            }
+        });
+        t.setOpacity(0.8);
+        t.setStyle("""
+                -fx-background-color: transparent;
+                   -fx-background-insets: 0, 0 0 0 0 ;
+                   -fx-background-radius: 0 ;
+                   -fx-padding: 0;
+                   -fx-margin: 0;
+                   -fx-background-insets: 0;
+                   -fx-text-fill: #FFFFFF;""".indent(1));
+        int index = p.getChildren().indexOf(name);
+        if (index != -1) {
+            p.getChildren().remove(index);
+            p.getChildren().add(index, t);
+        }
+        t.requestFocus();
     }
 
     static class PlayerProfile {
@@ -316,6 +349,12 @@ public class LoginScreens {
         private int poke;
 
         private int badge;
+
+        public Text getTextField() {
+            return textField;
+        }
+
+        private Text textField;
 
         @Override
         public String toString() {
@@ -338,5 +377,3 @@ public class LoginScreens {
         }
     }
 }
-
-// c18104176

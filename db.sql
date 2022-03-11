@@ -22,7 +22,7 @@ create Table User
 create TABLE Player
 (
     PK_Player_ID int AUTO_INCREMENT,
-    name         varchar(25) unique,
+    name         varchar(25),
     posX         int,
     posY         int,
     skinID       int,
@@ -32,6 +32,7 @@ create TABLE Player
     PRIMARY KEY (PK_Player_ID),
     foreign key (FK_User_ID) REFERENCES User (PK_User_ID),
     check ( skinID >= 0 ),
+    check ( name rlike '.{4,}'),
     CHECK ( name rlike '^[a-zA-Z0-9][a-zA-Z0-9_]*$')
 );
 
@@ -82,7 +83,7 @@ values ('Name', '$2a$06$fUbqoClTr0U0.CWyp5PdPekyWHpXhPdr53.d.S7pkRgwmyyRCo9My', 
        ('Name2', '$2a$06$zWhy4d6V4vyOIFtqPR5CleF7FMTC4m7TcMfIFa.ie7Xoxp8Id7nZa', 'a@g.com');
 
 insert into Player (name, posX, posY, FK_User_ID, language, skinID, startPokID)
-values ('Fra', 10, 10, 1, 'eng', 0, 0),
+values ('Fran', 10, 10, 1, 'eng', 0, 0),
        ('Fra2', 12, 11, 1, 'eng', 0, 2),
        ('Fra3', 12, 10, 2, 'eng', 0, 2);
 
@@ -101,6 +102,22 @@ select count(PK_Badge_ID) as nbr
 from Badge
          inner join Player P on Badge.FK_Player_ID = P.PK_Player_ID
 where P.PK_Player_ID = 4;
+
+
+# select count(*) as nbr from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = 1 && User.name = 'Name';
+
+# update Player set name='Set Username' where (select count(*)from User inner join Player P on User.PK_User_ID = Player.FK_User_ID where Player.startPokID = 1 && User.name = 'Name') > 0;
+
+select*
+from player;
+
+insert into player (name, posX, posY, skinID, startPokID, FK_User_ID, language)
+    VALUE
+    (
+     'name', 0, 0, 0, 2, (select PK_User_ID from User where name='Name'), 'eng'
+        );
+
+
 
 # select PK_Player_ID,Player.name,skinID,language from Player INNER JOIN User U on Player.FK_User_ID = U.PK_User_ID where U.name='Name' OR email='Name';
 # select *

@@ -16,6 +16,7 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
@@ -137,7 +138,7 @@ public class MyClient extends Application {
                 if (stage.getScene().getRoot().getChildrenUnmodifiable().size() >= 2 && stage.getScene().getRoot().getChildrenUnmodifiable().get(0) instanceof ProgressBar bar) {
                     updateBarsAndPos(bar);
                 } else if (stage.getScene().getRoot().getChildrenUnmodifiable().size() >= 3 && stage.getScene().getRoot().getChildrenUnmodifiable().get(0) instanceof javafx.scene.layout.Pane) {
-                    updateProfileSelect();
+                    resizeProfileSelect();
                 }
             }
         }
@@ -178,7 +179,7 @@ public class MyClient extends Application {
         }
     };
 
-    private void updateProfileSelect() {
+    private void resizeProfileSelect() {
         List<Node> l = stage.getScene().getRoot().getChildrenUnmodifiable();
         Vector2D gaps = new Vector2D(stage.getScene().getWidth() * 0.06, stage.getScene().getHeight() * 0.06);
         double gapsEdge = stage.getScene().getWidth() * 0.05;
@@ -197,10 +198,16 @@ public class MyClient extends Application {
                     r.setHeight(r.getWidth() * 1200 / 1920);
                     r.setArcHeight(r.getWidth() * 0.2);
                     r.setArcWidth(r.getWidth() * 0.2);
-                    if (p.getChildren().size() > 2 && p.getChildren().get(2) instanceof Text name) {
-                        name.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
-                        name.setFont(new Font(r.getHeight() * 0.12));
-                        name.setLayoutY(r.getLayoutY() + r.getHeight() * 0.1 + name.getFont().getSize());
+                    if (p.getChildren().size() > 2) {
+                        if (p.getChildren().get(2) instanceof TextField name) {
+                            name.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
+                            name.setFont(new Font(r.getHeight() * 0.12));
+                            name.setLayoutY(r.getLayoutY() + name.getFont().getSize());
+                        } else if (p.getChildren().get(2) instanceof Text name) {
+                            name.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
+                            name.setFont(new Font(r.getHeight() * 0.12));
+                            name.setLayoutY(r.getLayoutY() + r.getHeight() * 0.1 + name.getFont().getSize());
+                        }
                         if (p.getChildren().size() > 3 && p.getChildren().get(3) instanceof Text poke) {
                             poke.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
                             poke.setFont(new Font(r.getHeight() * 0.1));
@@ -214,6 +221,11 @@ public class MyClient extends Application {
                                     changeName.setLayoutY(r.getLayoutY() + r.getHeight() * 0.1);
                                     changeName.setMaxSize(r.getHeight() * 0.15, r.getHeight() * 0.15);
                                     changeName.setMinSize(r.getHeight() * 0.15, r.getHeight() * 0.15);
+                                    if (p.getChildren().size() > 6 && p.getChildren().get(6) instanceof Text error) {
+                                        error.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
+                                        error.setFont(new Font(r.getHeight() * 0.1));
+                                        error.setLayoutY(r.getLayoutY() + r.getHeight() * 0.62 + error.getFont().getSize());
+                                    }
                                 }
                             }
                         }
@@ -221,6 +233,7 @@ public class MyClient extends Application {
                 }
             }
         }
+
     }
 
     private List<Keys> getUpdatedKeysToSendAndUpdatePlayerDir(List<Keys> lastKeysPressed, List<Keys> keys, Player p) {
@@ -322,9 +335,30 @@ public class MyClient extends Application {
     }
 
     private void doProfiles(String str) {
-        Matcher m = Pattern.compile("\\{((.)*?,(.)*?,(.)*?)??}").matcher(str);
-        for (int i = 0; i < 3; i++)
-            client.getProfiles()[i] = new LoginScreens.PlayerProfile(m.find() ? m.group(1) : null);
+        switch (str.charAt(0) - '0') {
+            case 0 -> {
+                Matcher m = Pattern.compile("\\{((.)*?,(.)*?,(.)*?)??}").matcher(str);
+                for (int i = 0; i < 3; i++)
+                    client.getProfiles()[i] = new LoginScreens.PlayerProfile(m.find() ? m.group(1) : null);
+            }
+            case 1 -> {
+                if (stage.getScene().getRoot().getChildrenUnmodifiable().get(Integer.parseInt(str.charAt(1) + "")) instanceof Pane p) {
+                    Platform.runLater(() -> {
+                        p.getChildren().remove(client.getErrorTxt());
+                        if (p.getChildren().get(2) instanceof TextField txt) {
+                            Text t = client.getProfiles()[Integer.parseInt(str.charAt(1) + "")].getTextField();
+                            t.setText(txt.getText());
+                            p.getChildren().add(2, t);
+                            p.getChildren().remove(txt);
+                        }
+                    });
+                }
+            }
+            case 2 -> client.getErrorTxt().setText("Min 4 Chars");
+            case 3 -> client.getErrorTxt().setText("Not allowed chars");
+            case 4 -> client.getErrorTxt().setText("Max 25 Chars");
+            case 5 -> client.getErrorTxt().setText("Something went wrong. Please check if your program is on the latest version.");
+        }
     }
 
     private void doRegion(String s) {
