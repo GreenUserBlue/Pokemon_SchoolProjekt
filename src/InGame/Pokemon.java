@@ -26,6 +26,7 @@ public class Pokemon {
 
     /**
      * makes a Pokemon from the String which was send to the server
+     *
      * @param msg the message from the server
      * @return
      */
@@ -36,6 +37,7 @@ public class Pokemon {
 
     /**
      * makes a String to send from the server to the client
+     *
      * @return
      */
     private String toMsg() {
@@ -64,11 +66,32 @@ public class Pokemon {
     }
 
     enum Nature {
-        Hardy(1, 1, 1, 1, 1),
-        Lonely(1.1, 1 / 1.1, 1, 1, 1),
-        Adamant(1.1, 1, 1 / 1.1, 1, 1),
-        Naughty(1.1, 1, 1, 1 / 1.1, 1),
-        Brave(1.1, 1, 1, 1, 1 / 1.1);
+        hardy(1, 1, 1, 1, 1),
+        bold(1 / 1.1, 1 * 1.1, 1, 1, 1),
+        modest(1 / 1.1, 1, 1 * 1.1, 1, 1),
+        calm(1 / 1.1, 1, 1, 1 * 1.1, 1),
+        timid(1 / 1.1, 1, 1, 1, 1 * 1.1),
+        lonely(1 * 1.1, 1 / 1.1, 1, 1, 1),
+        docile(1, 1, 1, 1, 1),
+        mild(1, 1 / 1.1, 1 * 1.1, 1, 1),
+        gentle(1, 1 / 1.1, 1, 1 * 1.1, 1),
+        hasty(1, 1 / 1.1, 1, 1, 1 * 1.1),
+        adamant(1 * 1.1, 1, 1 / 1.1, 1, 1),
+        impish(1, 1 * 1.1, 1 / 1.1, 1, 1),
+        bashful(1, 1, 1, 1, 1),
+        careful(1, 1, 1 / 1.1, 1 * 1.1, 1),
+        jolly(1, 1, 1 / 1.1, 1, 1 * 1.1),
+        naughty(1 * 1.1, 1, 1, 1 / 1.1, 1),
+        lax(1, 1 * 1.1, 1, 1 / 1.1, 1),
+        rash(1, 1, 1 * 1.1, 1 / 1.1, 1),
+        quirky(1, 1, 1, 1, 1),
+        naive(1, 1, 1, 1 / 1.1, 1 * 1.1),
+        brave(1 * 1.1, 1, 1, 1, 1 / 1.1),
+        relaxed(1, 1 * 1.1, 1, 1, 1 / 1.1),
+        quiet(1, 1, 1 * 1.1, 1, 1 / 1.1),
+        sassy(1, 1, 1, 1 * 1.1, 1 / 1.1),
+        serious(1, 1, 1, 1, 1);
+
 
         private final double[] values;
 

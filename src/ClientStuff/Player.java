@@ -17,6 +17,11 @@ import java.util.Optional;
 public class Player {
 
     /**
+     * the unique id of the player
+     */
+    private int id;
+
+    /**
      * how fast a player walks normally (not fast)
      */
     private static final double walkingSpeed = 0.1;
@@ -254,6 +259,14 @@ public class Player {
         }
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
     /**
      * what the player is doing
      */
@@ -283,6 +296,7 @@ public class Player {
 
         /**
          * makes the keys to directions
+         *
          * @param keys the keys which are pressed
          */
         public static Vector2D getDirFromKeys(List<Keys> keys) {
@@ -296,8 +310,9 @@ public class Player {
 
         /**
          * calculates the new direction which depends on the old direction and the target looking position
+         *
          * @param target the position where the player should be
-         * @param cur the current direction
+         * @param cur    the current direction
          * @return the new calculated direction
          */
         public static Dir getDir(Vector2D target, Dir cur) {
