@@ -15,15 +15,12 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -42,6 +39,7 @@ public class MyClient extends Application {
      * the client which communicates with the server
      */
     private Client client;
+
 
     public Client getClient() {
         return client;
@@ -124,8 +122,8 @@ public class MyClient extends Application {
         }
     };
 
-    private final AnimationTimer designUpdater = new AnimationTimer() {
 
+    private final AnimationTimer designUpdater = new AnimationTimer() {
         long timeTillNextUse = 0;
 
         long timeTillFadeEnds = 0;
@@ -137,7 +135,7 @@ public class MyClient extends Application {
                 if (stage.getScene().getRoot().getChildrenUnmodifiable().size() >= 2 && stage.getScene().getRoot().getChildrenUnmodifiable().get(0) instanceof ProgressBar bar) {
                     updateBarsAndPos(bar);
                 } else if (stage.getScene().getRoot().getChildrenUnmodifiable().size() >= 3 && stage.getScene().getRoot().getChildrenUnmodifiable().get(0) instanceof javafx.scene.layout.Pane) {
-                    resizeProfileSelect();
+                    updateProfileSelect();
                 }
             }
         }
@@ -178,63 +176,25 @@ public class MyClient extends Application {
         }
     };
 
-    /**
-     * resizes the profileSelect Screen
-     */
-    private void resizeProfileSelect() {
+    private void updateProfileSelect() {
         List<Node> l = stage.getScene().getRoot().getChildrenUnmodifiable();
-        Vector2D gaps = new Vector2D(stage.getScene().getWidth() * 0.06, stage.getScene().getHeight() * 0.06);
-        double gapsEdge = stage.getScene().getWidth() * 0.05;
-        Vector2D size = new Vector2D(stage.getWidth() * 0.22, stage.getScene().getHeight() * 0.22);
+        Vector2D gaps = new Vector2D(stage.getWidth() * 0.06, stage.getHeight() * 0.06);
+        double gapsEdge = stage.getWidth() * 0.05;
+        Vector2D size = new Vector2D(stage.getWidth() * 0.22, stage.getHeight() * 0.22);
         for (int i = 0; i < l.size() && l.get(i) instanceof Pane p; i++) {
-            synchronized (p.getChildren()) {
-                p.setPrefSize(size.getX(), size.getY());
-                p.setLayoutX((i + 1) * gaps.getX() + i * size.getX() + gapsEdge);
-                p.setLayoutY(gaps.getY() + size.getY());
-                if (p.getChildren().get(0) instanceof Rectangle pokeball) {
-                    pokeball.setWidth(p.getWidth());
-                    pokeball.setHeight(p.getWidth());
-                    if (p.getChildren().size() > 1 && p.getChildren().get(1) instanceof Rectangle r) {
-                        r.setLayoutX(p.getWidth() * 0.1);
-                        r.setLayoutY(p.getHeight() * 0.15);
-                        r.setWidth(p.getWidth() * 0.8);
-                        r.setHeight(r.getWidth() * 1200 / 1920);
-                        r.setArcHeight(r.getWidth() * 0.2);
-                        r.setArcWidth(r.getWidth() * 0.2);
-                        if (p.getChildren().size() > 2) {
-                            /*if (p.getChildren().get(2) instanceof TextField poke) {
-                                poke.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
-                                poke.setFont(new Font(r.getHeight() * 0.12));
-                                poke.setLayoutY(r.getLayoutY() + poke.getFont().getSize());
-                            } else*/
-                            if (p.getChildren().get(2) instanceof Text poke) {
-                                poke.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
-                                poke.setFont(new Font(r.getHeight() * 0.12));
-                                poke.setLayoutY(r.getLayoutY() + r.getHeight() * 0.1 + poke.getFont().getSize());
-                            }
-                            if (p.getChildren().size() > 3 && p.getChildren().get(3) instanceof Text badge) {
-                                badge.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
-                                badge.setFont(new Font(r.getHeight() * 0.1));
-                                badge.setLayoutY(r.getLayoutY() + r.getHeight() * 0.3 + badge.getFont().getSize());
-                               /* if (p.getChildren().size() > 4 && p.getChildren().get(4) instanceof Text badge) {
-                                    badge.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
-                                    badge.setFont(new Font(r.getHeight() * 0.1));
-                                    badge.setLayoutY(r.getLayoutY() + r.getHeight() * 0.42 + badge.getFont().getSize());
-                                    if (p.getChildren().size() > 5 && p.getChildren().get(5) instanceof Button changeName) {
-                                        changeName.setLayoutX(r.getLayoutX() + r.getWidth() * 0.85);
-                                        changeName.setLayoutY(r.getLayoutY() + r.getHeight() * 0.1);
-                                        changeName.setMaxSize(r.getHeight() * 0.15, r.getHeight() * 0.15);
-                                        changeName.setMinSize(r.getHeight() * 0.15, r.getHeight() * 0.15);
-                                        if (p.getChildren().size() > 6 && p.getChildren().get(6) instanceof Text error) {
-                                            error.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
-                                            error.setFont(new Font(r.getHeight() * 0.1));
-                                            error.setLayoutY(r.getLayoutY() + r.getHeight() * 0.62 + error.getFont().getSize());
-                                        }
-                                    }
-                                }*/
-                            }
-                        }
-                    }
+            p.setPrefSize(size.getX(), size.getY());
+            p.setLayoutX((i + 1) * gaps.getX() + i * size.getX() + gapsEdge);
+            p.setLayoutY(gaps.getY() + size.getY());
+            if (p.getChildren().get(0) instanceof Rectangle pokeball) {
+                pokeball.setWidth(p.getWidth());
+                pokeball.setHeight(p.getWidth());
+                if (p.getChildren().size() > 1 && p.getChildren().get(1) instanceof Rectangle r) {
+                    r.setLayoutX(p.getWidth() * 0.3);
+                    r.setLayoutY(p.getHeight() * 0.45);
+                    r.setWidth(p.getWidth() * 0.42);
+                    r.setHeight(r.getWidth() * 1200 / 1920);
+                    r.setArcHeight(r.getWidth() * 0.2);
+                    r.setArcWidth(r.getWidth() * 0.2);
                 }
             }
         }
@@ -330,56 +290,26 @@ public class MyClient extends Application {
                 MessageType mT = MessageType.getType(s.length() > 2 && Pattern.matches("[0-9]{3}", s.substring(0, 3)) ? Integer.parseInt(s.substring(0, 3)) : 999);
                 switch (mT) {
                     case hellman, register, login, delete -> doLogin(mT, s);
-                    case region -> doRegion(s);
-                    case profile -> doProfiles(s.substring(3));
+                    case region -> {
+                        if (s.charAt(3) - '0' != 0) client.getErrorTxt().setVisible(true);
+                        switch (s.charAt(3) - '0') {
+                            case 0 -> {
+                                client.setWorld(new World(Integer.parseInt(s.substring(4, s.indexOf(","))), client.getErrorTxt().getText()));
+                                stage.getScene().setRoot(LoginScreens.getGameScreen());
+                                client.setUsername(s.substring(s.indexOf(",") + 1));
+                                client.getPlayers().add(new Player(client.getUsername(), new Vector2D(3, 2), 0, client.getErrorTxt().getText()));
+                                animationTimer.start();
+                                // Platform.runLater(()->stage.setFullScreen(true));
+                            }
+                            case 1 -> client.getErrorTxt().setText("region does not exist");
+                            case 2 -> client.getErrorTxt().setText("you are not logged in");
+                            default -> client.getErrorTxt().setText("Something went wrong. Please check if your program is on the latest version.");
+                        }
+                    }
                     case updatePos -> updatePos(s);
                 }
             }
         });
-    }
-
-    private void doProfiles(String str) {
-        switch (str.charAt(0) - '0') {
-            case 0 -> {
-                Matcher m = Pattern.compile("\\{((.)*?,(.)*?)??}").matcher(str);
-                for (int i = 0; i < 3; i++)
-                    client.getProfiles()[i] = new LoginScreens.PlayerProfile(m.find() ? m.group(1) : null);
-            }
-            case 1 -> {
-                if (stage.getScene().getRoot().getChildrenUnmodifiable().get(Integer.parseInt(str.charAt(1) + "")) instanceof Pane p) {
-                    Platform.runLater(() -> {
-                        p.getChildren().remove(client.getErrorTxt());
-                        if (p.getChildren().get(2) instanceof TextField txt) {
-                            Text t = client.getProfiles()[Integer.parseInt(str.charAt(1) + "")].getTextField();
-                            t.setText(txt.getText());
-                            p.getChildren().add(2, t);
-                            p.getChildren().remove(txt);
-                        }
-                    });
-                }
-            }
-            case 2 -> client.getErrorTxt().setText("Min 4 Chars");
-            case 3 -> client.getErrorTxt().setText("Not allowed chars");
-            case 4 -> client.getErrorTxt().setText("Max 25 Chars");
-            case 5 -> client.getErrorTxt().setText("Something went wrong. Please check if your program is on the latest version.");
-        }
-    }
-
-    private void doRegion(String s) {
-        if (s.charAt(3) - '0' != 0) client.getErrorTxt().setVisible(true);
-        switch (s.charAt(3) - '0') {
-            case 0 -> {
-                client.setWorld(new World(Integer.parseInt(s.substring(4, s.indexOf(","))), client.getErrorTxt().getText()));
-                stage.getScene().setRoot(LoginScreens.getGameScreen());
-                client.setUsername(s.substring(s.indexOf(",") + 1));
-                client.getPlayers().add(new Player(client.getUsername(), new Vector2D(3, 2), 0, client.getErrorTxt().getText()));
-                animationTimer.start();
-                // Platform.runLater(()->stage.setFullScreen(true));
-            }
-            case 1 -> client.getErrorTxt().setText("region does not exist");
-            case 2 -> client.getErrorTxt().setText("you are not logged in");
-            default -> client.getErrorTxt().setText("Something went wrong. Please check if your program is on the latest version.");
-        }
     }
 
     /**
@@ -432,11 +362,12 @@ public class MyClient extends Application {
                     client.setUsername(login.split(";")[0]);
                     client.send(MessageType.toStr(MessageType.login) + "{name='" + login.split(";")[0] + "', pwd='" + client.getCrypto().encrypt(login.split(";", 2)[1]) + "'}");
                     Platform.runLater(() -> ((ProgressBar) (stage.getScene().getRoot().getChildrenUnmodifiable().get(1))).setProgress(0.7));
+
                 }
                 break;
             case register:
                 switch (s.charAt(3) - '0') {
-                    case 0 -> stage.getScene().setRoot(LoginScreens.getProfileSelectScreen(stage, client));
+                    case 0 -> stage.getScene().setRoot(LoginScreens.getRegionSelectScreen(stage, client));
                     case 1 -> client.getErrorTxt().setText("Username too short. Min 4 Character");
                     case 2 -> client.getErrorTxt().setText("Username illegal, only (a-zA-z0-9_)");
                     case 3 -> client.getErrorTxt().setText("password too short");
@@ -452,7 +383,7 @@ public class MyClient extends Application {
                         if (stage.getScene().getRoot().getChildrenUnmodifiable().get(0) instanceof ProgressBar) {
                             Platform.runLater(() -> ((ProgressBar) (stage.getScene().getRoot().getChildrenUnmodifiable().get(1))).setProgress(1));
                         } else {
-                            stage.getScene().setRoot(LoginScreens.getProfileSelectScreen(stage, client));
+                            stage.getScene().setRoot(LoginScreens.getRegionSelectScreen(stage, client));
                         }
                         return;
                     }
@@ -461,9 +392,7 @@ public class MyClient extends Application {
                     case 3 -> client.getErrorTxt().setText("someone is already logged in");
                     default -> client.getErrorTxt().setText("Something went wrong. Please check if your program is on the latest version.");
                 }
-                if (stage.getScene().getRoot().getChildrenUnmodifiable().get(1) instanceof ProgressBar p) {
-                    Platform.runLater(() -> p.setProgress(1.1));
-                }
+                Platform.runLater(() -> ((ProgressBar) (stage.getScene().getRoot().getChildrenUnmodifiable().get(1))).setProgress(1.1));
                 break;
             case delete:
                 switch (s.charAt(3) - '0') {
