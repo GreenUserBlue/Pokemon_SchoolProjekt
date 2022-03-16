@@ -25,6 +25,9 @@ public class Pokemon {
     //wie viele xp kann man auf dem Level erreichen maximal
     private int maxXP;
 
+    //block auf dem das Pokemon spawnen kann
+    private World.Block block;
+
     public static void main(String[] args) {
         Attack[] a = new Attack[4];
         Type[] b = new Type[]{Type.grass};
@@ -56,7 +59,7 @@ public class Pokemon {
     }
 
     /**
-     * makes a Pokemon from the String which was sent to the server
+     * makes a Pokemon from the String which was sent from the server
      *
      * @param msg the message from the server
      * @return
@@ -90,6 +93,12 @@ public class Pokemon {
     }
 
     private static Pokemon createPokemon(Vector2D pos, World.Block block) {
+        if (block.equals(World.Block.Grass)){
+            return new Pokemon();
+
+        }else if (block.equals(World.Block.Water)){
+            return new Pokemon();
+        }
 
         return new Pokemon();
     }
