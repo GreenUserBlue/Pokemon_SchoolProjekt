@@ -1,11 +1,22 @@
 package InGame;
 
 public enum Type {
-    Normal,
-    Water,
-    Fire,
-    Grass,
-    Bug,
-    Ghost,
-    Fighting
+    normal,
+    fighting,
+    flying,
+    poison,
+    ground,
+    rock,
+    bug,
+    ghost,
+    steel,
+    fire,
+    water,
+    grass,
+    electric,
+    psychic,
+    ice,
+    dragon,
+    dark,
+    fairy;
 }

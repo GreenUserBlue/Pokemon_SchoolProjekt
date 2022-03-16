@@ -22,7 +22,6 @@ create Table User
 create TABLE Player
 (
     PK_Player_ID int AUTO_INCREMENT,
-    name         varchar(25),
     posX         int,
     posY         int,
     skinID       int,
@@ -31,9 +30,7 @@ create TABLE Player
     language     varchar(3),
     PRIMARY KEY (PK_Player_ID),
     foreign key (FK_User_ID) REFERENCES User (PK_User_ID),
-    check ( skinID >= 0 ),
-    check ( name rlike '.{4,}'),
-    CHECK ( name rlike '^[a-zA-Z0-9][a-zA-Z0-9_]*$')
+    check ( skinID >= 0 )
 );
 
 create Table Badge
@@ -79,13 +76,14 @@ CREATE TABLE House
 
 insert into User (name, password, email)
 values ('Name', '$2a$06$fUbqoClTr0U0.CWyp5PdPekyWHpXhPdr53.d.S7pkRgwmyyRCo9My', 'a@g.co'),
-       ('Nam3', '$2a$06$G3g9wHJXL24IK1fpssrgtufueu2z5fojxBd0bHgkBlF8daukHQAPS', 'f@t.x'),
-       ('Name2', '$2a$06$zWhy4d6V4vyOIFtqPR5CleF7FMTC4m7TcMfIFa.ie7Xoxp8Id7nZa', 'a@g.com');
+       ('Name1', '$2a$06$G3g9wHJXL24IK1fpssrgtufueu2z5fojxBd0bHgkBlF8daukHQAPS', 'f@t.x'),
+       ('Name2', '$2a$06$G3g9wHJXL24IK1fpssrgtufueu2z5fojxBd0bHgkBlF8daukHQAPS', 'f@t.xd'),
+       ('Name3', '$2a$06$zWhy4d6V4vyOIFtqPR5CleF7FMTC4m7TcMfIFa.ie7Xoxp8Id7nZa', 'a@g.com');
 
-insert into Player (name, posX, posY, FK_User_ID, language, skinID, startPokID)
-values ('Fran', 10, 10, 1, 'eng', 0, 0),
-       ('Fra2', 12, 11, 1, 'eng', 0, 2),
-       ('Fra3', 12, 10, 2, 'eng', 0, 2);
+insert into Player (posX, posY, FK_User_ID, language, skinID, startPokID)
+values (10, 10, 1, 'eng', 0, 0),
+       (12, 11, 1, 'eng', 0, 2),
+       (12, 10, 2, 'eng', 0, 2);
 
 insert into Badge (badgeTypeID, FK_Player_ID)
 VALUES (1, 2),
@@ -111,10 +109,10 @@ where P.PK_Player_ID = 4;
 select*
 from player;
 
-insert into player (name, posX, posY, skinID, startPokID, FK_User_ID, language)
+insert into player ( posX, posY, skinID, startPokID, FK_User_ID, language)
     VALUE
     (
-     'name', 0, 0, 0, 2, (select PK_User_ID from User where name='Name'), 'eng'
+      0, 0, 0, 2, (select PK_User_ID from User where name='Name'), 'eng'
         );
 
 

@@ -27,7 +27,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class LoginScreens {
 
-
+    /**
+     * creates and returns a pane to let the user login
+     *
+     * @param stage the stage where everything will be shown
+     * @param c     the client to send the selected region
+     * @param s     the username which was entered at the registerScreen (if there was none, then its null)
+     */
     public static Pane getLoginScene(Stage stage, Client c, String s) {
         Pane p = new Pane();
         String dataLog = User.getLogin();
@@ -54,6 +60,14 @@ public class LoginScreens {
         return p;
     }
 
+
+    /**
+     * sends a message to the server that you want to login
+     *
+     * @param c    the client to send the data
+     * @param name the name or email of the user
+     * @param pwd  the password of the user
+     */
     private static void sendLogin(Client c, TextField name, TextField pwd) {
         c.setUsername(name.getText());
         User.storePwd(name.getText(), pwd.getText());
@@ -61,6 +75,13 @@ public class LoginScreens {
         c.send(MessageType.toStr(MessageType.login) + "{name='" + name.getText() + "', pwd='" + c.getCrypto().encrypt(pwd.getText()) + "'}");
     }
 
+    /**
+     * creates and returns a pane to let the user register
+     *
+     * @param stage the stage where everything will be shown
+     * @param c     the client to send the selected region
+     * @param s     the username which was entered at the loginScreen (if there was none, then its null)
+     */
     private static Pane getRegisterPane(Stage stage, Client c, String s) {
         Pane p = new Pane();
         TextField name = new TextField(s == null ? "" : s);
@@ -109,16 +130,28 @@ public class LoginScreens {
         return p;
     }
 
+    /**
+     * sends a message to the server that you want to register
+     *
+     * @param c     the client to send the data
+     * @param name  the name of the user
+     * @param pwd   the password of the user
+     * @param email the email of the user
+     */
     private static void sendRegister(Client c, TextField name, TextField pwd, TextField email) {
         c.setUsername(name.getText());
         User.storePwd(name.getText(), pwd.getText());
         c.send(MessageType.toStr(MessageType.register) + "{name='" + name.getText() + "', pwd='" + c.getCrypto().encrypt(pwd.getText()) + "', email='" + email.getText() + "'}");
     }
 
+    /**
+     * creates and return the screen to select in which world you want to play (needs rework)
+     *
+     * @param stage the stage where everything will be shown
+     * @param c     the client to send the selected region
+     */
     public static Pane getRegionSelectScreen(Stage stage, Client c) {
-        if (c.getUsername() == null) {
-            return getLoginScene(stage, c, null);
-        }
+        if (c.getUsername() == null) return getLoginScene(stage, c, null);
         Pane p = new Pane();
         Button logout = new Button("Logout");
         Button delete = new Button("Delete");
@@ -157,6 +190,12 @@ public class LoginScreens {
         return p;
     }
 
+    /**
+     * creates and returns a screen to delete the user
+     *
+     * @param stage the stage to draw on
+     * @param c     the client to send the confirmation to the server
+     */
     private static Pane getDeleteScreen(Stage stage, Client c) {
         Pane p = new Pane();
         Text question = new Text("Are you sure you want to delete your User? Please enter your password to confirm!");
@@ -178,6 +217,12 @@ public class LoginScreens {
         return p;
     }
 
+    /**
+     * sends aa message to the server that the client wants to logout
+     *
+     * @param c     the client to send the data
+     * @param stage the stage to update the scene
+     */
     private static void sendLogout(Client c, Stage stage) {
         String s = MessageType.toStr(MessageType.logout);
         User.delLoginData();
@@ -186,6 +231,9 @@ public class LoginScreens {
         c.send(s);
     }
 
+    /**
+     * returns the gameScreen to draw on
+     */
     public static Pane getGameScreen() {
         Pane p = new Pane();
         Canvas can = new Canvas();
@@ -201,6 +249,11 @@ public class LoginScreens {
         return p;
     }
 
+    /**
+     * creates and returns the loadingScreen
+     *
+     * @throws MalformedURLException if the background image is not found
+     */
     public static Pane getLoadingScreen() throws MalformedURLException {
         Pane p = new Pane();
         Image img = new Image(String.valueOf(Path.of("./res/LogScreen/Intro.png").toUri().toURL()));
@@ -215,6 +268,12 @@ public class LoginScreens {
         return p;
     }
 
+    /**
+     * creates and returns the Pane where all nodes for the profile select are on
+     *
+     * @param stage  the parent stage
+     * @param client the client to communicate with the server
+     */
     public static Pane getProfileSelectScreen(Stage stage, Client client) {
         Pane p = new Pane();
         Image img = null;
@@ -239,7 +298,7 @@ public class LoginScreens {
             AtomicInteger curState = new AtomicInteger(2);
             int finalI = i;
             ps[i].setOnMouseClicked(e -> {
-                if (ps[finalI].getChildren().size() > 1 && ps[finalI].getChildren().get(1) instanceof Rectangle background && curState.get() == 0 && (e.getX()  > background.getWidth()+ background.getLayoutX() || e.getY() > background.getHeight()  + background.getLayoutY() || e.getX() < background.getLayoutX() || e.getY() < background.getLayoutY())) {
+                if (ps[finalI].getChildren().size() > 1 && ps[finalI].getChildren().get(1) instanceof Rectangle background && curState.get() == 0 && (e.getX() > background.getWidth() + background.getLayoutX() || e.getY() > background.getHeight() + background.getLayoutY() || e.getX() < background.getLayoutX() || e.getY() < background.getLayoutY())) {
                     curState.set(1);
                     try {
                         r.setFill(new ImagePattern(new Image(String.valueOf(Path.of("./res/LogScreen/ProfileSelectBallClose.gif").toUri().toURL()))));
@@ -261,7 +320,6 @@ public class LoginScreens {
                                         ps[finalI].getChildren().remove(1);
                                     }
                                 }
-
                             });
                         } catch (InterruptedException ignored) {
                         }
@@ -273,8 +331,10 @@ public class LoginScreens {
                             showNameChangeWindow(t, client, finalI, ps[finalI], stage);
                         }
                     } else {
+
                         System.out.println("LoginScreens.getProfileSelectScreen: do some shit with login and so");
-//                        curState.set(-1);
+                        stage.getScene().setRoot(getRegionSelectScreen(stage, client));
+                        curState.set(-1);
                     }
                 } else if (curState.get() == 2) {
                     curState.set(1);
@@ -327,6 +387,15 @@ public class LoginScreens {
         return p;
     }
 
+    /**
+     * updates the window to let the user change one of his Profile names
+     *
+     * @param name         the current name
+     * @param client       the client to communicate with the server
+     * @param indexOfArray which profile it is (0-2)
+     * @param p            the pane where all the current elements are on
+     * @param stage        the parent stage
+     */
     private static void showNameChangeWindow(Text name, Client client, int indexOfArray, Pane p, Stage stage) {
         TextField t = new TextField(name.getText());
         t.setOnKeyPressed(e -> {
@@ -350,12 +419,12 @@ public class LoginScreens {
         t.setOpacity(0.8);
         t.setStyle("""
                 -fx-background-color: transparent;
-                   -fx-background-insets: 0, 0 0 0 0 ;
-                   -fx-background-radius: 0 ;
-                   -fx-padding: 0;
-                   -fx-margin: 0;
-                   -fx-background-insets: 0;
-                   -fx-text-fill: #FFFFFF;""".indent(1));
+                -fx-background-insets: 0, 0 0 0 0 ;
+                -fx-background-radius: 0 ;
+                -fx-padding: 0;
+                -fx-margin: 0;
+                -fx-background-insets: 0;
+                -fx-text-fill: #FFFFFF;""".indent(1));
         int index = p.getChildren().indexOf(name);
         if (index != -1) {
             p.getChildren().remove(index);
@@ -364,18 +433,34 @@ public class LoginScreens {
         t.requestFocus();
     }
 
+    /**
+     * shows a PlayerProfile with name, nbr of badges and nbr of pokemon
+     * just to display at the ProfileSelectScreen
+     */
     static class PlayerProfile {
 
+        /**
+         * the name of the profile
+         */
         private String name;
 
+        /**
+         * the number of pokemon
+         */
         private int poke;
 
+        /**
+         * the number of badges
+         */
         private int badge;
 
         public Text getTextField() {
             return textField;
         }
 
+        /**
+         * the text where the name is displayed on
+         */
         private Text textField;
 
         @Override
@@ -387,6 +472,11 @@ public class LoginScreens {
                     '}';
         }
 
+        /**
+         * inits the Profiles
+         *
+         * @param str in Format "'Name',NbrOfPokemon,NbrOfBadges"
+         */
         public PlayerProfile(String str) {
             if (str != null && str.length() > 0) {
                 String[] s = str.split(",");

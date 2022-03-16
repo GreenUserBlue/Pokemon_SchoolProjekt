@@ -179,6 +179,9 @@ public class MyClient extends Application {
         }
     };
 
+    /**
+     * resizes the profileSelect Screen
+     */
     private void resizeProfileSelect() {
         List<Node> l = stage.getScene().getRoot().getChildrenUnmodifiable();
         Vector2D gaps = new Vector2D(stage.getScene().getWidth() * 0.06, stage.getScene().getHeight() * 0.06);
@@ -186,7 +189,6 @@ public class MyClient extends Application {
         Vector2D size = new Vector2D(stage.getWidth() * 0.22, stage.getScene().getHeight() * 0.22);
         for (int i = 0; i < l.size() && l.get(i) instanceof Pane p; i++) {
             synchronized (p.getChildren()) {
-
                 p.setPrefSize(size.getX(), size.getY());
                 p.setLayoutX((i + 1) * gaps.getX() + i * size.getX() + gapsEdge);
                 p.setLayoutY(gaps.getY() + size.getY());
@@ -436,7 +438,7 @@ public class MyClient extends Application {
                 break;
             case register:
                 switch (s.charAt(3) - '0') {
-                    case 0 -> stage.getScene().setRoot(LoginScreens.getRegionSelectScreen(stage, client));
+                    case 0 -> stage.getScene().setRoot(LoginScreens.getProfileSelectScreen(stage, client));
                     case 1 -> client.getErrorTxt().setText("Username too short. Min 4 Character");
                     case 2 -> client.getErrorTxt().setText("Username illegal, only (a-zA-z0-9_)");
                     case 3 -> client.getErrorTxt().setText("password too short");
@@ -452,7 +454,7 @@ public class MyClient extends Application {
                         if (stage.getScene().getRoot().getChildrenUnmodifiable().get(0) instanceof ProgressBar) {
                             Platform.runLater(() -> ((ProgressBar) (stage.getScene().getRoot().getChildrenUnmodifiable().get(1))).setProgress(1));
                         } else {
-                            stage.getScene().setRoot(LoginScreens.getRegionSelectScreen(stage, client));
+                            stage.getScene().setRoot(LoginScreens.getProfileSelectScreen(stage, client));
                         }
                         return;
                     }
