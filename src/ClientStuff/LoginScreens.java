@@ -5,7 +5,10 @@ import ServerStuff.User;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
@@ -18,7 +21,6 @@ import javafx.util.Duration;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -153,40 +155,52 @@ public class LoginScreens {
     public static Pane getRegionSelectScreen(Stage stage, Client c) {
         if (c.getUsername() == null) return getLoginScene(stage, c, null);
         Pane p = new Pane();
+        Image img = null;
+        try {
+            img = new Image(String.valueOf(Path.of("./res/LogScreen/ProfileSelect.png").toUri().toURL()));
+        } catch (MalformedURLException ignored) {
+        }
+        assert img != null;
+        BackgroundSize fullSize = new BackgroundSize(-1.0D, -1.0D, true, true, true, true);
+        p.setBackground(new Background(new BackgroundImage(img, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, fullSize)));
         Button logout = new Button("Logout");
         Button delete = new Button("Delete");
-        ComboBox<String> combo = new ComboBox<>();
+        Button ownWorld = new Button("Own World");
+        TextField otherUser = new TextField();
+        otherUser.setPromptText("Enter Username");
         Text error = new Text();
         c.setErrorTxt(error);
         Button send = new Button("Send");
-        combo.getItems().addAll(
-                "Kanto",
-                "Johto",
-                "Sinnoh"
-        );
-        combo.setPromptText("Region");
-        combo.setValue("Kanto");
-        p.getChildren().addAll(combo, send, logout, delete, error);
+        p.getChildren().addAll(ownWorld, otherUser, send, error);
         send.setOnAction(e -> {
-            c.getErrorTxt().setText(combo.getValue());
+            c.getErrorTxt().setText("");
             c.getErrorTxt().setVisible(false);
-            c.send(MessageType.toStr(MessageType.region) + "{name='" + combo.getValue() + "'}");
-        });
-        combo.setOnKeyPressed(e -> {
-            if (e.getCode() == KeyCode.ENTER) {
-                c.getErrorTxt().setText(combo.getValue());
-                c.getErrorTxt().setVisible(false);
-                c.send(MessageType.toStr(MessageType.region) + "{name='" + combo.getValue() + "'}");
-            }
+            c.send(MessageType.toStr(MessageType.region) + "{name='" + otherUser.getText() + "'}");
         });
         logout.setOnAction(e -> sendLogout(c, stage));
         delete.setOnAction(e -> stage.getScene().setRoot(getDeleteScreen(stage, c)));
+
+
         for (int i = 0; i < p.getChildren().size(); i++) {
             p.getChildren().get(i).setLayoutX(90 * i + 10);
             p.getChildren().get(i).setLayoutY(10);
         }
         error.setLayoutX(10);
         error.setLayoutY(50);
+        Button[] btns = new Button[5];
+        for (int i = 0; i < btns.length; i++) {
+            btns[i] = new Button("World " + (i + 1));
+            btns[i].setLayoutX(10);
+            btns[i].setLayoutY(30 * (i + 3));
+            int finalI = i;
+            btns[i].setOnAction(e -> {
+                c.getErrorTxt().setText("");
+                c.getErrorTxt().setVisible(false);
+                c.send(MessageType.toStr(MessageType.region) + "{name='" + finalI + "'}");
+            });
+            p.getChildren().add(btns[i]);
+        }
+
         return p;
     }
 
@@ -324,51 +338,59 @@ public class LoginScreens {
                         } catch (InterruptedException ignored) {
                         }
                     }).start();
-
                 } else if (curState.get() == 0) {
-                    if (client.getProfiles()[finalI].name == null) {
-                        if (ps[finalI].getChildren().get(2) instanceof Text t) {
-                            showNameChangeWindow(t, client, finalI, ps[finalI], stage);
-                        }
-                    } else {
 
-                        System.out.println("LoginScreens.getProfileSelectScreen: do some shit with login and so");
-                        stage.getScene().setRoot(getRegionSelectScreen(stage, client));
-                        curState.set(-1);
-                    }
+//                    System.out.println("LoginScreens.getProfileSelectScreen: do some shit with login and so");
+                    curState.set(-1);
+                    client.send(MessageType.toStr(MessageType.profile) + 1 + finalI);
+                    new Thread(() -> {
+                        try {
+                            p.getChildren().forEach(f -> {
+                                FadeTransition fadeTransition = new FadeTransition(Duration.millis(400), f);
+                                fadeTransition.setFromValue(f.getOpacity());
+                                fadeTransition.setToValue(0);
+                                fadeTransition.playFromStart();
+                            });
+                            Thread.sleep(500);
+                            Platform.runLater(() -> {
+                                synchronized (p.getChildren()) {
+                                    while (p.getChildren().size() > 0) {
+                                        p.getChildren().remove(0);
+                                    }
+                                }
+                            });
+                            stage.getScene().setRoot(getRegionSelectScreen(stage, client));
+                            stage.getScene().getRoot().getChildrenUnmodifiable().forEach(f -> {
+                                FadeTransition fadeTransition = new FadeTransition(Duration.millis(900), f);
+                                fadeTransition.setFromValue(0);
+                                fadeTransition.setToValue(1);
+                                fadeTransition.playFromStart();
+                            });
+                        } catch (InterruptedException ignored) {
+                        }
+                    }).start();
                 } else if (curState.get() == 2) {
                     curState.set(1);
                     Rectangle rec = new Rectangle();
                     rec.setOpacity(0);
-                    Text name = new Text(client.getProfiles()[finalI].name == null ? "Set Username" : client.getProfiles()[finalI].name);
-                    Text poke = new Text("Pokemon: " + client.getProfiles()[finalI].poke);
-                    Text badge = new Text("Badges: " + client.getProfiles()[finalI].badge);
-                    name.setFill(Color.WHITE);
+                    Text poke = new Text("Poke: " + client.getProfiles()[finalI].poke);
+                    Text badge = new Text("Bad: " + client.getProfiles()[finalI].badge);
                     poke.setFill(Color.WHITE);
                     badge.setFill(Color.WHITE);
-                    name.setOpacity(0);
                     poke.setOpacity(0);
                     badge.setOpacity(0);
-                    Button changeName = new Button();
-                    changeName.setFocusTraversable(false);
                     try {
-                        changeName.setBackground(new Background(new BackgroundImage(new Image(String.valueOf(Paths.get("./res/logScreen/ChangeName.png").toUri().toURL())), BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, fullSize)));
-                        changeName.setOpacity(0);
                         r.setFill(new ImagePattern(new Image(String.valueOf(Path.of("./res/LogScreen/ProfileSelectBallOpen.gif").toUri().toURL()))));
                         rec.setFill(new ImagePattern(new Image(String.valueOf(Path.of("./res/LogScreen/Poke/" + finalI + ".png").toUri().toURL()))));
                     } catch (MalformedURLException ignored) {
                     }
-                    ps[finalI].getChildren().addAll(rec, name, poke, badge, changeName);
-                    client.getProfiles()[finalI].textField = name;
-                    changeName.setOnMouseClicked(f -> showNameChangeWindow(name, client, finalI, ps[finalI], stage));
+                    ps[finalI].getChildren().addAll(rec, poke, badge);
                     new Thread(() -> {
                         try {
                             Thread.sleep(400);
                             curState.set(0);
                             FadeTransition[] f = new FadeTransition[]{
                                     new FadeTransition(Duration.millis(300), rec),
-                                    new FadeTransition(Duration.millis(600), name),
-                                    new FadeTransition(Duration.millis(600), changeName),
                                     new FadeTransition(Duration.millis(1000), poke),
                                     new FadeTransition(Duration.millis(1400), badge),
                             };
@@ -388,61 +410,10 @@ public class LoginScreens {
     }
 
     /**
-     * updates the window to let the user change one of his Profile names
-     *
-     * @param name         the current name
-     * @param client       the client to communicate with the server
-     * @param indexOfArray which profile it is (0-2)
-     * @param p            the pane where all the current elements are on
-     * @param stage        the parent stage
-     */
-    private static void showNameChangeWindow(Text name, Client client, int indexOfArray, Pane p, Stage stage) {
-        TextField t = new TextField(name.getText());
-        t.setOnKeyPressed(e -> {
-            if (e.getCode() == KeyCode.ENTER) {
-                if (client.getErrorTxt() != null && client.getErrorTxt().getParent() != null) {
-                    for (int i = 0; i < stage.getScene().getRoot().getChildrenUnmodifiable().size() && stage.getScene().getRoot().getChildrenUnmodifiable().get(i) instanceof Pane pane; i++) {
-                        pane.getChildren().remove(client.getErrorTxt());
-                    }
-                }
-                client.setErrorTxt(new Text("Please wait ..."));
-                client.getErrorTxt().setFill(Color.WHITE);
-                client.send(MessageType.toStr(MessageType.profile) + '0' + indexOfArray + t.getText());
-                if (!p.getChildren().contains(client.getErrorTxt())) p.getChildren().add(client.getErrorTxt());
-            } else if (e.getCode() == KeyCode.ESCAPE) {
-                int index = p.getChildren().indexOf(t);
-                p.getChildren().remove(index);
-                p.getChildren().remove(client.getErrorTxt());
-                p.getChildren().add(index, name);
-            }
-        });
-        t.setOpacity(0.8);
-        t.setStyle("""
-                -fx-background-color: transparent;
-                -fx-background-insets: 0, 0 0 0 0 ;
-                -fx-background-radius: 0 ;
-                -fx-padding: 0;
-                -fx-margin: 0;
-                -fx-background-insets: 0;
-                -fx-text-fill: #FFFFFF;""".indent(1));
-        int index = p.getChildren().indexOf(name);
-        if (index != -1) {
-            p.getChildren().remove(index);
-            p.getChildren().add(index, t);
-        }
-        t.requestFocus();
-    }
-
-    /**
      * shows a PlayerProfile with name, nbr of badges and nbr of pokemon
      * just to display at the ProfileSelectScreen
      */
     static class PlayerProfile {
-
-        /**
-         * the name of the profile
-         */
-        private String name;
 
         /**
          * the number of pokemon
@@ -461,12 +432,11 @@ public class LoginScreens {
         /**
          * the text where the name is displayed on
          */
-        private Text textField;
+        private final Text textField = new Text();
 
         @Override
         public String toString() {
             return "PlayerProfile{" +
-                    "name='" + name + '\'' +
                     ", poke=" + poke +
                     ", badge=" + badge +
                     '}';
@@ -480,16 +450,11 @@ public class LoginScreens {
         public PlayerProfile(String str) {
             if (str != null && str.length() > 0) {
                 String[] s = str.split(",");
-                if (s.length == 3) {
-                    this.name = s[0];
-                    poke = Integer.parseInt(s[1]);
-                    badge = Integer.parseInt(s[2]);
+                if (s.length == 2) {
+                    poke = Integer.parseInt(s[0]);
+                    badge = Integer.parseInt(s[1]);
                 }
             }
-        }
-
-        public void setName(String name) {
-            this.name = name;
         }
     }
 }

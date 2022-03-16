@@ -62,7 +62,7 @@ public class MyServer {
 
     private static void doProfile(Server.ClientHandler c, String s) {
         if (s.startsWith("0")) {
-            ResultSet exists = Database.get("select count(*) as nbr from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = 1 && User.name = 'Name';");
+            /*ResultSet exists = Database.get("select count(*) as nbr from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "';");
             try {
                 if (exists != null && exists.next() && exists.getInt("nbr") > 0) {
                     String error = Database.execute("update Player set name='" + s.substring(2) + "' where (select count(*) from User inner join Player P on User.PK_User_ID = Player.FK_User_ID where Player.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "') > 0;");
@@ -75,7 +75,7 @@ public class MyServer {
                     }
                 } else {
                     // TODO add A pokemon to the new Player
-                    String error = Database.execute("insert into player (name, posX, posY, skinID, startPokID, FK_User_ID, language) VALUE ('" + s.substring(2) + "', 0, 0, 0, " + s.charAt(1) + ", (select PK_User_ID from User where name='" + c.getUsername() + "'), 'eng');");
+                    String error = Database.execute("insert into player (posX, posY, skinID, startPokID, FK_User_ID, language) VALUE ('" + s.substring(2) + "', 0, 0, 0, " + s.charAt(1) + ", (select PK_User_ID from User where name='" + c.getUsername() + "'), 'eng');");
                     if (error == null) c.send(MessageType.toStr(MessageType.profile) + 1 + s.charAt(1));
                     else if (error.contains("Data too long")) c.send(MessageType.toStr(MessageType.profile) + 4);
                     else {
@@ -83,6 +83,21 @@ public class MyServer {
                         if (m.find()) c.send(MessageType.toStr(MessageType.profile) + m.group(1));
                         else c.send(MessageType.toStr(MessageType.profile) + 5);
                     }
+                }
+            } catch (SQLException ignored) {
+            }*/
+            System.out.println("old code is here");
+        } else {
+            try {
+                ResultSet exists = Database.get("select count(*) as nbr from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "';");
+                if (exists != null && exists.next() && !(exists.getInt("nbr") > 0)) {
+                    Database.execute("insert into player (skinID, startPokID, FK_User_ID, language) VALUE (0," + s.charAt(1) + ",(select PK_User_ID from User where name='" + c.getUsername() + "'),'eng');");
+                    System.out.println("add Pokemon to this new Player");
+                }
+                ResultSet data = Database.get("select * from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "';");
+                if (data != null && data.next()) {
+                    c.setPlayer(initPlayer(c.getUsername(), data.getInt("PK_Player_ID")));
+                    System.out.println("Player inited");
                 }
             } catch (SQLException ignored) {
             }
@@ -102,7 +117,7 @@ public class MyServer {
         Optional<World> w = server.getRegions().stream().filter(e -> e.getName().equals(region)).findFirst();
         if (w.isPresent()) {
             c.send(MessageType.toStr(MessageType.region) + 0 + w.get().getSeed() + "," + c.getUsername());
-            c.setPlayer(initPlayer(c.getUsername(), region));
+            c.getPlayer().setRegion(region);
             sendPosUpdate(c);
             update(c);
         } else {
@@ -122,8 +137,8 @@ public class MyServer {
         }, (int) c.getId());
     }
 
-    private static Player initPlayer(String name, String region) {
-        ResultSet curPlayer = Database.get("select * from User inner join Player P on User.PK_User_ID = FK_User_ID where name='" + name + "' OR email='" + name + "';");
+    private static Player initPlayer(String name, int id) {
+        ResultSet curPlayer = Database.get("select * from User inner join Player P on User.PK_User_ID = P.FK_User_ID where name='" + name + "' OR email='" + name + "';");
         Vector2D pos = new Vector2D();
         int skinID = 0;
         try {
@@ -135,7 +150,7 @@ public class MyServer {
             } else throw new SQLException();
         } catch (SQLException ignored) {
         }
-        return new Player(name, pos, skinID, region);
+        return new Player(name, pos, skinID, id);
     }
 
     private static void sendPosUpdate(Server.ClientHandler c) {
@@ -174,14 +189,13 @@ public class MyServer {
 
     private static void sendPlayerProfiles(Server.ClientHandler c, String name) {
         c.setUsername(name);
-        ResultSet r = Database.get("select PK_Player_ID,Player.name,skinID,startPokID,language from Player INNER JOIN User U on Player.FK_User_ID = U.PK_User_ID where U.name='" + name + "' OR email='" + name + "';");
-
+        ResultSet r = Database.get("select PK_Player_ID,skinID,startPokID,language from Player INNER JOIN User U on Player.FK_User_ID = U.PK_User_ID where U.name='" + name + "' OR email='" + name + "';");
         if (r != null) {
             StringBuilder msgToSend = new StringBuilder(MessageType.toStr(MessageType.profile) + '0');
             HashMap<Integer, String> hMap = new HashMap<>();
             try {
                 while (r.next()) {
-                    String msgToSendSingle = "{" + r.getString("name") + ",";
+                    String msgToSendSingle = "{";
                     ResultSet badges = Database.get("select  count(PK_Badge_ID) as nbr from Badge inner join Player P on Badge.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID = " + r.getObject("PK_Player_ID") + ";");
                     if (badges != null && badges.next()) msgToSendSingle += badges.getString("nbr") + ",";
                     ResultSet poke = Database.get("select count(PK_Poke_ID) as nbr from Pokemon inner join Player P on Pokemon.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID=" + r.getObject("PK_Player_ID") + ";");

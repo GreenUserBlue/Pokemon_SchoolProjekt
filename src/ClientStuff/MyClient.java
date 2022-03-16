@@ -14,7 +14,6 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
@@ -203,20 +202,21 @@ public class MyClient extends Application {
                         r.setArcHeight(r.getWidth() * 0.2);
                         r.setArcWidth(r.getWidth() * 0.2);
                         if (p.getChildren().size() > 2) {
-                            if (p.getChildren().get(2) instanceof TextField name) {
-                                name.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
-                                name.setFont(new Font(r.getHeight() * 0.12));
-                                name.setLayoutY(r.getLayoutY() + name.getFont().getSize());
-                            } else if (p.getChildren().get(2) instanceof Text name) {
-                                name.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
-                                name.setFont(new Font(r.getHeight() * 0.12));
-                                name.setLayoutY(r.getLayoutY() + r.getHeight() * 0.1 + name.getFont().getSize());
-                            }
-                            if (p.getChildren().size() > 3 && p.getChildren().get(3) instanceof Text poke) {
+                            /*if (p.getChildren().get(2) instanceof TextField poke) {
                                 poke.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
-                                poke.setFont(new Font(r.getHeight() * 0.1));
-                                poke.setLayoutY(r.getLayoutY() + r.getHeight() * 0.3 + poke.getFont().getSize());
-                                if (p.getChildren().size() > 4 && p.getChildren().get(4) instanceof Text badge) {
+                                poke.setFont(new Font(r.getHeight() * 0.12));
+                                poke.setLayoutY(r.getLayoutY() + poke.getFont().getSize());
+                            } else*/
+                            if (p.getChildren().get(2) instanceof Text poke) {
+                                poke.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
+                                poke.setFont(new Font(r.getHeight() * 0.12));
+                                poke.setLayoutY(r.getLayoutY() + r.getHeight() * 0.1 + poke.getFont().getSize());
+                            }
+                            if (p.getChildren().size() > 3 && p.getChildren().get(3) instanceof Text badge) {
+                                badge.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
+                                badge.setFont(new Font(r.getHeight() * 0.1));
+                                badge.setLayoutY(r.getLayoutY() + r.getHeight() * 0.3 + badge.getFont().getSize());
+                               /* if (p.getChildren().size() > 4 && p.getChildren().get(4) instanceof Text badge) {
                                     badge.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
                                     badge.setFont(new Font(r.getHeight() * 0.1));
                                     badge.setLayoutY(r.getLayoutY() + r.getHeight() * 0.42 + badge.getFont().getSize());
@@ -231,14 +231,13 @@ public class MyClient extends Application {
                                             error.setLayoutY(r.getLayoutY() + r.getHeight() * 0.62 + error.getFont().getSize());
                                         }
                                     }
-                                }
+                                }*/
                             }
                         }
                     }
                 }
             }
         }
-
     }
 
     private List<Keys> getUpdatedKeysToSendAndUpdatePlayerDir(List<Keys> lastKeysPressed, List<Keys> keys, Player p) {
@@ -342,7 +341,7 @@ public class MyClient extends Application {
     private void doProfiles(String str) {
         switch (str.charAt(0) - '0') {
             case 0 -> {
-                Matcher m = Pattern.compile("\\{((.)*?,(.)*?,(.)*?)??}").matcher(str);
+                Matcher m = Pattern.compile("\\{((.)*?,(.)*?)??}").matcher(str);
                 for (int i = 0; i < 3; i++)
                     client.getProfiles()[i] = new LoginScreens.PlayerProfile(m.find() ? m.group(1) : null);
             }
@@ -353,7 +352,6 @@ public class MyClient extends Application {
                         if (p.getChildren().get(2) instanceof TextField txt) {
                             Text t = client.getProfiles()[Integer.parseInt(str.charAt(1) + "")].getTextField();
                             t.setText(txt.getText());
-                            client.getProfiles()[Integer.parseInt(str.charAt(1) + "")].setName(txt.getText());
                             p.getChildren().add(2, t);
                             p.getChildren().remove(txt);
                         }
@@ -463,7 +461,9 @@ public class MyClient extends Application {
                     case 3 -> client.getErrorTxt().setText("someone is already logged in");
                     default -> client.getErrorTxt().setText("Something went wrong. Please check if your program is on the latest version.");
                 }
-                Platform.runLater(() -> ((ProgressBar) (stage.getScene().getRoot().getChildrenUnmodifiable().get(1))).setProgress(1.1));
+                if (stage.getScene().getRoot().getChildrenUnmodifiable().get(1) instanceof ProgressBar p) {
+                    Platform.runLater(() -> p.setProgress(1.1));
+                }
                 break;
             case delete:
                 switch (s.charAt(3) - '0') {

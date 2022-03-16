@@ -21,7 +21,7 @@ public class Pokemon {
         p.addExp(60);
         System.out.println(createPokemon(new Vector2D(0, 1), World.Block.Water));
         System.out.println(p.toMsg());
-        System.out.println(Pokemon.getFromMsg(""));
+        System.out.println(Pokemon.getFromMsg(""));//Taubsi 1-200 0.4 200-300 0.1
     }
 
     /**

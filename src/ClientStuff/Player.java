@@ -96,6 +96,26 @@ public class Player {
         dir = Dir.down;
     }
 
+    public void setRegion(String region) {
+        this.region = region;
+    }
+
+    /**
+     * initializes the player
+     *
+     * @param name {@link Player#name}
+     * @param pos  {@link Player#pos}
+     * @param skin {@link Player#skin}
+     * @param id   {@link Player#id}
+     */
+    public Player(String name, Vector2D pos, int skin, int id) {
+        this.name = name;
+        this.pos = pos;
+        this.skin = skin;
+        this.id = id;
+        dir = Dir.down;
+    }
+
     public Vector2D getHouseEntrancePos() {
         return houseEntrancePos;
     }

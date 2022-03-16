@@ -22,8 +22,7 @@ create Table User
 create TABLE Player
 (
     PK_Player_ID int AUTO_INCREMENT,
-    posX         int,
-    posY         int,
+
     skinID       int,
     startPokID   int,
     FK_User_ID   int,
@@ -74,6 +73,17 @@ CREATE TABLE House
     FOREIGN KEY (FK_Owner_ID) REFERENCES Player (PK_Player_ID)
 );
 
+CREATE TABLE Position
+(
+    FK_PK_Player_ID int,
+    FK_PK_World_ID  int,
+    posX            int,
+    posY            int,
+    PRIMARY KEY (FK_PK_Player_ID, FK_PK_Player_ID),
+    FOREIGN KEY (FK_PK_Player_ID) REFERENCES Player(PK_Player_ID),
+    FOREIGN KEY (FK_PK_World_ID) REFERENCES World(PK_World_ID)
+);
+
 insert into User (name, password, email)
 values ('Name', '$2a$06$fUbqoClTr0U0.CWyp5PdPekyWHpXhPdr53.d.S7pkRgwmyyRCo9My', 'a@g.co'),
        ('Name1', '$2a$06$G3g9wHJXL24IK1fpssrgtufueu2z5fojxBd0bHgkBlF8daukHQAPS', 'f@t.x'),
@@ -109,13 +119,14 @@ where P.PK_Player_ID = 4;
 select*
 from player;
 
-insert into player ( posX, posY, skinID, startPokID, FK_User_ID, language)
+
+insert into player (skinID, startPokID, FK_User_ID, language)
     VALUE
     (
-      0, 0, 0, 2, (select PK_User_ID from User where name='Name'), 'eng'
+     0, 2, (select PK_User_ID from User where name = 'Name'), 'eng'
         );
 
-
+select PK_User_ID from User where name='Name';
 
 # select PK_Player_ID,Player.name,skinID,language from Player INNER JOIN User U on Player.FK_User_ID = U.PK_User_ID where U.name='Name' OR email='Name';
 # select *
