@@ -147,12 +147,12 @@ public class LoginScreens {
     }
 
     /**
-     * creates and return the screen to select in which world you want to play (needs rework)
+     * creates and return the screen to select in which world you want to play
      *
      * @param stage the stage where everything will be shown
      * @param c     the client to send the selected region
      */
-    public static Pane getRegionSelectScreen(Stage stage, Client c) {
+    public static Pane getWorldSelectScreen(Stage stage, Client c) {
         if (c.getUsername() == null) return getLoginScene(stage, c, null);
         Pane p = new Pane();
         Image img = null;
@@ -172,33 +172,38 @@ public class LoginScreens {
         c.setErrorTxt(error);
         Button send = new Button("Send");
         p.getChildren().addAll(ownWorld, otherUser, send, error);
+
+        ownWorld.setOnAction(e -> {
+            c.getErrorTxt().setText("");
+            c.getErrorTxt().setVisible(false);
+            c.send(MessageType.toStr(MessageType.worldSelect) + "{n='" + c.getUsername() + "'}");
+        });
         send.setOnAction(e -> {
             c.getErrorTxt().setText("");
             c.getErrorTxt().setVisible(false);
-            c.send(MessageType.toStr(MessageType.region) + "{name='" + otherUser.getText() + "'}");
+            c.send(MessageType.toStr(MessageType.worldSelect) + "{n='" + otherUser.getText() + "'}");
         });
         logout.setOnAction(e -> sendLogout(c, stage));
         delete.setOnAction(e -> stage.getScene().setRoot(getDeleteScreen(stage, c)));
 
-
         for (int i = 0; i < p.getChildren().size(); i++) {
-            p.getChildren().get(i).setLayoutX(90 * i + 10);
+            p.getChildren().get(i).setLayoutX(130 * i + 10);
             p.getChildren().get(i).setLayoutY(10);
         }
         error.setLayoutX(10);
         error.setLayoutY(50);
-        Button[] btns = new Button[5];
-        for (int i = 0; i < btns.length; i++) {
-            btns[i] = new Button("World " + (i + 1));
-            btns[i].setLayoutX(10);
-            btns[i].setLayoutY(30 * (i + 3));
+        Button[] buttons = new Button[5];
+        for (int i = 0; i < buttons.length; i++) {
+            buttons[i] = new Button("World " + (i + 1));
+            buttons[i].setLayoutX(10);
+            buttons[i].setLayoutY(30 * (i + 3));
             int finalI = i;
-            btns[i].setOnAction(e -> {
+            buttons[i].setOnAction(e -> {
                 c.getErrorTxt().setText("");
                 c.getErrorTxt().setVisible(false);
-                c.send(MessageType.toStr(MessageType.region) + "{name='" + finalI + "'}");
+                c.send(MessageType.toStr(MessageType.worldSelect) + "{n='" + finalI + "'}");
             });
-            p.getChildren().add(btns[i]);
+            p.getChildren().add(buttons[i]);
         }
 
         return p;
@@ -220,7 +225,7 @@ public class LoginScreens {
         PasswordField pwd = new PasswordField();
 
         send.setOnAction(e -> c.send(MessageType.toStr(MessageType.delete) + "{name='" + c.getUsername() + "', pwd='" + c.getCrypto().encrypt(pwd.getText()) + "'}"));
-        back.setOnAction(e -> stage.getScene().setRoot(getRegionSelectScreen(stage, c)));
+        back.setOnAction(e -> stage.getScene().setRoot(getWorldSelectScreen(stage, c)));
 
         p.getChildren().addAll(question, pwd, error, send, back);
         for (int i = 0; i < p.getChildren().size(); i++) {
@@ -359,7 +364,7 @@ public class LoginScreens {
                                     }
                                 }
                             });
-                            stage.getScene().setRoot(getRegionSelectScreen(stage, client));
+                            stage.getScene().setRoot(getWorldSelectScreen(stage, client));
                             stage.getScene().getRoot().getChildrenUnmodifiable().forEach(f -> {
                                 FadeTransition fadeTransition = new FadeTransition(Duration.millis(900), f);
                                 fadeTransition.setFromValue(0);

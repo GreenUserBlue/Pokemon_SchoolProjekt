@@ -85,13 +85,13 @@ public class World {
         id = worldCount++;
         if (Database.isConnected()) {
             try {
-                if (!Objects.requireNonNull(Database.get("select * from World where PK_World_ID = " + id + ";")).first()) {
-                    Database.execute("insert into world (PK_World_ID, seed) VALUE (" + id + ", " + seed + ");");
+                if (!Objects.requireNonNull(Database.get("select * from World where FK_User_ID = (select PK_User_ID from User where name = '" + name + "')")).first()) {
+                    Database.execute("insert into world (seed, FK_User_ID) VALUE (" + seed + ", (select PK_User_ID from User where name = '" + name + "'));");
                 } else {
-                    ResultSet s = Database.get("select * from World where PK_World_ID = " + id + ";");
+                    ResultSet s = Database.get("select *from World where FK_User_ID = (select PK_User_ID from User where name = '" + name + "')");
                     assert s != null;
                     if (s.first() && s.getInt("seed") != seed) {
-                        Database.execute("update world set seed=" + seed + " where PK_World_ID=" + id + ";");
+                        Database.execute("update world set seed=" + seed + " where PK_World_ID=" + s.getObject("PK_World_ID") + ";");
                     }
                 }
             } catch (SQLException ignored) {
@@ -105,11 +105,11 @@ public class World {
         int last = 0;
         int houseIDs = 1;//because the database starts counting with one
         for (int i = 0; i < 2; i++) {
-            last += cities.nextInt(15) + 10;
             int rad = cities.nextInt();
-            Vector2D start = new Vector2D((int) (Math.sin(rad) * last), (int) (Math.cos(rad) * last));
+            Vector2D start = new Vector2D((int) (Math.sin(rad) * last) - 5, (int) (Math.cos(rad) * last) - 5);
             this.cities.add(new City(start, rnd, new Vector2D(30, 15), true, true, id, houseIDs));
             houseIDs += this.cities.get(this.cities.size() - 1).getHouses().size();
+            last += cities.nextInt(15) + 10;
         }
     }
 
@@ -229,6 +229,7 @@ public class World {
 
     /**
      * gets a Block from the environment
+     *
      * @param i the X coordinate in the array for all Blocks
      * @param j the Y coordinate in the array for all Blocks
      * @param x the real X coordinate
@@ -247,6 +248,7 @@ public class World {
 
     /**
      * gets a Block from the environment from a house
+     *
      * @param i the X coordinate in the array for all Blocks
      * @param j the Y coordinate in the array for all Blocks
      * @param x the real X coordinate
@@ -266,11 +268,12 @@ public class World {
 
     /**
      * resizes the window and canvas
+     *
      * @param canvas the canvas where everything will be drawn
-     * @param pos all Players which will be displayed
-     * @param size the size of the new window
-     * @param w the width of the new window
-     * @param h the height of the new window
+     * @param pos    all Players which will be displayed
+     * @param size   the size of the new window
+     * @param w      the width of the new window
+     * @param h      the height of the new window
      */
     private double getBlockSizeAndResize(Canvas canvas, List<Player> pos, Vector2D size, double w, double h) {
         double blockSize;
@@ -289,6 +292,7 @@ public class World {
 
     /**
      * returns the simplex noise value of the coordinates
+     *
      * @param x the x coordinate
      * @param y the y coordinate
      */
@@ -298,6 +302,7 @@ public class World {
 
     /**
      * returns the grass type for the coordinates
+     *
      * @param x the x coordinate
      * @param y the y coordinate
      */
@@ -314,8 +319,9 @@ public class World {
 
     /**
      * gets The Block for the coordinates
-     * @param x the x coordinate
-     * @param y the y coordinate
+     *
+     * @param x   the x coordinate
+     * @param y   the y coordinate
      * @param rec if it is a recursive call
      */
     private Block getBlockEnvir(int x, int y, boolean rec) {
@@ -327,9 +333,10 @@ public class World {
 
     /**
      * draws the environment inside a house (Client)
-     * @param canvas the canvas to draw on
+     *
+     * @param canvas  the canvas to draw on
      * @param players all Player which will be drawn
-     * @param size the size of the window
+     * @param size    the size of the window
      * @param allImgs {@link ClientStuff.MyClient#allImgs}
      */
     public void drawInsideHouse(Canvas canvas, List<Player> players, Vector2D size, Map<String, Image> allImgs) {
@@ -411,8 +418,9 @@ public class World {
 
     /**
      * if it is possible to walk to a specific block inside a house
+     *
      * @param pos the pos to check
-     * @param p the player which wants to go there
+     * @param p   the player which wants to go there
      */
     public boolean isFreeToWalkHouse(Vector2D pos, Player p) {
         House h = getHouse(p.getHouseEntrancePos());
@@ -454,6 +462,7 @@ public class World {
 
     /**
      * if there is a tree
+     *
      * @param x the x coordinate
      * @param y the y coordinate
      */
@@ -475,6 +484,7 @@ public class World {
 
     /**
      * if it is the last pos of a tree
+     *
      * @param x the x coordinate
      * @param y the y coordinate
      */
@@ -485,8 +495,9 @@ public class World {
 
     /**
      * if it is possible to walk to a specific block outside a house
+     *
      * @param pos the pos to check
-     * @param p the player which wants to go there
+     * @param p   the player which wants to go there
      */
     public boolean isFreeToWalkEnvir(Vector2D pos, Player p) {
         Block cur = getSingleBlockEnvir(-1, -1, (int) pos.getX(), (int) pos.getY());
@@ -509,6 +520,7 @@ public class World {
 
     /**
      * get the house which stands on the position
+     *
      * @param pos the position which will be checked
      */
     public House getHouse(Vector2D pos) {
@@ -522,8 +534,9 @@ public class World {
 
     /**
      * gets the correct WaterBlock in relation to
-     * @param x the x coordinate
-     * @param y the y coordinate
+     *
+     * @param x      the x coordinate
+     * @param y      the y coordinate
      * @param blocks the blocks to check
      */
     public static List<WaterBlock> getWaterBlocks(int x, int y, Block[][] blocks) {

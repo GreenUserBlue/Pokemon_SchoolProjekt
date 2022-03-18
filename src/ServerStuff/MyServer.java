@@ -49,20 +49,21 @@ public class MyServer {
                     case logout -> c.setUsername(null);
                     case delete -> doDel(c, s);
                     case profile -> doProfile(c, s.substring(3));
-                    case region -> doRegion(c, s);
+                    case worldSelect -> doRegion(c, s);
                     case keysPres -> doKeys(c, s.substring(3));
                     case error -> System.out.println("ERROR-Message: " + s);
                 }
             }
         });
-        server.getRegions().add(new World(696969, "Kanto"));
-        server.getRegions().add(new World(187420, "Johto"));
-
+        Random r = new Random();
+        for (int i = 0; i < 5; i++) {
+            server.getWorlds().add(new World((int) (69420 + r.nextDouble() * 100000), "" + i));
+        }
     }
 
     private static void doProfile(Server.ClientHandler c, String s) {
         if (s.startsWith("0")) {
-            /*ResultSet exists = Database.get("select count(*) as nbr from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "';");
+            /*a ResultSet exists = Database.get("select count(*) as nbr from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "';");
             try {
                 if (exists != null && exists.next() && exists.getInt("nbr") > 0) {
                     String error = Database.execute("update Player set name='" + s.substring(2) + "' where (select count(*) from User inner join Player P on User.PK_User_ID = Player.FK_User_ID where Player.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "') > 0;");
@@ -74,7 +75,6 @@ public class MyServer {
                         else c.send(MessageType.toStr(MessageType.profile) + 5);
                     }
                 } else {
-                    // TODO add A pokemon to the new Player
                     String error = Database.execute("insert into player (posX, posY, skinID, startPokID, FK_User_ID, language) VALUE ('" + s.substring(2) + "', 0, 0, 0, " + s.charAt(1) + ", (select PK_User_ID from User where name='" + c.getUsername() + "'), 'eng');");
                     if (error == null) c.send(MessageType.toStr(MessageType.profile) + 1 + s.charAt(1));
                     else if (error.contains("Data too long")) c.send(MessageType.toStr(MessageType.profile) + 4);
@@ -97,7 +97,7 @@ public class MyServer {
                 ResultSet data = Database.get("select * from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "';");
                 if (data != null && data.next()) {
                     c.setPlayer(initPlayer(c.getUsername(), data.getInt("PK_Player_ID")));
-                    System.out.println("Player inited");
+                    System.out.println("Player initialized");
                 }
             } catch (SQLException ignored) {
             }
@@ -112,17 +112,32 @@ public class MyServer {
     }
 
     private static void doRegion(Server.ClientHandler c, String s) {
-        Matcher mRegion = Pattern.compile("name='(.*?)'[,}]").matcher(s);
-        String region = mRegion.find() ? mRegion.group(1) : "";
-        Optional<World> w = server.getRegions().stream().filter(e -> e.getName().equals(region)).findFirst();
+        Matcher mRegion = Pattern.compile("n='(.*?)'[,}]").matcher(s);
+        String worldName = mRegion.find() ? mRegion.group(1) : "";
+        Optional<World> w = server.getWorlds().stream().filter(e -> e.getName().equals(worldName)).findFirst();
         if (w.isPresent()) {
-            c.send(MessageType.toStr(MessageType.region) + 0 + w.get().getSeed() + "," + c.getUsername());
-            c.getPlayer().setRegion(region);
+            c.send(MessageType.toStr(MessageType.worldSelect) + 0 + w.get().getSeed() + "," + c.getUsername());
+            c.getPlayer().setWorld(worldName);
             sendPosUpdate(c);
             update(c);
         } else {
-            c.send(MessageType.toStr(MessageType.region) + 1);
+            if (c.getUsername().equals(worldName)) {
+                server.getWorlds().add(new World(worldName.hashCode(), worldName));
+                c.send(MessageType.toStr(MessageType.worldSelect) + 0 + worldName.hashCode() + "," + worldName);
+            } else {
+                ResultSet nbr = Database.get("select * from World inner join User U on World.FK_User_ID = U.PK_User_ID where U.name='" + worldName + "';");
+                try {
+                    if (nbr != null && nbr.first()) {
+                        c.send(MessageType.toStr(MessageType.worldSelect) + 0 + nbr.getInt("seed") + "," + worldName);
+                    } else {
+                        c.send(MessageType.toStr(MessageType.worldSelect) + 1);
+                    }
+                } catch (SQLException ignored) {
+                    c.send(MessageType.toStr(MessageType.worldSelect) + 1);
+                }
+            }
         }
+        System.out.println("MyServer.doRegion: " + c.getPlayer().getPos());
     }
 
     private static void update(Server.ClientHandler c) {
@@ -130,7 +145,7 @@ public class MyServer {
             synchronized (client.getKeysPressed()) {
                 Vector2D tar = Vector2D.add(client.getPlayer().getPos(), Player.Dir.getDirFromKeys(client.getKeysPressed()));
                 client.getPlayer().setTargetPos(tar);
-                Optional<World> w = server.getRegions().stream().filter(e -> e.getName().equals(c.getPlayer().getRegion())).findFirst();
+                Optional<World> w = server.getWorlds().stream().filter(e -> e.getName().equals(c.getPlayer().getWorld())).findFirst();
                 w.ifPresent(world -> client.getPlayer().updatePos(client, client.getKeysPressed().contains(Keys.decline), world));
             }
             sendPosUpdate(client);
@@ -155,7 +170,7 @@ public class MyServer {
 
     private static void sendPosUpdate(Server.ClientHandler c) {
         int loadingAreaWidth = 28;
-        List<Player> all = new ArrayList<>(server.getClients().values()).parallelStream().filter(Objects::nonNull).map(Server.ClientHandler::getPlayer).filter(e -> e != null && e.getRegion().equals(c.getPlayer().getRegion()) && Math.abs(e.getPos().getX() - c.getPlayer().getPos().getX()) < loadingAreaWidth && Math.abs(e.getPos().getY() - c.getPlayer().getPos().getY()) < loadingAreaWidth && (c.getPlayer().getHouseEntrancePos() == null ? e.getHouseEntrancePos() == null : c.getPlayer().getHouseEntrancePos().equals(e.getHouseEntrancePos()))).collect(Collectors.toList());
+        List<Player> all = new ArrayList<>(server.getClients().values()).parallelStream().filter(Objects::nonNull).map(Server.ClientHandler::getPlayer).filter(e -> e != null && e.getWorld().equals(c.getPlayer().getWorld()) && Math.abs(e.getPos().getX() - c.getPlayer().getPos().getX()) < loadingAreaWidth && Math.abs(e.getPos().getY() - c.getPlayer().getPos().getY()) < loadingAreaWidth && (c.getPlayer().getHouseEntrancePos() == null ? e.getHouseEntrancePos() == null : c.getPlayer().getHouseEntrancePos().equals(e.getHouseEntrancePos()))).collect(Collectors.toList());
         StringBuilder str = new StringBuilder();
         all.forEach(e -> str.append('{').append(e.getName()).append(',').append(e.getPos().getX() + e.getCurWalked().getX()).append(',').append(e.getPos().getY() + e.getCurWalked().getY()).append(',').append(e.getSkin()).append('}'));
         c.send(MessageType.toStr(MessageType.updatePos) + str);

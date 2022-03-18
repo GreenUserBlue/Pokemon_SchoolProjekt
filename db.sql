@@ -55,12 +55,13 @@ create table Pokemon
 
 CREATE TABLE World
 (
-    PK_World_ID int,
+    PK_World_ID int auto_increment,
     seed        int,
     FK_User_ID  int,
     PRIMARY KEY (PK_World_ID),
     FOREIGN KEY (FK_User_ID) REFERENCES User (PK_User_ID)
 );
+
 
 CREATE TABLE House
 (
@@ -80,8 +81,8 @@ CREATE TABLE Position
     posX            int,
     posY            int,
     PRIMARY KEY (FK_PK_Player_ID, FK_PK_Player_ID),
-    FOREIGN KEY (FK_PK_Player_ID) REFERENCES Player(PK_Player_ID),
-    FOREIGN KEY (FK_PK_World_ID) REFERENCES World(PK_World_ID)
+    FOREIGN KEY (FK_PK_Player_ID) REFERENCES Player (PK_Player_ID),
+    FOREIGN KEY (FK_PK_World_ID) REFERENCES World (PK_World_ID)
 );
 
 insert into User (name, password, email)
@@ -90,10 +91,10 @@ values ('Name', '$2a$06$fUbqoClTr0U0.CWyp5PdPekyWHpXhPdr53.d.S7pkRgwmyyRCo9My', 
        ('Name2', '$2a$06$G3g9wHJXL24IK1fpssrgtufueu2z5fojxBd0bHgkBlF8daukHQAPS', 'f@t.xd'),
        ('Name3', '$2a$06$zWhy4d6V4vyOIFtqPR5CleF7FMTC4m7TcMfIFa.ie7Xoxp8Id7nZa', 'a@g.com');
 
-insert into Player (posX, posY, FK_User_ID, language, skinID, startPokID)
-values (10, 10, 1, 'eng', 0, 0),
-       (12, 11, 1, 'eng', 0, 2),
-       (12, 10, 2, 'eng', 0, 2);
+insert into Player (FK_User_ID, language, skinID, startPokID)
+values (1, 'eng', 0, 0),
+       (1, 'eng', 0, 2),
+       (2, 'eng', 0, 2);
 
 insert into Badge (badgeTypeID, FK_Player_ID)
 VALUES (1, 2),
@@ -116,9 +117,9 @@ where P.PK_Player_ID = 4;
 
 # update Player set name='Set Username' where (select count(*)from User inner join Player P on User.PK_User_ID = Player.FK_User_ID where Player.startPokID = 1 && User.name = 'Name') > 0;
 
-select*
-from player;
+select *from World inner join User U on World.FK_User_ID = U.PK_User_ID;
 
+delete from World;
 
 insert into player (skinID, startPokID, FK_User_ID, language)
     VALUE
@@ -126,7 +127,20 @@ insert into player (skinID, startPokID, FK_User_ID, language)
      0, 2, (select PK_User_ID from User where name = 'Name'), 'eng'
         );
 
-select PK_User_ID from User where name='Name';
+select PK_User_ID
+from User
+where name = 'Name';
+
+
+insert into world (seed, FK_User_ID) VALUE (1234, (select PK_User_ID from User where name = 'Name17'));
+select *
+from world;
+
+select *
+from World
+where PK_World_ID = 2;
+
+select *from World where FK_User_ID = (select PK_User_ID from User where name = 'Name')
 
 # select PK_Player_ID,Player.name,skinID,language from Player INNER JOIN User U on Player.FK_User_ID = U.PK_User_ID where U.name='Name' OR email='Name';
 # select *

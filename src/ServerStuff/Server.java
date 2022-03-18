@@ -105,7 +105,7 @@ public class Server {
         return clients;
     }
 
-    public List<World> getRegions() {
+    public List<World> getWorlds() {
         return regions;
     }
 

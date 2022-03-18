@@ -54,7 +54,7 @@ public class Player {
     /**
      * the Name of the region the player is inside
      */
-    private String region;
+    private String world;
 
     /**
      * the id of the skin
@@ -86,18 +86,18 @@ public class Player {
      * @param name   {@link Player#name}
      * @param pos    {@link Player#pos}
      * @param skin   {@link Player#skin}
-     * @param region {@link Player#region}
+     * @param world {@link Player#world}
      */
-    public Player(String name, Vector2D pos, int skin, String region) {
+    public Player(String name, Vector2D pos, int skin, String world) {
         this.name = name;
         this.pos = pos;
         this.skin = skin;
-        this.region = region;
+        this.world = world;
         dir = Dir.down;
     }
 
-    public void setRegion(String region) {
-        this.region = region;
+    public void setWorld(String world) {
+        this.world = world;
     }
 
     /**
@@ -156,8 +156,8 @@ public class Player {
         this.targetPos = targetPos;
     }
 
-    public String getRegion() {
-        return region;
+    public String getWorld() {
+        return world;
     }
 
     @Override

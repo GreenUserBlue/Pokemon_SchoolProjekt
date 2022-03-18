@@ -97,7 +97,8 @@ public class House {
                 return true;
             }
         }
-        return false;
+
+        return pos.getX() <= 0 && pos.getX() + size.getX() >= 0 && pos.getY() <= 0 && pos.getY() + size.getY() >= 0;
     }
 
     @Override
