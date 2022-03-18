@@ -331,8 +331,8 @@ public class MyClient extends Application {
                 MessageType mT = MessageType.getType(s.length() > 2 && Pattern.matches("[0-9]{3}", s.substring(0, 3)) ? Integer.parseInt(s.substring(0, 3)) : 999);
                 switch (mT) {
                     case hellman, register, login, delete -> doLogin(mT, s);
-                    case worldSelect -> doRegion(s);
                     case profile -> doProfiles(s.substring(3));
+                    case worldSelect -> doWorldSelect(s);
                     case updatePos -> updatePos(s);
                 }
             }
@@ -366,7 +366,7 @@ public class MyClient extends Application {
         }
     }
 
-    private void doRegion(String s) {
+    private void doWorldSelect(String s) {
         if (s.charAt(3) - '0' != 0) client.getErrorTxt().setVisible(true);
         switch (s.charAt(3) - '0') {
             case 0 -> {
@@ -375,7 +375,6 @@ public class MyClient extends Application {
                 client.setUsername(s.substring(s.indexOf(",") + 1));
                 client.getPlayers().add(new Player(client.getUsername(), new Vector2D(3, 2), 0, client.getErrorTxt().getText()));
                 animationTimer.start();
-                // Platform.runLater(()->stage.setFullScreen(true));
             }
             case 1 -> client.getErrorTxt().setText("region does not exist");
             case 2 -> client.getErrorTxt().setText("you are not logged in");

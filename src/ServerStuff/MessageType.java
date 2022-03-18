@@ -7,7 +7,7 @@ public enum MessageType {
     logout,              //Client
     delete,              //Client
     profile,             //Server + Client
-    worldSelect,              //Client
+    worldSelect,         //Client
     keysPres,            //Client
     updatePos,           //Server
     houseRequest,        //Client

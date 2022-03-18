@@ -101,6 +101,7 @@ public class World {
         this.seed = seed;
         this.name = name;
         rnd = new Random(seed);
+        System.out.println(seed);
         Random cities = new Random(135);
         int last = 0;
         int houseIDs = 1;//because the database starts counting with one

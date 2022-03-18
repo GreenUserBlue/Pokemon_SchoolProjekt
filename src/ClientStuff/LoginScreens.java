@@ -294,6 +294,7 @@ public class LoginScreens {
      * @param client the client to communicate with the server
      */
     public static Pane getProfileSelectScreen(Stage stage, Client client) {
+        // Platform.runLater(()->stage.setFullScreen(true));
         Pane p = new Pane();
         Image img = null;
         try {

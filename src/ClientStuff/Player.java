@@ -83,9 +83,9 @@ public class Player {
     /**
      * initializes the player
      *
-     * @param name   {@link Player#name}
-     * @param pos    {@link Player#pos}
-     * @param skin   {@link Player#skin}
+     * @param name  {@link Player#name}
+     * @param pos   {@link Player#pos}
+     * @param skin  {@link Player#skin}
      * @param world {@link Player#world}
      */
     public Player(String name, Vector2D pos, int skin, String world) {
@@ -276,6 +276,8 @@ public class Player {
             if (newVec.getY() % 1 > 0.2 && h.getBlockInside((int) newVec.getX(), (int) newVec.getY() + 1) == World.Block.HouseDoor && dir == Dir.down) {
                 houseEntrancePos = null;
             }
+        } else if (h == null && houseEntrancePos.getY() < newVec.getY()) {
+            houseEntrancePos = null;
         }
     }
 
