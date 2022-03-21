@@ -4,6 +4,8 @@ import Calcs.Crypto;
 import Calcs.Vector2D;
 import Envir.House;
 import Envir.World;
+import JsonParser.JSONParser;
+import JsonParser.JSONValue;
 import ServerStuff.MessageType;
 import ServerStuff.User;
 import javafx.animation.AnimationTimer;
@@ -29,6 +31,7 @@ import javafx.util.Duration;
 
 import java.math.BigInteger;
 import java.net.MalformedURLException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -60,6 +63,13 @@ public class MyClient extends Application {
      * the inGame menu for the player
      */
     private Menu menu;
+
+    /**
+     * the textBox when the player talks to someone or something
+     */
+    private TextEvent txt = new TextEvent();
+
+    public static Map<Integer, JSONValue> eventTexts = new HashMap<>();
 
     /**
      * all Images which are needed for graphics
@@ -106,6 +116,11 @@ public class MyClient extends Application {
                     if (keys.contains(Keys.menu) && client.getPlayers().get(0).getActivity() != Player.Activity.menu) {
                         menu = new Menu(getMyClient());
                         menu.showMenu();
+                    } else if (keys.contains(Keys.confirm) && client.getPlayers().get(0).getActivity() != Player.Activity.textEvent) {
+                        World.Block b;
+                        if ((b = getNextBlock(client.getPlayers().get(0))).getVal()!=-1){
+                            txt = new TextEvent(eventTexts.get(b.getVal()));
+                        }
                     }
                     if (((count++) & 0b11) == 0) {
                         client.getPlayers().forEach(Player::updateHands);
@@ -123,6 +138,15 @@ public class MyClient extends Application {
             }
         }
     };
+
+    private World.Block getNextBlock(Player player) {
+        if (player.getHouseEntrancePos() == null) {
+            return client.getWorld().getBlockEnvir((int) player.getPos().getX(), (int) player.getPos().getY(), false);
+        } else {
+            House h = client.getWorld().getHouse(player.getHouseEntrancePos());
+            return h.getBlockInside((int) player.getPos().getX(), (int) player.getPos().getY());
+        }
+    }
 
     private final AnimationTimer designUpdater = new AnimationTimer() {
 
@@ -161,11 +185,8 @@ public class MyClient extends Application {
                     }
                     if (System.currentTimeMillis() > timeTillFadeEnds) {
                         Parent p;
-                        if (barHidden.getProgress() > 1.05) {
-                            p = (LoginScreens.getLoginScene(stage, client, null));
-                        } else {
-                            p = (LoginScreens.getProfileSelectScreen(stage, client));
-                        }
+                        if (barHidden.getProgress() > 1.05) p = (LoginScreens.getLoginScene(stage, client, null));
+                        else p = (LoginScreens.getProfileSelectScreen(stage, client));
                         FadeTransition f = new FadeTransition(Duration.millis(300), p);
                         p.setOpacity(0);
                         f.setFromValue(0);
@@ -300,6 +321,7 @@ public class MyClient extends Application {
         stage.setX(1000);
         stage.setY(80);
         initImgs();
+        initTexts();
         client = new Client(33333, "127.0.0.1", false);
         client.onMessage((a, b) -> {
             if (b instanceof String s && !s.startsWith(MessageType.toStr(MessageType.updatePos))) {
@@ -315,6 +337,11 @@ public class MyClient extends Application {
         designUpdater.start();
         stage.getScene().setFill(Color.BLACK);
         stage.show();
+    }
+
+    private void initTexts() {
+        Map<String, JSONValue> c = JSONParser.read(Path.of("./res/DataSets/texts.json"));
+        c.forEach((key, value) -> value.getMap().forEach((a, b) -> eventTexts.put(Integer.parseInt(a), b)));
     }
 
     /**

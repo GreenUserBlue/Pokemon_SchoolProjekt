@@ -296,7 +296,8 @@ public class Player {
         fight,
         moving,
         menu,
-        standing
+        standing,
+        textEvent,
     }
 
 

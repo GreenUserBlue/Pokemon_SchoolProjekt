@@ -325,7 +325,7 @@ public class World {
      * @param y   the y coordinate
      * @param rec if it is a recursive call
      */
-    private Block getBlockEnvir(int x, int y, boolean rec) {
+    public Block getBlockEnvir(int x, int y, boolean rec) {
         if (!rec && isTreeL(x, y)) return Block.TreeL;
         if (!rec && isTree(x, y)) return Block.Tree;
         double d = getNoise(x, y);
@@ -443,22 +443,32 @@ public class World {
      * allPossible Blocks
      */
     public enum Block {
-        Free,
-        Grass,
-        Tree,
-        TreeL,
-        Water,
-        House,
-        HouseL,
-        HouseDoor,
-        HouseWall,
-        HouseWallL,
-        HouseR,
-        HouseTable,
-        HouseTableL,
-        HouseBigShelf,
-        HouseSmallShelf,
-        none
+        Free(-1),
+        Grass(-1),
+        Tree(0),
+        TreeL(0),
+        Water(-1),
+        House(-1),
+        HouseL(-1),
+        HouseDoor(-1),
+        HouseWall(-1),
+        HouseWallL(-1),
+        HouseR(-1),
+        HouseTable(-1),
+        HouseTableL(-1),
+        HouseBigShelf(1),
+        HouseSmallShelf(2),
+        none(-1);
+
+        private final int val;
+
+        Block(int value) {
+            val = value;
+        }
+
+        public int getVal() {
+            return val;
+        }
     }
 
     /**
