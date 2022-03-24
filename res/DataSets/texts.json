@@ -1,5 +1,5 @@
 {
-  "Envir": {
+  "0": {
     "0": [
       "This is a tree, what do you think will happen now"
     ],
@@ -11,6 +11,24 @@
     ],
     "2": [
       "This is only decoration, please go kill yourself and you parents and your siblings and everyone with the same root as you!"
+    ]
+  },
+  "10": {
+    "0": [
+      "We will heal your Pokemon, please wait.   We have healed your Pokemon, thanks for waiting."
+    ],
+    "1": [
+      "What do you want to do",
+      "Buy stuff",
+      "sell stuff(not implemented)"
+    ],
+    "2": [
+      "Are you sure you have what it takes to even stand a chance against me.",
+      "Where do you live? This is import because then i can bring you to your mommy when you lose."
+    ],
+    "3": [
+      "I think you will regret all your life choices.",
+      "I will show you what you might reach one day."
     ]
   }
 }

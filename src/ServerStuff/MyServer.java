@@ -77,9 +77,19 @@ public class MyServer {
     }
 
     private static void doKeys(Server.ClientHandler c, String s) {
+        String keys = s.replaceAll(",.*", "");
+        String dir = s.replaceAll(".*,", "");
+
+        Optional<Player.Dir> p = Arrays.stream(Player.Dir.values()).filter(a -> dir.equals("" + a.ordinal())).findFirst();
+
+        synchronized (c.getPlayer()) {
+            if (c.getPlayer().getActivity() == Player.Activity.standing) {
+                p.ifPresent(a -> c.getPlayer().setDir(a));
+            }
+        }
         synchronized (c.getKeysPressed()) {
             c.getKeysPressed().clear();
-            c.getKeysPressed().addAll(Keys.getKeysFromString(s).stream().filter(e -> !c.getKeysPressed().contains(e)).collect(Collectors.toList()));
+            c.getKeysPressed().addAll(Keys.getKeysFromString(keys).stream().filter(e -> !c.getKeysPressed().contains(e)).collect(Collectors.toList()));
         }
     }
 
@@ -120,12 +130,12 @@ public class MyServer {
 
     private static void update(Server.ClientHandler c) {
         server.setOnUpdate(false, client -> {
-            System.out.println("update");
             synchronized (client.getKeysPressed()) {
                 Vector2D tar = Vector2D.add(client.getPlayer().getPos(), Player.Dir.getDirFromKeys(client.getKeysPressed()));
                 client.getPlayer().setTargetPos(tar);
                 Optional<World> w = server.getWorlds().stream().filter(e -> e.getName().equals(c.getPlayer().getWorld())).findFirst();
                 w.ifPresent(world -> client.getPlayer().updatePos(client, client.getKeysPressed().contains(Keys.decline), world));
+                w.ifPresent(world -> client.getPlayer().updateTextEvents(client, client.getKeysPressed(), world));
             }
             sendPosUpdate(client);
         }, (int) c.getId());
