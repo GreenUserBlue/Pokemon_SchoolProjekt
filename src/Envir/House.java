@@ -97,7 +97,6 @@ public class House {
                 return true;
             }
         }
-
         return pos.getX() <= 0 && pos.getX() + size.getX() >= 0 && pos.getY() <= 0 && pos.getY() + size.getY() >= 0;
     }
 
@@ -227,21 +226,21 @@ public class House {
                 res[res.length - 1][0] = World.Block.HouseWall;
                 res[4][0] = World.Block.HouseWall;
 
-                res[6][2] = World.Block.HouseWall;
-                res[7][2] = World.Block.HouseWall;
-                res[7][3] = World.Block.HouseWall;
+                res[6][2] = World.Block.HouseBigShelfOther;
+                res[7][2] = World.Block.HouseBigShelfOther;
+                res[7][3] = World.Block.HouseBigShelfOther;
                 res[6][3] = World.Block.HouseBigShelf;
 
-                res[9][2] = World.Block.HouseWall;
+                res[9][2] = World.Block.HouseSmallShelfOther;
                 res[9][3] = World.Block.HouseSmallShelf;
 
-                res[6][6] = World.Block.HouseWall;
+                res[6][6] = World.Block.HouseBigShelfOther;
                 res[6][7] = World.Block.HouseSmallShelf;
 
-                res[7][6] = World.Block.HouseWall;
+                res[7][6] = World.Block.HouseSmallShelfOther;
                 res[7][7] = World.Block.HouseSmallShelf;
 
-                res[9][6] = World.Block.HouseWall;
+                res[9][6] = World.Block.HouseSmallShelfOther;
                 res[9][7] = World.Block.HouseSmallShelf;
                 return res;
             }
