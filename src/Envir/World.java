@@ -132,8 +132,9 @@ public class World {
      * @param size    how big the scene/Canvas is
      */
     public void drawEnvir(Canvas canvas, List<Player> players, Vector2D size, Map<String, Image> allImgs) {
-        if (players.get(0).getPos().getX() > 100_000) System.out.println(rnd + " " + id);
+        if (size.getX() > 100_000) System.out.println(rnd + " " + id);
         double blockSize;
+
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.clearRect(0, 0, size.getX(), size.getY());
         double w = size.getX();
@@ -429,7 +430,7 @@ public class World {
             p.setHouseEntrancePos(null);
             h.getPlayers().remove(p);
         }
-        List<Block> notWalkableBlocks = Arrays.asList(Block.none, Block.HouseWall, Block.HouseTable, Block.HouseTableL, Block.HouseWallL, Block.HouseL, Block.HouseR, Block.HouseBigShelf, Block.HouseSmallShelf, Block.HouseSmallShelfOther, Block.HouseBigShelfOther);
+        List<Block> notWalkableBlocks = Arrays.asList(Block.none, Block.HouseWall, Block.HouseTable, Block.HouseTableL, Block.HouseWallL, Block.HouseL, Block.HouseR, Block.HouseBigShelf, Block.HouseSmallShelf);
         if (!notWalkableBlocks.contains(cur)) {
             Optional<Player> op = MyServer.getServer().getClients().entrySet().stream().filter(c -> c != null && c.getValue() != null).map(c -> c.getValue().getPlayer()).filter(c -> c != null && c != p && (c.getHouseEntrancePos() == null ? (c.getPos().equals(Vector2D.add(Vector2D.add(h.getPos(), h.getType().getDoorPos()), new Vector2D(0, 1)))) : c.getHouseEntrancePos().equals(p.getHouseEntrancePos())) && (c.getPos().equals(pos) || (c.getActivity() == Player.Activity.moving && Vector2D.add(c.getPos(), c.getDir().getVecDir()).equals(pos)))).findAny();
             op.ifPresent(a -> p.setHouseEntrancePos(Vector2D.add(h.getPos(), h.getType().getDoorPos())));
@@ -456,9 +457,7 @@ public class World {
         HouseTable(-1),
         HouseTableL(-1),
         HouseBigShelf(1),
-        HouseBigShelfOther(1),
         HouseSmallShelf(2),
-        HouseSmallShelfOther(2),
         none(-1);
 
         private final int val;

@@ -4,9 +4,7 @@ import JsonParser.JSONValue;
 import javafx.scene.control.TextField;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class TextEvent {
@@ -19,41 +17,20 @@ public class TextEvent {
 
     private TextField field;
 
-    private long timeTillNextNextLine;
+    public TextEvent(JSONValue jsonValue) {
+        List<JSONValue> h = jsonValue.getList();
+        text = splitToLines(h.get(0).getStr().replaceAll("   ", System.lineSeparator()), 20).toArray(new String[0]);
+        h.stream().skip(1).forEach(a -> optionsAfterText.add(a.getStr()));
 
-    public TextEvent(JSONValue jsonValue, TextField field) {
-        if(field!=null){
-            this.field = field;
-            List<JSONValue> h = jsonValue.getList();
-            text = Objects.requireNonNull(splitToLines(h.get(0).getStr().replaceAll(" {3}", System.lineSeparator()), 20)).toArray(new String[0]);
-
-            h.stream().skip(1).forEach(a -> optionsAfterText.add(a.getStr()));
-            timeTillNextNextLine = System.currentTimeMillis() + 400;
-            //TODO error, weil server nie aktualisiert, dass man wieder laufen kann. (und weiter fertig machen)
-        }
     }
 
     public TextEvent() {
     }
 
-    @Override
-    public String toString() {
-        return "TextEvent{" +
-                "text=" + Arrays.toString(text) +
-                ", optionsAfterText=" + optionsAfterText +
-                ", curLine=" + curLine +
-                ", field=" + field +
-                '}';
-    }
-
     public void nextLines() {
-        if (System.currentTimeMillis() > timeTillNextNextLine) {
-            timeTillNextNextLine = System.currentTimeMillis() + 400;
-            if (text.length >= curLine + 2) {
-                curLine += 2;
-                field.setText(text[curLine - 1] + System.lineSeparator() + (text.length > curLine ? text[curLine] : ""));
-            } else {
-            }
+        if (text.length >= curLine + 2) {
+            curLine += 2;
+            field.setText(text[curLine - 1] + System.lineSeparator() + (text.length > curLine ? text[curLine] : ""));
         }
     }
 

@@ -116,8 +116,11 @@ public class MyClient extends Application {
                     if (keys.contains(Keys.menu) && client.getPlayers().get(0).getActivity() != Player.Activity.menu) {
                         menu = new Menu(getMyClient());
                         menu.showMenu();
-                    } else if (keys.contains(Keys.confirm) && client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
-                        txt.nextLines();
+                    } else if (keys.contains(Keys.confirm) && client.getPlayers().get(0).getActivity() != Player.Activity.textEvent) {
+                        World.Block b;
+                        if ((b = getNextBlock(client.getPlayers().get(0))).getVal()!=-1){
+                            txt = new TextEvent(eventTexts.get(b.getVal()));
+                        }
                     }
                     if (((count++) & 0b11) == 0) {
                         client.getPlayers().forEach(Player::updateHands);
@@ -125,9 +128,6 @@ public class MyClient extends Application {
                             StringBuilder res = new StringBuilder();
                             keys = getUpdatedKeysToSendAndUpdatePlayerDir(lastKeysPressed, keys, client.getPlayers().get(0));
                             keys.forEach(e -> res.append(e.ordinal()));
-                            if (keys.contains(Keys.confirm)) {
-                                res.append(",").append(client.getPlayers().get(0).getDir().ordinal());
-                            }
                             client.send(MessageType.toStr(MessageType.keysPres) + res);
                         } else if (client.getPlayers().get(0).getActivity() == Player.Activity.menu) {
                             menu.updatePlayerMenuPos();
@@ -264,11 +264,9 @@ public class MyClient extends Application {
     private List<Keys> getUpdatedKeysToSendAndUpdatePlayerDir(List<Keys> lastKeysPressed, List<Keys> keys, Player p) {
         if (keys.stream().anyMatch(a -> p.getDir().toString().equalsIgnoreCase(a.toString()))) return keys;
         else {
-//            keys = keys.stream().filter(e -> (e == Keys.up || e == Keys.down || e == Keys.left || e == Keys.right || e == Keys.decline || e == Keys.confirm)).toList();
+            keys = keys.stream().filter(e -> (e == Keys.up || e == Keys.down || e == Keys.left || e == Keys.right || e == Keys.decline)).toList();
             List<Keys> k = new ArrayList<>(keys);
             k.remove(Keys.decline);
-            k.remove(Keys.confirm);
-            k.remove(Keys.menu);
             if ((k.size() == 1)) p.setDir(Player.Dir.valueOf(k.get(0).toString()));
             return keys.stream().filter(lastKeysPressed::contains).toList();
         }
@@ -320,14 +318,15 @@ public class MyClient extends Application {
     @Override
     public void start(Stage primaryStage) throws MalformedURLException {
         stage = primaryStage;
-        stage.setX(1300);
+        stage.setX(1000);
         stage.setY(80);
         initImgs();
         initTexts();
         client = new Client(33333, "127.0.0.1", false);
         client.onMessage((a, b) -> {
-            if (b instanceof String s && !s.startsWith(MessageType.toStr(MessageType.updatePos)) && !s.startsWith(MessageType.toStr(MessageType.textEvent)))
+            if (b instanceof String s && !s.startsWith(MessageType.toStr(MessageType.updatePos))) {
                 System.out.println("From Server: '" + b + '\'');
+            }
         });
         int height = 300;
         stage.setScene(new Scene(LoginScreens.getLoadingScreen(), height / 9D * 16, height));
@@ -342,7 +341,7 @@ public class MyClient extends Application {
 
     private void initTexts() {
         Map<String, JSONValue> c = JSONParser.read(Path.of("./res/DataSets/texts.json"));
-        c.forEach((key, value) -> value.getMap().forEach((a, b) -> eventTexts.put(Integer.parseInt(a) + Integer.parseInt(key), b)));
+        c.forEach((key, value) -> value.getMap().forEach((a, b) -> eventTexts.put(Integer.parseInt(a), b)));
     }
 
     /**
@@ -362,25 +361,9 @@ public class MyClient extends Application {
                     case profile -> doProfiles(s.substring(3));
                     case worldSelect -> doWorldSelect(s);
                     case updatePos -> updatePos(s);
-                    case textEvent -> doTextEvent(s.substring(3));
                 }
             }
         });
-    }
-
-    private void doTextEvent(String s) {
-        Player p = client.getPlayers().get(0);
-        switch (s.charAt(0) - '0') {
-            case 0 -> {
-                synchronized (p) {
-                    p.setActivity(Player.Activity.textEvent);
-                    txt = new TextEvent(eventTexts.get(Integer.parseInt(s.substring(1))), stage.getScene().getRoot().getChildrenUnmodifiable().get(2) instanceof TextField t ? t : null);
-                }
-            }
-            case 1 -> {
-                System.out.println("you are doing something weird");
-            }
-        }
     }
 
     private void doProfiles(String str) {

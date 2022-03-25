@@ -10,7 +10,6 @@ public enum MessageType {
     worldSelect,         //Client
     keysPres,            //Client
     updatePos,           //Server
-    textEvent,           //Server
     houseRequest,        //Client
     pokAppear,           //Server
     playerInteraction,   //Client + Server
