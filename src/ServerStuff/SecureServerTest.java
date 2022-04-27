@@ -1,7 +1,7 @@
 package ServerStuff;
 
 import com.sun.net.httpserver.*;
-import org.mariadb.jdbc.internal.logging.LoggerFactory;
+
 
 import javax.net.ssl.*;
 import java.io.FileInputStream;
