@@ -4,7 +4,6 @@ import Calcs.Vector2D;
 import Envir.World;
 
 import java.io.*;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,12 +30,23 @@ public class Pokemon {
     //wie viele xp kann man auf dem Level erreichen maximal
     private int maxXP;
 
-    private int growthRate;
+    private int captureRate;
 
     //block auf dem das Pokemon spawnen kann
     private World.Block block;
 
     public static List<Pokemon> template = new ArrayList<>();
+
+
+
+    public static void main(String[] args) {
+        Pokemon.init();
+
+        Pokemon a = createPokemon(new Vector2D(900,900), World.Block.Water);
+        System.out.println(a);
+    }
+
+
 
     //liest File aus und gibts in Liste
     //und gibts in die tatsächliche Liste
@@ -61,9 +71,11 @@ public class Pokemon {
         for (int i = 0; i < 151; i++) {
             oneRow = lines[i].split(";");
             maxXp = getXpNeeded(oneRow[5], 1);
-            if (oneRow[4].contains("water")){
+            if (oneRow[4].contains("water") || oneRow[4].contains("sea")) {
                 block = World.Block.Water;
-            }else{
+            } else if (oneRow[4].equals("rare")) {
+                block = null;
+            } else {
                 block = World.Block.Grass;
             }
             template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, null, null, null, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block));
@@ -73,51 +85,27 @@ public class Pokemon {
     }
 
     /**
-     *
-     *
      * @param levelType
-     * @param curLevel das is das tatsächlich derzeitige Level
+     * @param curLevel  das is das tatsächlich derzeitige Level
      * @return
      */
     private static int getXpNeeded(String levelType, int curLevel) {
         int maxXp = 0;
         curLevel++;
-        if (levelType.equals("fast")){
-            maxXp = (int) ((4 * Math.pow(curLevel,3))/5);
-        }else if (levelType.equals("medium")){
-            maxXp = (int) Math.pow(curLevel,3);
-        }else if (levelType.equals("medium-slow")){
-            maxXp = (int) (((6 * Math.pow(curLevel,3))/5) - (15 * Math.pow(curLevel,2)) + (100 * curLevel) - 140);
-        }else {//if (levelType.equals("slow"))
-            maxXp = (int) ((5 * Math.pow(curLevel,3))/4);
+        if (levelType.equals("fast")) {
+            maxXp = (int) ((4 * Math.pow(curLevel, 3)) / 5);
+        } else if (levelType.equals("medium")) {
+            maxXp = (int) Math.pow(curLevel, 3);
+        } else if (levelType.equals("medium-slow")) {
+            maxXp = (int) (((6 * Math.pow(curLevel, 3)) / 5) - (15 * Math.pow(curLevel, 2)) + (100 * curLevel) - 140);
+        } else {//if (levelType.equals("slow"))
+            maxXp = (int) ((5 * Math.pow(curLevel, 3)) / 4);
         }
         return maxXp;
     }
 
-    public static void main(String[] args) {
-        Pokemon.init();
-        System.out.println(template);
 
-
-        /*Attack[] a = new Attack[4];
-        Type[] b = new Type[]{Type.grass};
-        Pokemon bisasam = new Pokemon("Bisasam", 1, EvolveType.Level, a, Nature.hardy, b,  1, 0, 20);
-
-        Pokemon p = createPokemon(new Vector2D(200, 300), World.Block.Grass);
-        p.addExp(23);
-        p.addExp(60);
-        System.out.println(createPokemon(new Vector2D(0, 1), World.Block.Water));
-        System.out.println(p.toMsg());
-        System.out.println(Pokemon.getFromMsg(""));
-        //Taubsi 1-200 0.4 200-300 0.1
-
-         */
-    }
-
-
-
-
-    public Pokemon(String name, int id, EvolveType evolveType, Attack[] attacks, Nature nature, Type[] type, int level, int xp, int maxXP, int growthRate, World.Block block) {
+    public Pokemon(String name, int id, EvolveType evolveType, Attack[] attacks, Nature nature, Type[] type, int level, int xp, int maxXP, int captureRate, World.Block block) {
         this.name = name;
         this.id = id;
         this.evolveType = evolveType;
@@ -127,13 +115,28 @@ public class Pokemon {
         this.level = level;
         this.xp = xp;
         this.maxXP = maxXP;
-        this.growthRate = growthRate;
+        this.captureRate = captureRate;
         this.block = block;
     }
 
-    //TODO eine Methode getPokemon die mit id und level genau das Pokemon übergibt(mit den stats des levels)
+
+
+    //TODO neues Bild
+
+
+    //TODO die Stats an das Level anpassen
+    private static Pokemon getPokemon(int id, int level) {
+        Pokemon a = template.get(id-1);
+        a.level = level;
+        return a;
+    }
 
     public Pokemon() {
+    }
+
+    public Pokemon(int id, int level) {
+        this.id = id;
+        this.level = level;
     }
 
     /**
@@ -171,12 +174,71 @@ public class Pokemon {
     }
 
     //pos für wie weit vom spawnt entfernt
+    //TODO es is nicht beachtet wegen Grass und Wasser
+    //TODO vl schöner machen und sachen in Methoden auslagern
     private static Pokemon createPokemon(Vector2D pos, World.Block block) {
+        int distance = (int) pos.magnitude();
+        int level = (int) Math.sqrt(distance);
+        List<Pokemon> possibilities = new ArrayList<>();
+        if (level == 0) {
+            level = 1;
+        }
         if (block.equals(World.Block.Grass)) {
-            return new Pokemon();
-
+            if (distance >= 0 && distance <= 150) {
+                for (Pokemon pokemon : template) {
+                    if (pokemon.captureRate >= 150 && pokemon.captureRate <= 255 && pokemon.block == World.Block.Grass) {
+                        possibilities.add(pokemon);
+                    }
+                }
+            } else if (distance > 150 && distance <= 500) {
+                for (Pokemon pokemon : template) {
+                    if (pokemon.captureRate >= 100 && pokemon.captureRate <= 255 && pokemon.block == World.Block.Grass) {
+                        possibilities.add(pokemon);
+                    }
+                }
+            } else if (distance > 500 && distance <= 3000) {
+                for (Pokemon pokemon : template) {
+                    if (pokemon.captureRate >= 50 && pokemon.captureRate <= 150 && pokemon.block == World.Block.Grass) {
+                        possibilities.add(pokemon);
+                    }
+                }
+            } else if (distance > 3000 && distance <= 10000) {
+                for (Pokemon pokemon : template) {
+                    if (pokemon.captureRate >= 4 && pokemon.captureRate <= 100 && pokemon.block == World.Block.Grass) {
+                        possibilities.add(pokemon);
+                    }
+                }
+            }
+            int number = (int) (Math.random() * (possibilities.size() - 1 + 1) + 1);
+            return getPokemon(possibilities.get(number).id, level);
         } else if (block.equals(World.Block.Water)) {
-            return new Pokemon();
+            if (distance >= 0 && distance <= 150) {
+                for (Pokemon pokemon : template) {
+                    if (pokemon.captureRate >= 150 && pokemon.captureRate <= 255 && pokemon.block == World.Block.Water) {
+                        possibilities.add(pokemon);
+                    }
+                }
+            } else if (distance > 150 && distance <= 500) {
+                for (Pokemon pokemon : template) {
+                    if (pokemon.captureRate >= 100 && pokemon.captureRate <= 255 && pokemon.block == World.Block.Water) {
+                        possibilities.add(pokemon);
+                    }
+                }
+            } else if (distance > 500 && distance <= 3000) {
+                for (Pokemon pokemon : template) {
+                    if (pokemon.captureRate >= 50 && pokemon.captureRate <= 150 && pokemon.block == World.Block.Water) {
+                        possibilities.add(pokemon);
+                    }
+                }
+            } else if (distance > 3000 && distance <= 10000) {
+                for (Pokemon pokemon : template) {
+                    if (pokemon.captureRate >= 4 && pokemon.captureRate <= 100 && pokemon.block == World.Block.Water) {
+                        possibilities.add(pokemon);
+                    }
+                }
+            }
+            int number = (int) (Math.random() * (possibilities.size() - 1 + 1) + 1);
+            return getPokemon(possibilities.get(number).id, level);
         }
         //math.sqrt(pos.magnitude) --> das is das level des pokemons pokemons
         //pos.magnitude --> entfernung vom spawn
@@ -250,6 +312,7 @@ public class Pokemon {
                 ", level=" + level +
                 ", xp=" + xp +
                 ", maxXP=" + maxXP +
+                ", captureRate=" + captureRate +
                 ", block=" + block +
                 '}';
     }
