@@ -4,6 +4,7 @@ import Calcs.Vector2D;
 import ClientStuff.Keys;
 import ClientStuff.Player;
 import Envir.World;
+import InGame.Pokemon;
 
 import java.io.IOException;
 import java.math.BigInteger;

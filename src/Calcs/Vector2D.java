@@ -94,6 +94,11 @@ public class Vector2D {
         return getAngle(this, p);
     }
 
+
+    public double magnitude() {
+        return Math.sqrt(x * x + y * y);
+    }
+
     /**
      * @return die X-Coordinates
      */
@@ -187,6 +192,7 @@ public class Vector2D {
 
     /**
      * checks if either x or y absolute value is bigger than d
+     *
      * @param d the min for either value
      */
     public boolean anyBigger(double d) {
@@ -195,6 +201,7 @@ public class Vector2D {
 
     /**
      * rounds the value to specific number of decimal-points
+     *
      * @param decimalPoints the number of decimal-points
      */
     public void round(int decimalPoints) {
@@ -204,7 +211,8 @@ public class Vector2D {
 
     /**
      * rounds a single value to a single number of points
-     * @param value the value which needs to be rounded
+     *
+     * @param value         the value which needs to be rounded
      * @param decimalPoints the number of decimal-points
      * @return tthe new rounded value
      */

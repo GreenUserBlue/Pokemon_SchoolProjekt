@@ -17,6 +17,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
@@ -117,7 +118,9 @@ public class MyClient extends Application {
                         menu = new Menu(getMyClient());
                         menu.showMenu();
                     } else if (keys.contains(Keys.confirm) && client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
-                        txt.nextLines();
+                        txt.nextLine();
+                    } else if (client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
+                        System.out.println("now in text");
                     }
                     if (((count++) & 0b11) == 0) {
                         client.getPlayers().forEach(Player::updateHands);
@@ -193,6 +196,7 @@ public class MyClient extends Application {
                         f.setToValue(1);
                         f.playFromStart();
                         stage.getScene().setRoot(p);
+
                     }
                 }
             }
@@ -372,9 +376,18 @@ public class MyClient extends Application {
         Player p = client.getPlayers().get(0);
         switch (s.charAt(0) - '0') {
             case 0 -> {
-                synchronized (p) {
-                    p.setActivity(Player.Activity.textEvent);
-                    txt = new TextEvent(eventTexts.get(Integer.parseInt(s.substring(1))), stage.getScene().getRoot().getChildrenUnmodifiable().get(2) instanceof TextField t ? t : null);
+                synchronized (client.getPlayers().get(0)) {
+                    if (p.getActivity() != Player.Activity.textEvent) {
+                        System.out.println("MyClient.doTextEvent: got something");
+                        p.setActivity(Player.Activity.textEvent);
+                        TextArea t = null;
+                        if (stage.getScene().getRoot().getChildrenUnmodifiable().size() > 1 && stage.getScene().getRoot().getChildrenUnmodifiable().get(1) instanceof TextArea field) {
+                            t = field;
+                        } else {
+                            // t = TextEvent.getText();
+                        }
+                        txt = new TextEvent(eventTexts.get(Integer.parseInt(s.substring(1))), t, null);
+                    }
                 }
             }
             case 1 -> {
@@ -420,7 +433,7 @@ public class MyClient extends Application {
                 client.getPlayers().add(new Player(client.getUsername(), new Vector2D(3, 2), 0, client.getErrorTxt().getText()));
                 animationTimer.start();
             }
-            case 1 -> client.getErrorTxt().setText("region does not exist");
+            case 1 -> client.getErrorTxt().setText("Player/World does not exist");
             case 2 -> client.getErrorTxt().setText("you are not logged in");
             default -> client.getErrorTxt().setText("Something went wrong. Please check if your program is on the latest version.");
         }

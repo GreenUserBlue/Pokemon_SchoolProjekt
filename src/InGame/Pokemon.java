@@ -5,6 +5,8 @@ import Envir.World;
 
 public class Pokemon {
 
+
+
     private String name;
 
     private int id;
@@ -31,7 +33,7 @@ public class Pokemon {
     public static void main(String[] args) {
         Attack[] a = new Attack[4];
         Type[] b = new Type[]{Type.grass};
-        Pokemon bisasam = new Pokemon("Bisasam", 1, EvolveType.Level, a, Nature.hardy, b,  1, 0, 20);
+        Pokemon bisasam = new Pokemon("Bisasam", 1, EvolveType.Level, a, Nature.hardy, b, 1, 0, 20);
 
         Pokemon p = createPokemon(new Vector2D(200, 300), World.Block.Grass);
         p.addExp(23);
@@ -81,7 +83,7 @@ public class Pokemon {
     private void addExp(int newExP) {
         if (newExP + xp >= maxXP) {
             levelUp(maxXP - xp - newExP);
-        }else{
+        } else {
             xp = newExP + xp;
         }
     }
@@ -93,10 +95,10 @@ public class Pokemon {
     }
 
     private static Pokemon createPokemon(Vector2D pos, World.Block block) {
-        if (block.equals(World.Block.Grass)){
+        if (block.equals(World.Block.Grass)) {
             return new Pokemon();
 
-        }else if (block.equals(World.Block.Water)){
+        } else if (block.equals(World.Block.Water)) {
             return new Pokemon();
         }
 

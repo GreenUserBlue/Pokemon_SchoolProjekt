@@ -302,7 +302,7 @@ public class House {
 
             @Override
             public Vector2D getDoorPos() {
-                return new Vector2D(1, getSize().getY() - 1);
+                return new Vector2D(1, getSize().getY() - 2);
             }
 
             @Override

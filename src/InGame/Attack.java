@@ -1,6 +1,9 @@
 package InGame;
 
+import javafx.scene.paint.Color;
+
 public class Attack {
+
     private String name;
 
     private Type type;
