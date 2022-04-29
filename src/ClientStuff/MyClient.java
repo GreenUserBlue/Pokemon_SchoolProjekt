@@ -38,7 +38,10 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+//Hod
+//--module-path "D:\Alle Apps\javafx-sdk-11.0.2\lib" --add-modules javafx.controls,javafx.fxml
 
+//Zwi
 //--module-path "C:\Program Files\Java\openjfx-16_windows-x64_bin-sdk\javafx-sdk-16\lib" --add-modules javafx.controls,javafx.fxml
 public class MyClient extends Application {
 
@@ -323,7 +326,7 @@ public class MyClient extends Application {
     @Override
     public void start(Stage primaryStage) throws MalformedURLException {
         stage = primaryStage;
-        stage.setX(1300);
+        stage.setX(1000);
         stage.setY(80);
         initImgs();
         initTexts();

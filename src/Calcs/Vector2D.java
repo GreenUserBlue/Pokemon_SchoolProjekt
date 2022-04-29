@@ -147,6 +147,15 @@ public class Vector2D {
         this.y -= v.y;
     }
 
+    /**
+     * Die Entfernung zur Mitte der Map
+     *
+     * @return double entfernung zum Spawn
+     */
+    public double magnitude(){
+        return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
