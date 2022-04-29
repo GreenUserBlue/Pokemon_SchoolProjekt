@@ -196,7 +196,6 @@ public class MyClient extends Application {
                         f.setToValue(1);
                         f.playFromStart();
                         stage.getScene().setRoot(p);
-
                     }
                 }
             }

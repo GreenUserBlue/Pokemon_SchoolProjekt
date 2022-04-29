@@ -5,10 +5,13 @@ import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,7 +29,9 @@ public class TextEvent {
 
     private long timeTillNextNextLine;
 
-    private GridPane optionsNode;
+    private final VBox optionsNode = new VBox();
+
+    private GridPane grid=new GridPane();
 
     public TextEventState getState() {
         return state;
@@ -58,34 +63,39 @@ public class TextEvent {
         }
 
         text = Objects.requireNonNull(splitToLines(h.get(0).getStr().replaceAll(" {3}", System.lineSeparator()), 20)).toArray(new String[0]);
+        optionsNode.getChildren().clear();
         h.stream().skip(1).forEach(a -> {
             optionsAfterText.add(a.getStr());
-          /*  optionsNode.getChildren().clear();
-            ColumnConstraints c = new ColumnConstraints();
-
-            c.setPercentWidth(optionsAfterText.size() % 2 == 0 ? optionsAfterText.size() / 2 : optionsAfterText.size() / 2 + 1);
-            VBox box = new VBox();
-            for (int i = 0; i < optionsAfterText.size(); i++) {
-                Button t = new Button(optionsAfterText.get(i));
-                t.setMaxWidth(Double.MAX_VALUE);
-                t.setMaxHeight(Double.MAX_VALUE);
-                box.getChildren().add(t);
-                if (i % 2 == 0) {
-                    optionsNode.getColumnConstraints().add(c);
-                    box.setAlignment(Pos.BOTTOM_RIGHT);
-                    GridPane.setHalignment(box, HPos.RIGHT);//TODO ein gridpane mit allen antworten, welches im gridpane mit txt und diesem gridpane ist
-                    optionsNode.add(box, i / 2, 0);
-                }
-            }*/
-
+//            c.setPercentWidth(optionsAfterText.size() % 2 == 0 ? optionsAfterText.size() / 2 : optionsAfterText.size() / 2 + 1);
+            Button t = new Button(optionsAfterText.get(optionsAfterText.size() - 1));
+            t.setMaxWidth(Double.MAX_VALUE);
+            t.setMaxHeight(Double.MAX_VALUE);
+            optionsNode.getChildren().add(t);
         });
+        optionsNode.setAlignment(Pos.BOTTOM_RIGHT);
+        GridPane.setHalignment(optionsNode, HPos.RIGHT); //TODO ein gridpane mit allen antworten, welches im gridpane mit txt und diesem gridpane ist
         nextLine();
+        createGrid();
+
+
     }
 
-    public static TextField getText() {
-        TextField t = new TextField();
+    private void createGrid() {
+        grid.getChildren().clear();
+        grid.getColumnConstraints().clear();
+        grid.getRowConstraints().clear();
 
-        return t;
+        ColumnConstraints c3 = new ColumnConstraints();
+        c3.setPercentWidth(100);
+        grid.getColumnConstraints().add(c3);
+
+        RowConstraints r = new RowConstraints();
+        RowConstraints r2 = new RowConstraints();
+        r.setPercentHeight(85);
+        r2.setPercentHeight(15);
+        grid.getRowConstraints().addAll(r, r2);
+
+        grid.add(field, 0, 1);
     }
 
     @Override
@@ -125,23 +135,17 @@ public class TextEvent {
     }
 
     public Node getOptionsNode() {
-        VBox box = new VBox();
-
-        optionsAfterText.forEach(a -> {
-            Button t = new Button(a);
-//            t.setMaxWidth(Double.MAX_VALUE);
-            t.setMaxHeight(Double.MAX_VALUE);
-
-            box.getChildren().add(t);
-        });
-        box.setAlignment(Pos.BOTTOM_RIGHT);
-        GridPane.setHalignment(box, HPos.RIGHT);
-
-        return box;
+        return optionsNode;
     }
 
-    void updateSize(VBox box, GridPane pa) {
-        box.setMaxWidth(((GridPane) box.getParent()).getWidth() * 0.2);
+    public GridPane getGrid() {
+        return grid;
+    }
+
+    void updateSize() {
+        optionsNode.setPrefWidth(((GridPane) optionsNode.getParent()).getWidth() * 0.2);
+        optionsNode.getChildren().forEach(a -> ((Button) a).setMaxWidth(optionsNode.getPrefWidth()));
+        System.out.println(((Button) optionsNode.getChildren().get(0)).getMaxWidth());
     }
 
     /**
@@ -157,7 +161,6 @@ public class TextEvent {
             boolean isLineBreak = false;
             for (int j = 0; j < maxLen; j++) {
                 if (i - maxLen + j < s.length() && s.substring(i - maxLen + j).startsWith(System.lineSeparator())) {
-//                    System.out.println("detected");
                     list.add(s.substring(i - maxLen, i - maxLen + j));
                     isLineBreak = true;
                     i += j + 1;
@@ -169,11 +172,7 @@ public class TextEvent {
             for (int j = 0; j < maxLen; j++) {
                 if (i - j < s.length() && s.substring(i - j).startsWith(System.lineSeparator())) {
                     System.out.println("detected");
-                    /*String str = s.substring((i), i + j).trim();
-                    if (!str.isBlank()) list.add(str);
-                    i += maxLen - j;
-                    break;*/
-                } /*else*/
+                }
                 if (i - j < s.length() && Pattern.matches("\\s", "" + s.charAt(i - j))) {
                     String str = s.substring((i - maxLen), i - j).trim();
                     if (!str.isBlank()) list.add(str);
