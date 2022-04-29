@@ -335,7 +335,7 @@ public class MyClient extends Application {
         int height = 300;
         stage.setScene(new Scene(LoginScreens.getLoadingScreen(), height / 9D * 16, height));
         addListener();
-        stage.setTitle("Pokemon");
+        stage.setTitle("Pokemon OW");
         stage.getIcons().add(new Image(String.valueOf(Paths.get("res/icon.png").toUri().toURL())));
         stage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
         designUpdater.start();
@@ -385,7 +385,7 @@ public class MyClient extends Application {
                         } else {
                             // t = TextEvent.getText();
                         }
-                        txt = new TextEvent(eventTexts.get(Integer.parseInt(s.substring(1))), t, null);
+//                        txt = new TextEvent(eventTexts.get(Integer.parseInt(s.substring(1))), t, null);
                     }
                 }
             }
