@@ -35,6 +35,8 @@ public class Pokemon {
     //block auf dem das Pokemon spawnen kann
     private World.Block block;
 
+    private String growthRate;
+
     public static List<Pokemon> template = new ArrayList<>();
 
 
@@ -78,7 +80,7 @@ public class Pokemon {
             } else {
                 block = World.Block.Grass;
             }
-            template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, null, null, null, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block));
+            template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, null, null, null, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block, oneRow[5]));
         }
 
 
@@ -105,7 +107,9 @@ public class Pokemon {
     }
 
 
-    public Pokemon(String name, int id, EvolveType evolveType, Attack[] attacks, Nature nature, Type[] type, int level, int xp, int maxXP, int captureRate, World.Block block) {
+
+
+    public Pokemon(String name, int id, EvolveType evolveType, Attack[] attacks, Nature nature, Type[] type, int level, int xp, int maxXP, int captureRate, World.Block block, String growthRate) {
         this.name = name;
         this.id = id;
         this.evolveType = evolveType;
@@ -117,18 +121,33 @@ public class Pokemon {
         this.maxXP = maxXP;
         this.captureRate = captureRate;
         this.block = block;
+        this.growthRate = growthRate;
     }
-
 
 
     //TODO neues Bild
 
 
+
+
+
     //TODO die Stats an das Level anpassen
     private static Pokemon getPokemon(int id, int level) {
-        Pokemon a = template.get(id-1);
+        Pokemon a = new Pokemon();
+        try {
+            a = template.get(id-1).clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
         a.level = level;
+        a.xp = getXpNeeded(a.growthRate, level-1);//TODO is die xp wenn man gerade auf das level gekommen ist
+        a.maxXP=getXpNeeded(a.growthRate, level);
         return a;
+    }
+
+    @Override
+    protected Pokemon clone() throws CloneNotSupportedException {
+        return new Pokemon(name, id, evolveType, attacks, nature, type, level, xp, maxXP, captureRate, block, growthRate);
     }
 
     public Pokemon() {
