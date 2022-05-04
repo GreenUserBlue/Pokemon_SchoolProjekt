@@ -54,6 +54,8 @@ public class Pokemon {
 
         private static final Random rnd=new Random(696969);
 
+
+
     public static void main(String[] args) {
         Pokemon.init();
         /*for (Pokemon pokemon : template) {
@@ -61,6 +63,8 @@ public class Pokemon {
         }
 
          */
+
+
 
         Pokemon a = createPokemon(new Vector2D(3000,2471), World.Block.Grass);
         System.out.println(a);
@@ -94,9 +98,11 @@ public class Pokemon {
         }
         String[] oneRow;//bis jz nur 6 attribute
         String[] oneRow2;
+
         int maxXp;
         World.Block block;
         for (int i = 0; i < 151; i++) {
+            Type[] types = new Type[2];
             oneRow = lines[i].split(";");
             oneRow2 = lines2[i].split(",");
             maxXp = getXpNeeded(oneRow[5], 1);
@@ -108,7 +114,19 @@ public class Pokemon {
                 block = World.Block.Grass;
             }
             s = new State(Integer.parseInt(oneRow2[5]), Integer.parseInt(oneRow2[6]), Integer.parseInt(oneRow2[7]), Integer.parseInt(oneRow2[8]), Integer.parseInt(oneRow2[9]), Integer.parseInt(oneRow2[10]));
-            template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, null, null, null, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block, oneRow[5], s, new int[6]));
+            System.out.println(oneRow2[3]);
+            if (oneRow2[3].equals("")){
+                //oneRow2[3] = null;
+                types[0] = Type.valueOf(oneRow2[2].toLowerCase());
+                types[1] = null;
+                System.out.println(Arrays.toString(types));
+            }else{
+                types[0] = Type.valueOf(oneRow2[2].toLowerCase());
+                //System.out.println(types[1]);
+                types[1] = Type.valueOf(oneRow2[3].toLowerCase());
+                System.out.println(Arrays.toString(types));
+            }
+            template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, null, null, types, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block, oneRow[5], s, new int[6]));
         }
 
 
@@ -171,7 +189,6 @@ public class Pokemon {
         for (int i = 0; i < 6; i++) {
             a.iv[i] = rnd.nextInt(16);
         }
-        System.out.println(template.get(id).getState());
         a.state.add(id, level, a.nature);
         return a;
     }
