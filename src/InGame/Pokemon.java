@@ -243,6 +243,7 @@ public class Pokemon {
         xp = xpOverride;
     }
 
+
     //pos für wie weit vom spawnt entfernt
     //TODO vl schöner machen und sachen in Methoden auslagern
     private static Pokemon createPokemon(Vector2D pos, World.Block block) {
