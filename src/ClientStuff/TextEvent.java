@@ -1,6 +1,7 @@
 package ClientStuff;
 
 import JsonParser.JSONValue;
+import javafx.animation.AnimationTimer;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -17,7 +18,7 @@ import java.util.regex.Pattern;
 /**
  * @author Zwickelstorfer Felix
  * @version 2.1
- *
+ * <p>
  * presents a graphic gridpane with a textarea, which always presents two lines of a text
  */
 public class TextEvent {
@@ -36,7 +37,13 @@ public class TextEvent {
 
     private String[] text;
 
+    private boolean isCurFin = true;
+
+    private String curTextToWrite = "";
+
     private int curLine = 0;
+
+    private int curCharsShown = 0;
 
     private long timeTillNextNextLine;
 
@@ -128,7 +135,7 @@ public class TextEvent {
             Button t = new Button(optionsAfterText.get(optionsAfterText.size() - 1));
             optionsNode.getChildren().add(t);
         });
-        System.out.println(Arrays.toString(text));
+//        System.out.println(Arrays.toString(text));
         optionsNode.setAlignment(Pos.BOTTOM_RIGHT);
         GridPane.setHalignment(optionsNode, HPos.RIGHT);
         nextLine();
@@ -174,11 +181,34 @@ public class TextEvent {
      * shows the next line on the textField
      */
     public boolean nextLine() {
-        if (System.currentTimeMillis() > timeTillNextNextLine && text != null) {
+        if (/*System.currentTimeMillis() > timeTillNextNextLine &&*/ text != null && isCurFin) {
+            System.out.println("hiii");
+            isCurFin = false;
             timeTillNextNextLine = System.currentTimeMillis() + 400;
             if (text.length > curLine + 1 || text.length == 1 && curLine == 0) {
                 curLine++;
-                field.setText(text[curLine - 1] + System.lineSeparator() + (text.length > curLine ? text[curLine] : ""));
+                curTextToWrite = text[curLine - 1] + System.lineSeparator() + (text.length > curLine ? text[curLine] : "");
+                curCharsShown = curLine != 1 ? Math.max(curTextToWrite.indexOf(System.lineSeparator()), 1) : 1;
+
+                System.out.println(curTextToWrite);
+                AnimationTimer timer = new AnimationTimer() {
+                    long timeTillNextUse = 0;
+
+                    @Override
+                    public void handle(long l) {
+                        if (timeTillNextUse < System.currentTimeMillis()) {
+                            timeTillNextUse = System.currentTimeMillis() + 15;
+                            if (curCharsShown <= curTextToWrite.length()) {
+                                field.setText(curTextToWrite.substring(0, curCharsShown++));
+                            } else {
+                                isCurFin = true;
+                                stop();
+                            }
+                        }
+                    }
+                };
+                timer.start();
+                field.setText("");
                 state = TextEventState.reading;
             } else {
                 if (hasOptions()) {
