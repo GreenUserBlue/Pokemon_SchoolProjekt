@@ -4,7 +4,7 @@ import javafx.scene.paint.Color;
 
 public enum Type {
     normal(Color.GRAY),
-    fighting(),
+    fighting,
     flying,
     poison,
     ground,

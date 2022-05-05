@@ -17,7 +17,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
@@ -71,7 +70,7 @@ public class MyClient extends Application {
     /**
      * the textBox when the player talks to someone or something
      */
-    private TextEvent txt = new TextEvent();
+    private final TextEvent txt = new TextEvent();
 
     public static Map<Integer, JSONValue> eventTexts = new HashMap<>();
 
@@ -107,9 +106,11 @@ public class MyClient extends Application {
         public void handle(long l) {
             if (System.currentTimeMillis() > timeTillNextUse) {
                 timeTillNextUse = System.currentTimeMillis() + 20;
+
+                txt.updateSize(stage.getScene());
                 Canvas c = (Canvas) (stage.getScene().getRoot().getChildrenUnmodifiable().get(0));
-                c.setWidth(stage.getScene().getWidth());
-                c.setHeight(stage.getScene().getHeight());
+//             a   c.setWidth(stage.getScene().getWidth());
+//                c.setHeight(stage.getScene().getHeight());
                 synchronized (client.getPlayers()) {
                     if (client.getPlayers().get(0).getHouseEntrancePos() == null) {
                         client.getWorld().drawEnvir(c, client.getPlayers(), new Vector2D(stage.getScene().getWidth(), stage.getScene().getHeight()), allImgs);
@@ -121,9 +122,17 @@ public class MyClient extends Application {
                         menu = new Menu(getMyClient());
                         menu.showMenu();
                     } else if (keys.contains(Keys.confirm) && client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
-                        txt.nextLine();
+                        if (txt.nextLine()) {
+                            if (txt.getState() == TextEvent.TextEventState.selection) {
+
+                            } else {
+                                client.getPlayers().get(0).setActivity(Player.Activity.standing);
+                                System.out.println("finished");
+                            }
+                        }
                     } else if (client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
-                        System.out.println("now in text");
+                        txt.getField().setVisible(true);
+//                        System.out.println("now in text");
                     }
                     if (((count++) & 0b11) == 0) {
                         client.getPlayers().forEach(Player::updateHands);
@@ -382,13 +391,7 @@ public class MyClient extends Application {
                     if (p.getActivity() != Player.Activity.textEvent) {
                         System.out.println("MyClient.doTextEvent: got something");
                         p.setActivity(Player.Activity.textEvent);
-                        TextArea t = null;
-                        if (stage.getScene().getRoot().getChildrenUnmodifiable().size() > 1 && stage.getScene().getRoot().getChildrenUnmodifiable().get(1) instanceof TextArea field) {
-                            t = field;
-                        } else {
-                            // t = TextEvent.getText();
-                        }
-//                        txt = new TextEvent(eventTexts.get(Integer.parseInt(s.substring(1))), t, null);
+                        Platform.runLater(() -> txt.startNewText(eventTexts.get(Integer.parseInt(s.substring(1))), null, false));
                     }
                 }
             }
@@ -430,7 +433,7 @@ public class MyClient extends Application {
         switch (s.charAt(3) - '0') {
             case 0 -> {
                 client.setWorld(new World(Integer.parseInt(s.substring(4, s.indexOf(","))), client.getErrorTxt().getText()));
-                stage.getScene().setRoot(LoginScreens.getGameScreen());
+                stage.getScene().setRoot(LoginScreens.getGameScreen(txt));
                 client.setUsername(s.substring(s.indexOf(",") + 1));
                 client.getPlayers().add(new Player(client.getUsername(), new Vector2D(3, 2), 0, client.getErrorTxt().getText()));
                 animationTimer.start();

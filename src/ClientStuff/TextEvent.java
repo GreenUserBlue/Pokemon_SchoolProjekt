@@ -3,6 +3,7 @@ package ClientStuff;
 import JsonParser.JSONValue;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TextArea;
@@ -13,9 +14,19 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
+/**
+ * @author Zwickelstorfer Felix
+ * @version 2.1
+ *
+ * presents a graphic gridpane with a textarea, which always presents two lines of a text
+ */
 public class TextEvent {
 
     private final List<String> optionsAfterText = new ArrayList<>();
+
+    public TextArea getField() {
+        return field;
+    }
 
     private final TextArea field;
 
@@ -32,6 +43,12 @@ public class TextEvent {
     private boolean showAfterwards = false;
 
     private TextEventState state = TextEventState.nothing;
+
+    public long getTimeAtLastFin() {
+        return timeAtLastFin;
+    }
+
+    private long timeAtLastFin = 0;
 
     public TextEvent() {
         field = new TextArea();
@@ -65,9 +82,9 @@ public class TextEvent {
             boolean isLineBreak = false;
             for (int j = 0; j < maxLen; j++) {
                 if (i - maxLen + j < s.length() && s.substring(i - maxLen + j).startsWith(System.lineSeparator())) {
-                    list.add(s.substring(i - maxLen, i - maxLen + j));
+                    list.add(s.substring(i - maxLen, i - maxLen + j + System.lineSeparator().length() - 1));
                     isLineBreak = true;
-                    i += j + 1;
+                    i += j + 1 + System.lineSeparator().length() - 1;
                     break;
                 }
             }
@@ -99,18 +116,19 @@ public class TextEvent {
     public void startNewText(JSONValue jsonValue, Map<String, String> keys, boolean showAfterwards) {
         this.showAfterwards = showAfterwards;
         List<JSONValue> h = jsonValue.getList();
+        AtomicReference<String> s = new AtomicReference<>(h.get(0).getStr());
         if (keys != null) {
-            AtomicReference<String> s = new AtomicReference<>(h.get(0).getStr());
-            keys.forEach((a, b) -> s.set(s.get().replaceAll(a, b)));
+            keys.forEach((a, b) -> s.set(s.get().replaceAll("%[$]%" + a + "%[$]%", b)));
         }
 
-        text = Objects.requireNonNull(splitToLines(h.get(0).getStr().replaceAll(" {3}", System.lineSeparator()), 80)).toArray(new String[0]);
+        text = Objects.requireNonNull(splitToLines(s.get().replaceAll(" {3}", System.lineSeparator()), 80)).toArray(new String[0]);
         optionsNode.getChildren().clear();
         h.stream().skip(1).forEach(a -> {
             optionsAfterText.add(a.getStr());
             Button t = new Button(optionsAfterText.get(optionsAfterText.size() - 1));
             optionsNode.getChildren().add(t);
         });
+        System.out.println(Arrays.toString(text));
         optionsNode.setAlignment(Pos.BOTTOM_RIGHT);
         GridPane.setHalignment(optionsNode, HPos.RIGHT);
         nextLine();
@@ -121,6 +139,7 @@ public class TextEvent {
         startNewText(jsonValue, keys, false);
     }
 
+    // My Guess is that this text will go on for now an that you will have some fun for waiting till you can press again and then you shall die because i have depression and i want to tell you about it.   I hope you won't delete this game now because this text-box is going on for now.
     private void createGrid() {
         grid.getChildren().clear();
         grid.getColumnConstraints().clear();
@@ -154,14 +173,13 @@ public class TextEvent {
     /**
      * shows the next line on the textField
      */
-    public void nextLine() {
-        if (System.currentTimeMillis() > timeTillNextNextLine) {
-            timeTillNextNextLine = System.currentTimeMillis() + 100;
-            if (text.length > curLine + 1) {
+    public boolean nextLine() {
+        if (System.currentTimeMillis() > timeTillNextNextLine && text != null) {
+            timeTillNextNextLine = System.currentTimeMillis() + 400;
+            if (text.length > curLine + 1 || text.length == 1 && curLine == 0) {
                 curLine++;
                 field.setText(text[curLine - 1] + System.lineSeparator() + (text.length > curLine ? text[curLine] : ""));
                 state = TextEventState.reading;
-                System.out.println(Arrays.toString(text));
             } else {
                 if (hasOptions()) {
                     state = TextEventState.selection;
@@ -173,8 +191,14 @@ public class TextEvent {
                         field.setVisible(false);
                     }
                 }
+                timeAtLastFin = System.currentTimeMillis();
+                if (text.length <= 1) {
+                    field.setText(text[0]);
+                }
+                return true;
             }
         }
+        return false;
     }
 
     public boolean hasOptions() {
@@ -197,6 +221,12 @@ public class TextEvent {
         } else {
             optionsNode.getChildren().forEach(a -> ((Button) a).setMaxWidth(optionsNode.getPrefWidth()));
         }
+    }
+
+    public void updateSize(Scene scene) {
+        grid.setMinSize(scene.getWidth(), scene.getHeight());
+        grid.setMaxSize(scene.getWidth(), scene.getHeight());
+        grid.setPrefSize(scene.getWidth(), scene.getHeight());
     }
 
     public enum TextEventState {

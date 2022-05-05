@@ -4,7 +4,6 @@ import Calcs.Vector2D;
 import ClientStuff.Keys;
 import ClientStuff.Player;
 import Envir.World;
-import InGame.Pokemon;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -52,6 +51,7 @@ public class MyServer {
                     case profile -> doProfile(c, s.substring(3));
                     case worldSelect -> doRegion(c, s);
                     case keysPres -> doKeys(c, s.substring(3));
+                    case textEvent -> doTextEvents(c,s.substring(3));
                     case error -> System.out.println("ERROR-Message: " + s);
                 }
             }
@@ -59,6 +59,10 @@ public class MyServer {
         Random r = new Random();
         for (int i = 0; i < 5; i++) server.getWorlds().add(new World((int) (69420 + r.nextDouble() * 100000), "" + i));
         server.getWorlds().add(new World(696969, "K"));
+    }
+
+    private static void doTextEvents(Server.ClientHandler c, String s) {
+
     }
 
     private static void doProfile(Server.ClientHandler c, String s) {

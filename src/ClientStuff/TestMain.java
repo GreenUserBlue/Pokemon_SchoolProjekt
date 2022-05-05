@@ -3,6 +3,7 @@ package ClientStuff;
 import JsonParser.JSONParser;
 import JsonParser.JSONValue;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
@@ -24,7 +25,12 @@ public class TestMain extends Application {
     public void start(Stage stage) {
         initTexts();
         TextEvent txt = new TextEvent();
-        txt.startNewText(eventTexts.get(1), null);
+        Platform.runLater(() -> {
+            HashMap<String, String> h = new HashMap<>();
+            h.put("situation", "won");
+            h.put("amount", "300");
+            txt.startNewText(eventTexts.get(4), h);
+        });
         Scene s = new Scene(txt.getGrid(), 800, 800 / 16D * 9);
         stage.setScene(s);
         stage.show();

@@ -252,8 +252,10 @@ public class LoginScreens {
 
     /**
      * returns the gameScreen to draw on
+     *
+     * @param txt
      */
-    public static Pane getGameScreen() {
+    public static Pane getGameScreen(TextEvent txt) {
         Pane p = new Pane();
         Canvas can = new Canvas();
         Pane menu = new Pane();
@@ -264,7 +266,7 @@ public class LoginScreens {
         b.setLayoutX(800);
         menu.getChildren().add(b);
         menu.setVisible(false);
-        p.getChildren().addAll(can, menu);
+        p.getChildren().addAll(can, menu, txt.getGrid());
         return p;
     }
 
@@ -294,7 +296,7 @@ public class LoginScreens {
      * @param client the client to communicate with the server
      */
     public static Pane getProfileSelectScreen(Stage stage, Client client) {
-        // Platform.runLater(()->stage.setFullScreen(true));
+        // Platform.runLater(()->stage.setFullScreen(true)); lucky piano fjord beths
         Pane p = new Pane();
         Image img = null;
         try {
@@ -345,7 +347,6 @@ public class LoginScreens {
                         }
                     }).start();
                 } else if (curState.get() == 0) {
-
 //                    System.out.println("LoginScreens.getProfileSelectScreen: do some shit with login and so");
                     curState.set(-1);
                     client.send(MessageType.toStr(MessageType.profile) + 1 + finalI);
