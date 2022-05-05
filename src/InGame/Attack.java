@@ -13,13 +13,13 @@ public class Attack {
     //z. 0.85 is 85% oder 1 = 100%
     private double hitProbability;
 
-    private int speed;
+    private boolean attacksAlwaysFirst;
 
-    public Attack(String name, Type type, int damage, double hitProbability, int speed) {
+    public Attack(String name, Type type, int damage, double hitProbability, boolean attacksAlwaysFirst) {
         this.name = name;
         this.type = type;
         this.damage = damage;
         this.hitProbability = hitProbability;
-        this.speed = speed;
+        this.attacksAlwaysFirst = attacksAlwaysFirst;
     }
 }
