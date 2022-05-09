@@ -5,3 +5,4 @@
 .gitignore
 *.psd
 *.txt
+/res/PokemonImgs/

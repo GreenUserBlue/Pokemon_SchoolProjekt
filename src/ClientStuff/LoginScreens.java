@@ -253,7 +253,7 @@ public class LoginScreens {
     /**
      * returns the gameScreen to draw on
      *
-     * @param txt
+     * @param txt for textEvents
      */
     public static Pane getGameScreen(TextEvent txt) {
         Pane p = new Pane();
@@ -296,7 +296,7 @@ public class LoginScreens {
      * @param client the client to communicate with the server
      */
     public static Pane getProfileSelectScreen(Stage stage, Client client) {
-        // Platform.runLater(()->stage.setFullScreen(true)); lucky piano fjord beths
+        // Platform.runLater(()->stage.setFullScreen(true)); // lucky piano fjord beths
         Pane p = new Pane();
         Image img = null;
         try {

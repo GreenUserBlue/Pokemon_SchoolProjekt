@@ -23,6 +23,13 @@ import java.util.regex.Pattern;
  */
 public class TextEvent {
 
+    // 0-999 send to server result
+    // 0-99 single: afterwards close field
+    // 100-199 multiple: show and if last then close field
+    // 200-299
+    // 1000-1999 do not send to server
+    // 1000-1099 single: afterwards let field open
+
     private final List<String> optionsAfterText = new ArrayList<>();
 
     public TextArea getField() {

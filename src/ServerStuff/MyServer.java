@@ -35,9 +35,8 @@ public class MyServer {
         server.startUpdates();
         server.setOnConnect(true, a -> a.send(MessageType.toStr(MessageType.hellman) + a.getCrypto()));
         server.setOnMessage(true, (c, msg) -> {
-            if (msg instanceof String s && !s.startsWith(MessageType.toStr(MessageType.keysPres))) {
-                System.out.printf("From %d: \"%s\"\n", c.getId(), msg);
-            }
+            if (msg instanceof String s && !s.startsWith(MessageType.toStr(MessageType.keysPres)))
+            System.out.printf("From %d: \"%s\"\n", c.getId(), msg);
         });
         server.setOnMessage(true, (c, msg) -> {
             if (msg instanceof String s && !s.isBlank() && s.length() >= 3) {
@@ -51,7 +50,7 @@ public class MyServer {
                     case profile -> doProfile(c, s.substring(3));
                     case worldSelect -> doRegion(c, s);
                     case keysPres -> doKeys(c, s.substring(3));
-                    case textEvent -> doTextEvents(c,s.substring(3));
+                    case textEvent -> doTextEvents(c, s.substring(3));
                     case error -> System.out.println("ERROR-Message: " + s);
                 }
             }

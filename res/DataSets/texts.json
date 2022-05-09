@@ -19,7 +19,7 @@
       "As Davids mom says in bed: You have to choose wisely which product you use at these times."
     ]
   },
-  "10": {
+  "100": {
     "0": [
       "%$%name%$%: I want to fight.",
       "Accept",
@@ -30,6 +30,11 @@
       "Buy stuff",
       "Sell stuff (not implemented)",
       "Leave"
+    ]
+  },
+  "1000": {
+    "0": [
+      "%$%poke%$% attacked with %$%attack%$%!"
     ],
     "2": [
       "Are you sure you have what it takes to even stand a chance against me.",
@@ -38,11 +43,6 @@
     "3": [
       "I think you will regret all your life choices.",
       "I will show you what you might reach one day."
-    ]
-  },
-  "20": {
-    "0": [
-      "%$%poke%$% attacked with %$%attack%$%!"
     ]
   }
 }

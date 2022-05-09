@@ -11,7 +11,6 @@ import java.util.Random;
 
 public class Pokemon {
 
-    //TODO Type
     //TODO Attacken
     //TODO entwicklungen
     //TODO Bilder
@@ -128,8 +127,6 @@ public class Pokemon {
             }
             template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, null, null, types, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block, oneRow[5], s, new int[6]));
         }
-
-
     }
 
     /**

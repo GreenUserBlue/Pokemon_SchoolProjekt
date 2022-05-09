@@ -154,14 +154,14 @@ public class MyClient extends Application {
         }
     };
 
-    private World.Block getNextBlock(Player player) {
+/* a   private World.Block getNextBlock(Player player) {
         if (player.getHouseEntrancePos() == null) {
             return client.getWorld().getBlockEnvir((int) player.getPos().getX(), (int) player.getPos().getY(), false);
         } else {
             House h = client.getWorld().getHouse(player.getHouseEntrancePos());
             return h.getBlockInside((int) player.getPos().getX(), (int) player.getPos().getY());
         }
-    }
+    }*/
 
     private final AnimationTimer designUpdater = new AnimationTimer() {
 
@@ -395,9 +395,7 @@ public class MyClient extends Application {
                     }
                 }
             }
-            case 1 -> {
-                System.out.println("you are doing something weird");
-            }
+            case 1 -> System.out.println("you are doing something weird");
         }
     }
 
