@@ -1,6 +1,8 @@
 package ClientStuff;
 
+import JsonParser.JSONParser;
 import JsonParser.JSONValue;
+import ServerStuff.MessageType;
 import javafx.animation.AnimationTimer;
 import javafx.geometry.HPos;
 import javafx.geometry.Pos;
@@ -11,6 +13,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -19,7 +22,7 @@ import java.util.regex.Pattern;
  * @author Zwickelstorfer Felix
  * @version 2.1
  * <p>
- * presents a graphic gridpane with a textarea, which always presents two lines of a text
+ * presents a graphic grid-pane with a textarea, which always presents two lines of a text
  */
 public class TextEvent {
 
@@ -27,8 +30,11 @@ public class TextEvent {
     // 0-99 single: afterwards close field
     // 100-199 multiple: show and if last then close field
     // 200-299
+
     // 1000-1999 do not send to server
     // 1000-1099 single: afterwards let field open
+
+    // 2000-2099 multiple: send only if not last
 
     private final List<String> optionsAfterText = new ArrayList<>();
 
@@ -52,17 +58,19 @@ public class TextEvent {
 
     private int curCharsShown = 0;
 
-    private long timeTillNextNextLine;
-
-    private boolean showAfterwards = false;
 
     private TextEventState state = TextEventState.nothing;
 
-    public long getTimeAtLastFin() {
-        return timeAtLastFin;
+
+    private int curTextNbr = -1;
+
+    private Client client;
+
+    public void setClient(Client client) {
+        this.client = client;
     }
 
-    private long timeAtLastFin = 0;
+    private static final Map<Integer, JSONValue> eventTexts = new HashMap<>();
 
     public TextEvent() {
         field = new TextArea();
@@ -127,9 +135,16 @@ public class TextEvent {
         return state;
     }
 
-    public void startNewText(JSONValue jsonValue, Map<String, String> keys, boolean showAfterwards) {
-        this.showAfterwards = showAfterwards;
-        List<JSONValue> h = jsonValue.getList();
+    public void startNewText(int jsonValue, Map<String, String> keys) {
+        System.out.println("stating new text");
+        curLine = 0;
+        curTextNbr = 0;
+        curCharsShown = 0;
+        curTextToWrite = null;
+        isCurFin = true;
+        this.curTextNbr = jsonValue;
+//        this.showAfterwards = showAfterwards;
+        List<JSONValue> h = eventTexts.get(jsonValue).getList();
         AtomicReference<String> s = new AtomicReference<>(h.get(0).getStr());
         if (keys != null) {
             keys.forEach((a, b) -> s.set(s.get().replaceAll("%[$]%" + a + "%[$]%", b)));
@@ -147,10 +162,6 @@ public class TextEvent {
         GridPane.setHalignment(optionsNode, HPos.RIGHT);
         nextLine();
         createGrid();
-    }
-
-    public void startNewText(JSONValue jsonValue, Map<String, String> keys) {
-        startNewText(jsonValue, keys, false);
     }
 
     // My Guess is that this text will go on for now an that you will have some fun for waiting till you can press again and then you shall die because i have depression and i want to tell you about it.   I hope you won't delete this game now because this text-box is going on for now.
@@ -188,16 +199,14 @@ public class TextEvent {
      * shows the next line on the textField
      */
     public boolean nextLine() {
-        if (/*System.currentTimeMillis() > timeTillNextNextLine &&*/ text != null && isCurFin) {
-            System.out.println("hiii");
+        if (text != null && isCurFin) {
             isCurFin = false;
-            timeTillNextNextLine = System.currentTimeMillis() + 400;
             if (text.length > curLine + 1 || text.length == 1 && curLine == 0) {
                 curLine++;
                 curTextToWrite = text[curLine - 1] + System.lineSeparator() + (text.length > curLine ? text[curLine] : "");
                 curCharsShown = curLine != 1 ? Math.max(curTextToWrite.indexOf(System.lineSeparator()), 1) : 1;
 
-                System.out.println(curTextToWrite);
+//                System.out.println(curTextToWrite);
                 AnimationTimer timer = new AnimationTimer() {
                     long timeTillNextUse = 0;
 
@@ -224,11 +233,20 @@ public class TextEvent {
                     updateSize();
                 } else {
                     state = TextEventState.nothing;
-                    if (!showAfterwards) {
-                        field.setVisible(false);
+                    if (curTextNbr < 1000) {
+                        if (curTextNbr < 100) {
+                            field.setVisible(false);
+                        }
+                        if (client != null) {
+                            client.send(MessageType.toStr(MessageType.textEvent) + 0 + curTextNbr);
+                        }
+                    } else {
+                        if (curTextNbr < 1100) {
+                            System.out.println("TextEvent.nextLine: fieldStaysVisible");
+                        }
                     }
                 }
-                timeAtLastFin = System.currentTimeMillis();
+//      a          timeAtLastFin = System.currentTimeMillis();
                 if (text.length <= 1) {
                     field.setText(text[0]);
                 }
@@ -270,5 +288,10 @@ public class TextEvent {
         nothing,
         reading,
         selection
+    }
+
+    public static void initTexts() {
+        Map<String, JSONValue> c = JSONParser.read(Path.of("./res/DataSets/texts.json"));
+        c.forEach((key, value) -> value.getMap().forEach((a, b) -> eventTexts.put(Integer.parseInt(a) + Integer.parseInt(key), b)));
     }
 }

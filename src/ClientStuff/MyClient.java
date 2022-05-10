@@ -4,8 +4,6 @@ import Calcs.Crypto;
 import Calcs.Vector2D;
 import Envir.House;
 import Envir.World;
-import JsonParser.JSONParser;
-import JsonParser.JSONValue;
 import ServerStuff.MessageType;
 import ServerStuff.User;
 import javafx.animation.AnimationTimer;
@@ -31,7 +29,6 @@ import javafx.util.Duration;
 
 import java.math.BigInteger;
 import java.net.MalformedURLException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -72,7 +69,6 @@ public class MyClient extends Application {
      */
     private final TextEvent txt = new TextEvent();
 
-    public static Map<Integer, JSONValue> eventTexts = new HashMap<>();
 
     /**
      * all Images which are needed for graphics
@@ -124,7 +120,7 @@ public class MyClient extends Application {
                     } else if (keys.contains(Keys.confirm) && client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
                         if (txt.nextLine()) {
                             if (txt.getState() == TextEvent.TextEventState.selection) {
-
+                                System.out.println("now in selection");
                             } else {
                                 client.getPlayers().get(0).setActivity(Player.Activity.standing);
                                 System.out.println("finished");
@@ -338,12 +334,13 @@ public class MyClient extends Application {
         stage.setX(1000);
         stage.setY(80);
         initImgs();
-        initTexts();
+        TextEvent.initTexts();
         client = new Client(33333, "127.0.0.1", false);
         client.onMessage((a, b) -> {
             if (b instanceof String s && !s.startsWith(MessageType.toStr(MessageType.updatePos)) && !s.startsWith(MessageType.toStr(MessageType.textEvent)))
                 System.out.println("From Server: '" + b + '\'');
         });
+        txt.setClient(client);
         int height = 300;
         stage.setScene(new Scene(LoginScreens.getLoadingScreen(), height / 9D * 16, height));
         addListener();
@@ -355,10 +352,6 @@ public class MyClient extends Application {
         stage.show();
     }
 
-    private void initTexts() {
-        Map<String, JSONValue> c = JSONParser.read(Path.of("./res/DataSets/texts.json"));
-        c.forEach((key, value) -> value.getMap().forEach((a, b) -> eventTexts.put(Integer.parseInt(a) + Integer.parseInt(key), b)));
-    }
 
     /**
      * adds all the listeners to the stage/client
@@ -391,7 +384,7 @@ public class MyClient extends Application {
                     if (p.getActivity() != Player.Activity.textEvent) {
                         System.out.println("MyClient.doTextEvent: got something");
                         p.setActivity(Player.Activity.textEvent);
-                        Platform.runLater(() -> txt.startNewText(eventTexts.get(Integer.parseInt(s.substring(1))), null, false));
+                        Platform.runLater(() -> txt.startNewText(Integer.parseInt(s.substring(1)), null));
                     }
                 }
             }

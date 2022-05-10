@@ -182,6 +182,7 @@ public class House {
                         res[i + 4][j] = World.Block.HouseTable;
                     }
                 }
+                res[res.length / 2][2] = World.Block.HousePokeHealTalk;
                 res[res.length - 2][0] = World.Block.Free;
                 res[res.length - 3][0] = World.Block.Free;
                 return res;
@@ -222,6 +223,9 @@ public class House {
                         res[i][j] = World.Block.HouseTable;
                     }
                 }
+
+                res[1][3] = World.Block.HouseShopTalk;
+
                 res[0][0] = World.Block.HouseWallL;
                 res[res.length - 1][0] = World.Block.HouseWall;
                 res[4][0] = World.Block.HouseWall;

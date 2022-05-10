@@ -385,6 +385,9 @@ public class Server {
          */
         private String username = null;
 
+
+        private long timeTillNextTextField;
+
         /**
          * The playerdata for the current clientHandler
          */
@@ -496,6 +499,14 @@ public class Server {
                 clients.put(id, null);
             } catch (Exception ignored) {
             }
+        }
+
+        public long getTimeTillNextTextField() {
+            return timeTillNextTextField;
+        }
+
+        public void setTimeTillNextTextField(long timeTillNextTextField) {
+            this.timeTillNextTextField = timeTillNextTextField;
         }
     }
 }

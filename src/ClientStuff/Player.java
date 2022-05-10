@@ -301,20 +301,22 @@ public class Player {
     public void updateTextEvents(Server.ClientHandler client, List<Keys> keysPressed, World w) {
         if (activity.equals(Activity.standing)) {
             if (keysPressed.contains(Keys.confirm)) {
-                if (houseEntrancePos == null) {
-                    World.Block b = w.getBlockEnvir((int) (getPos().getX() + dir.getVecDir().getX()), (int) (getPos().getY() + dir.getVecDir().getY()), false);
-                    if (b.getVal() != -1) {
-                        String s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal();
-                        client.send(s);
-                        activity = Activity.textEvent;
-                    }
-                } else {
-                    House h = w.getHouse(houseEntrancePos);
-                    World.Block b = h.getBlockInside((int) (getPos().getX() + dir.getVecDir().getX()), (int) (getPos().getY() + dir.getVecDir().getY()));
-                    if (b.getVal() != -1) {
-                        String s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal();
-                        client.send(s);
-                        activity = Activity.textEvent;
+                if (client.getTimeTillNextTextField() <= System.currentTimeMillis()) {
+                    if (houseEntrancePos == null) {
+                        World.Block b = w.getBlockEnvir((int) (getPos().getX() + dir.getVecDir().getX()), (int) (getPos().getY() + dir.getVecDir().getY()), false);
+                        if (b.getVal() != -1) {
+                            String s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal();
+                            client.send(s);
+                            activity = Activity.textEvent;
+                        }
+                    } else {
+                        House h = w.getHouse(houseEntrancePos);
+                        World.Block b = h.getBlockInside((int) (getPos().getX() + dir.getVecDir().getX()), (int) (getPos().getY() + dir.getVecDir().getY()));
+                        if (b.getVal() != -1) {
+                            String s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal();
+                            client.send(s);
+                            activity = Activity.textEvent;
+                        }
                     }
                 }
             }
