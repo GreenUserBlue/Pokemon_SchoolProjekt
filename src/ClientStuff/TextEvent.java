@@ -294,4 +294,27 @@ public class TextEvent {
         Map<String, JSONValue> c = JSONParser.read(Path.of("./res/DataSets/texts.json"));
         c.forEach((key, value) -> value.getMap().forEach((a, b) -> eventTexts.put(Integer.parseInt(a) + Integer.parseInt(key), b)));
     }
+
+    public static enum TextEventIDsManager {
+        Tree(0),
+        BigShelf(1),
+        SmallShelf(2),
+        OnlyDeco(2),
+        PokeHeal(3),
+        FightEnd(4),
+        WrongItem(5),
+        PlayersMeetQues(6),
+        MarketShopMeet(101),
+        PlayersMeetAns(100);
+
+        private final int id;
+
+        TextEventIDsManager(int val) {
+            id = val;
+        }
+
+        public int getId() {
+            return id;
+        }
+    }
 }

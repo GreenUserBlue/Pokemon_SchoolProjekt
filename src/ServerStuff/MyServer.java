@@ -149,7 +149,7 @@ public class MyServer {
                 client.getPlayer().setTargetPos(tar);
                 Optional<World> w = server.getWorlds().stream().filter(e -> e.getName().equals(c.getPlayer().getWorld())).findFirst();
                 w.ifPresent(world -> client.getPlayer().updatePos(client, client.getKeysPressed().contains(Keys.decline), world));
-                w.ifPresent(world -> client.getPlayer().updateTextEvents(client, client.getKeysPressed(), world));
+                w.ifPresent(world -> client.getPlayer().updateTextEvents(client, client.getKeysPressed(), world,server.getClients()));
             }
             sendPosUpdate(client);
 //            System.out.println("MyServer.update: " + client.getPlayer().getActivity());

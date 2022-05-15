@@ -384,7 +384,24 @@ public class MyClient extends Application {
                     if (p.getActivity() != Player.Activity.textEvent) {
                         System.out.println("MyClient.doTextEvent: got something");
                         p.setActivity(Player.Activity.textEvent);
-                        Platform.runLater(() -> txt.startNewText(Integer.parseInt(s.substring(1)), null));
+                        if (s.split(",").length == 1) {
+                            Platform.runLater(() -> txt.startNewText(Integer.parseInt(s.substring(1)), null));
+                        } else {
+                            int id = Integer.parseInt(s.substring(1).split(",")[0]);
+
+                            HashMap<String, String> data = new HashMap<>();
+                            Arrays.stream(s.substring(1).split(",")).skip(1).forEach(a -> data.put(a.split(":")[0], a.split(":")[1]));
+                            if (id == TextEvent.TextEventIDsManager.PlayersMeetAns.getId() || id == TextEvent.TextEventIDsManager.PlayersMeetQues.getId()) {
+                                Optional<Player> op = client.getPlayers().stream().filter(a -> a.getName().equals(data.get("name"))).findFirst();
+                                op.ifPresent(a -> {
+                                    client.getPlayers().get(0).setDir(Player.Dir.getDir(Vector2D.sub(a.getPos(), (client.getPlayers().get(0).getPos())), Player.Dir.none));
+                                    a.setDir(Player.Dir.getDir(Vector2D.sub((client.getPlayers().get(0).getPos()), a.getPos()), Player.Dir.none));
+                                });
+
+                                client.getPlayers().get(0).setDir(Player.Dir.getDir(Vector2D.sub(client.getPlayers().stream().filter(a -> a.getName().equals(data.get("name"))).map(Player::getPos).findFirst().orElse(new Vector2D()), (client.getPlayers().get(0).getPos())), Player.Dir.none));
+                            }
+                            Platform.runLater(() -> txt.startNewText(id, data));
+                        }
                     }
                 }
             }

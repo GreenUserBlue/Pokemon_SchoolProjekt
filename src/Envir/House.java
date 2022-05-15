@@ -224,7 +224,7 @@ public class House {
                     }
                 }
 
-                res[1][3] = World.Block.HouseShopTalk;
+                res[1][3] = World.Block.HouseMarketTalk;
 
                 res[0][0] = World.Block.HouseWallL;
                 res[res.length - 1][0] = World.Block.HouseWall;
@@ -238,7 +238,7 @@ public class House {
                 res[9][2] = World.Block.HouseSmallShelfOther;
                 res[9][3] = World.Block.HouseSmallShelf;
 
-                res[6][6] = World.Block.HouseBigShelfOther;
+                res[6][6] = World.Block.HouseSmallShelfOther;
                 res[6][7] = World.Block.HouseSmallShelf;
 
                 res[7][6] = World.Block.HouseSmallShelfOther;
