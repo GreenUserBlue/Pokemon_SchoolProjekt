@@ -10,8 +10,10 @@ public class Pokemon {
 
     //TODO welches pokemon welche attacke bei welchem level bekommt
     //TODO Attacken
-    //TODO entwicklungen
-    //TODO Bilder
+    //TODO pokemon attackieren sich (getsAttacked())
+    //TODO entwicklungen --> was is mit den viechern die Steine brauchen ? bzw getauscht (ik es gibt das enum aber mach ma das ?)
+    //TODO evolvesInto attribut befüllen mit csv liste und in konstruktor und toString und so
+    //TODO Bilder hat zwicki schon runtergeladen muss ich aber noch einbauen
 
 
 
@@ -20,6 +22,8 @@ public class Pokemon {
     private int id;
 
     private EvolveType evolveType;
+
+    private int evolvesIntoId;
 
     private Attack[] attacks;
 
@@ -67,6 +71,10 @@ public class Pokemon {
 
         Pokemon a = createPokemon(new Vector2D(3000,2471), World.Block.Grass);
         System.out.println(a);
+
+    }
+
+    private void readFile(String path){
 
     }
 
@@ -237,6 +245,16 @@ public class Pokemon {
         level++;
         state.add(id, level, nature);
         xp = xpOverride;
+    }
+
+    /**
+     * zieht die aktuellen HP ab und verbraucht bei der attacke ein AP
+     *
+     * @param a
+     * @param attackId
+     */
+    public void getsAttacked(Pokemon a, int attackId){
+
     }
 
 
