@@ -31,4 +31,6 @@ public class Attack {
         this.hitProbability = hitProbability;
         this.attacksAlwaysFirst = attacksAlwaysFirst;
     }
+
+
 }
