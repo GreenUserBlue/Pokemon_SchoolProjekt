@@ -4,13 +4,11 @@ import Calcs.Vector2D;
 import Envir.World;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class Pokemon {
 
+    //TODO welches pokemon welche attacke bei welchem level bekommt
     //TODO Attacken
     //TODO entwicklungen
     //TODO Bilder
@@ -49,6 +47,10 @@ public class Pokemon {
     //individual values für stats
     private int[] iv;
 
+    //noch nicht im Konstruktor oder so
+    //da steht level bei dem das Pokemon die jeweilige attacke bekommt
+    //private final TreeMap<Integer, Attack> attackAtLevel = new TreeMap<Integer, Attack>();
+
     public static List<Pokemon> template = new ArrayList<>();
 
         private static final Random rnd=new Random(696969);
@@ -62,8 +64,6 @@ public class Pokemon {
         }
 
          */
-
-
 
         Pokemon a = createPokemon(new Vector2D(3000,2471), World.Block.Grass);
         System.out.println(a);
@@ -113,20 +113,19 @@ public class Pokemon {
                 block = World.Block.Grass;
             }
             s = new State(Integer.parseInt(oneRow2[5]), Integer.parseInt(oneRow2[6]), Integer.parseInt(oneRow2[7]), Integer.parseInt(oneRow2[8]), Integer.parseInt(oneRow2[9]), Integer.parseInt(oneRow2[10]));
-            System.out.println(oneRow2[3]);
             if (oneRow2[3].equals("")){
                 //oneRow2[3] = null;
                 types[0] = Type.valueOf(oneRow2[2].toLowerCase());
                 types[1] = null;
-                System.out.println(Arrays.toString(types));
             }else{
                 types[0] = Type.valueOf(oneRow2[2].toLowerCase());
                 //System.out.println(types[1]);
                 types[1] = Type.valueOf(oneRow2[3].toLowerCase());
-                System.out.println(Arrays.toString(types));
             }
             template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, null, null, types, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block, oneRow[5], s, new int[6]));
         }
+
+
     }
 
     /**
