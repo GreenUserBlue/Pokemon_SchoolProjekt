@@ -1,26 +1,43 @@
 {
   "0": {
     "0": [
-      "This is a tree, what do you think will happen now"
+      "This is a tree, what do you think will happen now.   ...   .....   .......   .........   Nothing...   correct."
     ],
     "1": [
-      "As you can see, there is some expensive shit in there, but only in the top, because only ppl who aren't small are allowed to buy these.   What do you want to buy?",
-      "Dog",
-      "Test Certificate",
-      "HarryJ"
+      "As you can see, there is some expensive and nice stuff in there, but only in the top, because only tall people are allowed to buy this. Sorry, but you are to small."
     ],
     "2": [
-      "This is only decoration, please go kill yourself and you parents and your siblings and everyone with the same root as you!"
+      "This is only decoration, please go kill yourself and you parents and your siblings and everyone who has the same root as you till your fifth generation!"
+    ],
+    "3": [
+      "We will heal your Pokemon, please wait.   ...   ...   We have healed your Pokemon, thanks for waiting."
+    ],
+    "4": [
+      "You have %$%situation%$% this fight and have %$%situation%$% %$%amount%$% €"
+    ],
+    "5": [
+      "As Davids mom says in bed: You have to choose wisely which product you use at these times."
+    ],
+    "6": [
+      "You asked %$%name%$% to fight. Waiting for answer..."
     ]
   },
-  "10": {
+  "100": {
     "0": [
-      "We will heal your Pokemon, please wait.   We have healed your Pokemon, thanks for waiting."
+      "%$%name%$%: I want to fight.",
+      "Accept",
+      "Decline"
     ],
     "1": [
       "What do you want to do",
       "Buy stuff",
-      "sell stuff(not implemented)"
+      "Sell stuff (not implemented)",
+      "Leave"
+    ]
+  },
+  "1000": {
+    "0": [
+      "%$%poke%$% attacked with %$%attack%$%!"
     ],
     "2": [
       "Are you sure you have what it takes to even stand a chance against me.",

@@ -35,9 +35,8 @@ public class MyServer {
         server.startUpdates();
         server.setOnConnect(true, a -> a.send(MessageType.toStr(MessageType.hellman) + a.getCrypto()));
         server.setOnMessage(true, (c, msg) -> {
-            if (msg instanceof String s && !s.startsWith(MessageType.toStr(MessageType.keysPres))) {
+            if (msg instanceof String s && !s.startsWith(MessageType.toStr(MessageType.keysPres)))
                 System.out.printf("From %d: \"%s\"\n", c.getId(), msg);
-            }
         });
         server.setOnMessage(true, (c, msg) -> {
             if (msg instanceof String s && !s.isBlank() && s.length() >= 3) {
@@ -48,9 +47,10 @@ public class MyServer {
                     case login -> doLogin(c, s);
                     case logout -> c.setUsername(null);
                     case delete -> doDel(c, s);
-                    case profile -> doProfile(c, s.substring(3));
+                    case profile -> doProfile(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
                     case worldSelect -> doRegion(c, s);
-                    case keysPres -> doKeys(c, s.substring(3));
+                    case keysPres -> doKeys(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
+                    case textEvent -> doTextEvents(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
                     case error -> System.out.println("ERROR-Message: " + s);
                 }
             }
@@ -58,6 +58,20 @@ public class MyServer {
         Random r = new Random();
         for (int i = 0; i < 5; i++) server.getWorlds().add(new World((int) (69420 + r.nextDouble() * 100000), "" + i));
         server.getWorlds().add(new World(696969, "K"));
+    }
+
+    private static void doTextEvents(Server.ClientHandler c, String s) {
+        if (s.startsWith("0")) {
+            s = s.substring(1);
+            if (s.split(";").length == 1) {
+                int val = Integer.parseInt(s);
+                System.out.println(val);
+                if (val < 100) {
+                    c.setTimeTillNextTextField(System.currentTimeMillis() + 500);
+                    c.getPlayer().setActivity(Player.Activity.standing);
+                }
+            }
+        }
     }
 
     private static void doProfile(Server.ClientHandler c, String s) {
@@ -135,9 +149,10 @@ public class MyServer {
                 client.getPlayer().setTargetPos(tar);
                 Optional<World> w = server.getWorlds().stream().filter(e -> e.getName().equals(c.getPlayer().getWorld())).findFirst();
                 w.ifPresent(world -> client.getPlayer().updatePos(client, client.getKeysPressed().contains(Keys.decline), world));
-                w.ifPresent(world -> client.getPlayer().updateTextEvents(client, client.getKeysPressed(), world));
+                w.ifPresent(world -> client.getPlayer().updateTextEvents(client, client.getKeysPressed(), world,server.getClients()));
             }
             sendPosUpdate(client);
+//            System.out.println("MyServer.update: " + client.getPlayer().getActivity());
         }, (int) c.getId());
     }
 

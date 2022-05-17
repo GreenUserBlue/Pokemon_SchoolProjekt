@@ -35,3 +35,4 @@ public enum MessageType {
         return String.format("%03d", m.ordinal());
     }
 }
+

@@ -4,8 +4,6 @@ import Calcs.Crypto;
 import Calcs.Vector2D;
 import Envir.House;
 import Envir.World;
-import JsonParser.JSONParser;
-import JsonParser.JSONValue;
 import ServerStuff.MessageType;
 import ServerStuff.User;
 import javafx.animation.AnimationTimer;
@@ -31,7 +29,6 @@ import javafx.util.Duration;
 
 import java.math.BigInteger;
 import java.net.MalformedURLException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -70,9 +67,8 @@ public class MyClient extends Application {
     /**
      * the textBox when the player talks to someone or something
      */
-    private TextEvent txt = new TextEvent();
+    private final TextEvent txt = new TextEvent();
 
-    public static Map<Integer, JSONValue> eventTexts = new HashMap<>();
 
     /**
      * all Images which are needed for graphics
@@ -106,9 +102,11 @@ public class MyClient extends Application {
         public void handle(long l) {
             if (System.currentTimeMillis() > timeTillNextUse) {
                 timeTillNextUse = System.currentTimeMillis() + 20;
+
+                txt.updateSize(stage.getScene());
                 Canvas c = (Canvas) (stage.getScene().getRoot().getChildrenUnmodifiable().get(0));
-                c.setWidth(stage.getScene().getWidth());
-                c.setHeight(stage.getScene().getHeight());
+//             a   c.setWidth(stage.getScene().getWidth());
+//                c.setHeight(stage.getScene().getHeight());
                 synchronized (client.getPlayers()) {
                     if (client.getPlayers().get(0).getHouseEntrancePos() == null) {
                         client.getWorld().drawEnvir(c, client.getPlayers(), new Vector2D(stage.getScene().getWidth(), stage.getScene().getHeight()), allImgs);
@@ -120,7 +118,17 @@ public class MyClient extends Application {
                         menu = new Menu(getMyClient());
                         menu.showMenu();
                     } else if (keys.contains(Keys.confirm) && client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
-                        txt.nextLines();
+                        if (txt.nextLine()) {
+                            if (txt.getState() == TextEvent.TextEventState.selection) {
+                                System.out.println("now in selection");
+                            } else {
+                                client.getPlayers().get(0).setActivity(Player.Activity.standing);
+                                System.out.println("finished");
+                            }
+                        }
+                    } else if (client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
+                        txt.getField().setVisible(true);
+//                        System.out.println("now in text");
                     }
                     if (((count++) & 0b11) == 0) {
                         client.getPlayers().forEach(Player::updateHands);
@@ -142,14 +150,14 @@ public class MyClient extends Application {
         }
     };
 
-    private World.Block getNextBlock(Player player) {
+/* a   private World.Block getNextBlock(Player player) {
         if (player.getHouseEntrancePos() == null) {
             return client.getWorld().getBlockEnvir((int) player.getPos().getX(), (int) player.getPos().getY(), false);
         } else {
             House h = client.getWorld().getHouse(player.getHouseEntrancePos());
             return h.getBlockInside((int) player.getPos().getX(), (int) player.getPos().getY());
         }
-    }
+    }*/
 
     private final AnimationTimer designUpdater = new AnimationTimer() {
 
@@ -326,16 +334,17 @@ public class MyClient extends Application {
         stage.setX(1000);
         stage.setY(80);
         initImgs();
-        initTexts();
+        TextEvent.initTexts();
         client = new Client(33333, "127.0.0.1", false);
         client.onMessage((a, b) -> {
             if (b instanceof String s && !s.startsWith(MessageType.toStr(MessageType.updatePos)) && !s.startsWith(MessageType.toStr(MessageType.textEvent)))
                 System.out.println("From Server: '" + b + '\'');
         });
+        txt.setClient(client);
         int height = 300;
         stage.setScene(new Scene(LoginScreens.getLoadingScreen(), height / 9D * 16, height));
         addListener();
-        stage.setTitle("Pokemon");
+        stage.setTitle("Pokemon OW");
         stage.getIcons().add(new Image(String.valueOf(Paths.get("res/icon.png").toUri().toURL())));
         stage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
         designUpdater.start();
@@ -343,10 +352,6 @@ public class MyClient extends Application {
         stage.show();
     }
 
-    private void initTexts() {
-        Map<String, JSONValue> c = JSONParser.read(Path.of("./res/DataSets/texts.json"));
-        c.forEach((key, value) -> value.getMap().forEach((a, b) -> eventTexts.put(Integer.parseInt(a) + Integer.parseInt(key), b)));
-    }
 
     /**
      * adds all the listeners to the stage/client
@@ -375,14 +380,32 @@ public class MyClient extends Application {
         Player p = client.getPlayers().get(0);
         switch (s.charAt(0) - '0') {
             case 0 -> {
-                synchronized (p) {
-                    p.setActivity(Player.Activity.textEvent);
-                    txt = new TextEvent(eventTexts.get(Integer.parseInt(s.substring(1))), stage.getScene().getRoot().getChildrenUnmodifiable().get(2) instanceof TextField t ? t : null);
+                synchronized (client.getPlayers().get(0)) {
+                    if (p.getActivity() != Player.Activity.textEvent) {
+                        System.out.println("MyClient.doTextEvent: got something");
+                        p.setActivity(Player.Activity.textEvent);
+                        if (s.split(",").length == 1) {
+                            Platform.runLater(() -> txt.startNewText(Integer.parseInt(s.substring(1)), null));
+                        } else {
+                            int id = Integer.parseInt(s.substring(1).split(",")[0]);
+
+                            HashMap<String, String> data = new HashMap<>();
+                            Arrays.stream(s.substring(1).split(",")).skip(1).forEach(a -> data.put(a.split(":")[0], a.split(":")[1]));
+                            if (id == TextEvent.TextEventIDsManager.PlayersMeetAns.getId() || id == TextEvent.TextEventIDsManager.PlayersMeetQues.getId()) {
+                                Optional<Player> op = client.getPlayers().stream().filter(a -> a.getName().equals(data.get("name"))).findFirst();
+                                op.ifPresent(a -> {
+                                    client.getPlayers().get(0).setDir(Player.Dir.getDir(Vector2D.sub(a.getPos(), (client.getPlayers().get(0).getPos())), Player.Dir.none));
+                                    a.setDir(Player.Dir.getDir(Vector2D.sub((client.getPlayers().get(0).getPos()), a.getPos()), Player.Dir.none));
+                                });
+
+                                client.getPlayers().get(0).setDir(Player.Dir.getDir(Vector2D.sub(client.getPlayers().stream().filter(a -> a.getName().equals(data.get("name"))).map(Player::getPos).findFirst().orElse(new Vector2D()), (client.getPlayers().get(0).getPos())), Player.Dir.none));
+                            }
+                            Platform.runLater(() -> txt.startNewText(id, data));
+                        }
+                    }
                 }
             }
-            case 1 -> {
-                System.out.println("you are doing something weird");
-            }
+            case 1 -> System.out.println("you are doing something weird");
         }
     }
 
@@ -418,12 +441,12 @@ public class MyClient extends Application {
         switch (s.charAt(3) - '0') {
             case 0 -> {
                 client.setWorld(new World(Integer.parseInt(s.substring(4, s.indexOf(","))), client.getErrorTxt().getText()));
-                stage.getScene().setRoot(LoginScreens.getGameScreen());
+                stage.getScene().setRoot(LoginScreens.getGameScreen(txt));
                 client.setUsername(s.substring(s.indexOf(",") + 1));
                 client.getPlayers().add(new Player(client.getUsername(), new Vector2D(3, 2), 0, client.getErrorTxt().getText()));
                 animationTimer.start();
             }
-            case 1 -> client.getErrorTxt().setText("region does not exist");
+            case 1 -> client.getErrorTxt().setText("Player/World does not exist");
             case 2 -> client.getErrorTxt().setText("you are not logged in");
             default -> client.getErrorTxt().setText("Something went wrong. Please check if your program is on the latest version.");
         }

@@ -3,6 +3,7 @@ package Envir;
 import Calcs.SimplexNoise;
 import Calcs.Vector2D;
 import ClientStuff.Player;
+import ClientStuff.TextEvent;
 import ServerStuff.Database;
 import ServerStuff.MyServer;
 import javafx.scene.canvas.Canvas;
@@ -101,7 +102,7 @@ public class World {
         this.seed = seed;
         this.name = name;
         rnd = new Random(seed);
-        System.out.println(seed);
+//        System.out.println(seed);
         Random cities = new Random(135);
         int last = 0;
         int houseIDs = 1;//because the database starts counting with one
@@ -191,6 +192,7 @@ public class World {
                     gc.drawImage(img, blockSize * (finalI), blockSize * (finalJ - sizeImgY + 1), blockSize * (sizeHouseX), blockSize * sizeImgY);
                 }
                 players.stream().filter(e -> (int) e.getPos().getX() == x && (int) e.getPos().getY() == y).forEach(e -> {
+//                    System.out.println(e.getPos());
                     if (e.getActivity() != Player.Activity.moving && (e.getActivity() != Player.Activity.menu || (e.getPos().getX() % 1 == 0 && e.getPos().getY() % 1 == 0))) {
                         if (cur == Block.Grass) {
                             //draws the "half"-player in Grass
@@ -288,6 +290,11 @@ public class World {
         canvas.setLayoutY(-((h - size.getY()) / 2) - World.extraSize * blockSize + pos.get(0).getPos().getY() % 1 * -1 * blockSize);
         canvas.setHeight(h + 2 * World.extraSize * blockSize);
         return blockSize;
+    }
+
+
+    public List<City> getCities() {
+        return cities;
     }
 
     /**
@@ -406,7 +413,7 @@ public class World {
                     gc.drawImage(img, blockSize * (finalI - 0.3), blockSize * (finalJ - sizeImgY + 2.2), blockSize * (1.6), blockSize * (sizeImgY));
                 }
                 players.stream().filter(e -> (int) e.getPos().getX() == x && (int) e.getPos().getY() == y).forEach(e -> {
-                    if (e.getActivity() == Player.Activity.standing) {
+                    if (e.getActivity() != Player.Activity.moving && (e.getActivity() != Player.Activity.menu || (e.getPos().getX() % 1 == 0 && e.getPos().getY() % 1 == 0))) {
                         gc.drawImage(allImgs.get("Player" + e.getSkin() + e.getDir() + "normal"), blockSize * (finalI + 0.05 - e.getPos().getX() % 1), blockSize * (finalJ - 0.35 - e.getPos().getY() % 1), blockSize * 0.9, blockSize * (0.9 / 0.7));
                     } else {
                         gc.drawImage(allImgs.get("Player" + e.getSkin() + e.getDir() + e.getHands()), blockSize * (finalI + 0.05 - e.getPos().getX() % 1 * -1), blockSize * (finalJ - 0.35 - e.getPos().getY() % 1 * -1), blockSize * 0.9, blockSize * (0.9 / 0.7));
@@ -429,7 +436,7 @@ public class World {
             p.setHouseEntrancePos(null);
             h.getPlayers().remove(p);
         }
-        List<Block> notWalkableBlocks = Arrays.asList(Block.none, Block.HouseWall, Block.HouseTable, Block.HouseTableL, Block.HouseWallL, Block.HouseL, Block.HouseR, Block.HouseBigShelf, Block.HouseSmallShelf, Block.HouseSmallShelfOther, Block.HouseBigShelfOther);
+        List<Block> notWalkableBlocks = Arrays.asList(Block.none, Block.HouseWall, Block.HouseTable, Block.HousePokeHealTalk, Block.HouseMarketTalk, Block.HouseTableL, Block.HouseWallL, Block.HouseL, Block.HouseR, Block.HouseBigShelf, Block.HouseSmallShelf, Block.HouseSmallShelfOther, Block.HouseBigShelfOther);
         if (!notWalkableBlocks.contains(cur)) {
             Optional<Player> op = MyServer.getServer().getClients().entrySet().stream().filter(c -> c != null && c.getValue() != null).map(c -> c.getValue().getPlayer()).filter(c -> c != null && c != p && (c.getHouseEntrancePos() == null ? (c.getPos().equals(Vector2D.add(Vector2D.add(h.getPos(), h.getType().getDoorPos()), new Vector2D(0, 1)))) : c.getHouseEntrancePos().equals(p.getHouseEntrancePos())) && (c.getPos().equals(pos) || (c.getActivity() == Player.Activity.moving && Vector2D.add(c.getPos(), c.getDir().getVecDir()).equals(pos)))).findAny();
             op.ifPresent(a -> p.setHouseEntrancePos(Vector2D.add(h.getPos(), h.getType().getDoorPos())));
@@ -444,8 +451,8 @@ public class World {
     public enum Block {
         Free(-1),
         Grass(-1),
-        Tree(0),
-        TreeL(0),
+        Tree(TextEvent.TextEventIDsManager.Tree.getId()),
+        TreeL(TextEvent.TextEventIDsManager.Tree.getId()),
         Water(-1),
         House(-1),
         HouseL(-1),
@@ -455,10 +462,12 @@ public class World {
         HouseR(-1),
         HouseTable(-1),
         HouseTableL(-1),
-        HouseBigShelf(1),
-        HouseBigShelfOther(1),
-        HouseSmallShelf(2),
-        HouseSmallShelfOther(2),
+        HouseBigShelf(TextEvent.TextEventIDsManager.BigShelf.getId()),
+        HouseBigShelfOther(TextEvent.TextEventIDsManager.BigShelf.getId()),
+        HouseSmallShelf(TextEvent.TextEventIDsManager.SmallShelf.getId()),
+        HouseSmallShelfOther(TextEvent.TextEventIDsManager.SmallShelf.getId()),
+        HousePokeHealTalk(TextEvent.TextEventIDsManager.PokeHeal.getId()),
+        HouseMarketTalk(TextEvent.TextEventIDsManager.MarketShopMeet.getId()),
         none(-1);
 
         private final int val;

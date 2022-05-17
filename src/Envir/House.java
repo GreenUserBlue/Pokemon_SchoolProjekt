@@ -182,6 +182,7 @@ public class House {
                         res[i + 4][j] = World.Block.HouseTable;
                     }
                 }
+                res[res.length / 2][2] = World.Block.HousePokeHealTalk;
                 res[res.length - 2][0] = World.Block.Free;
                 res[res.length - 3][0] = World.Block.Free;
                 return res;
@@ -222,6 +223,9 @@ public class House {
                         res[i][j] = World.Block.HouseTable;
                     }
                 }
+
+                res[1][3] = World.Block.HouseMarketTalk;
+
                 res[0][0] = World.Block.HouseWallL;
                 res[res.length - 1][0] = World.Block.HouseWall;
                 res[4][0] = World.Block.HouseWall;
@@ -234,7 +238,7 @@ public class House {
                 res[9][2] = World.Block.HouseSmallShelfOther;
                 res[9][3] = World.Block.HouseSmallShelf;
 
-                res[6][6] = World.Block.HouseBigShelfOther;
+                res[6][6] = World.Block.HouseSmallShelfOther;
                 res[6][7] = World.Block.HouseSmallShelf;
 
                 res[7][6] = World.Block.HouseSmallShelfOther;
@@ -302,7 +306,7 @@ public class House {
 
             @Override
             public Vector2D getDoorPos() {
-                return new Vector2D(1, getSize().getY() - 1);
+                return new Vector2D(1, getSize().getY() - 2);
             }
 
             @Override

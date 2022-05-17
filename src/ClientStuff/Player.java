@@ -1,14 +1,13 @@
 package ClientStuff;
 
 import Calcs.Vector2D;
+import Envir.City;
 import Envir.House;
 import Envir.World;
 import ServerStuff.MessageType;
 import ServerStuff.Server;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * a player inside the game
@@ -294,27 +293,54 @@ public class Player {
     /**
      * updates the text events for the player (server)
      *
-     * @param client      the clienthandler
+     * @param client      the clientHandler
      * @param keysPressed the current keys which the client has pressed
-     * @param w           the world the is inside
+     * @param w           the world the player is inside
+     * @param clients     all players, to check if you want to talk to one of them
      */
-    public void updateTextEvents(Server.ClientHandler client, List<Keys> keysPressed, World w) {
+    public void updateTextEvents(Server.ClientHandler client, List<Keys> keysPressed, World w, HashMap<Integer, Server.ClientHandler> clients) {
         if (activity.equals(Activity.standing)) {
             if (keysPressed.contains(Keys.confirm)) {
-                if (houseEntrancePos == null) {
-                    World.Block b = w.getBlockEnvir((int) (getPos().getX() + dir.getVecDir().getX()), (int) (getPos().getY() + dir.getVecDir().getY()), false);
-                    if (b.getVal() != -1) {
-                        String s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal();
-                        client.send(s);
-                        activity = Activity.textEvent;
+                Vector2D pointToSearch = new Vector2D((int) (getPos().getX() + dir.getVecDir().getX()), (int) (getPos().getY() + dir.getVecDir().getY()));
+                if (client.getTimeTillNextTextField() <= System.currentTimeMillis()) {
+                    if (houseEntrancePos == null) {
+                        Optional<City> op = w.getCities().stream().filter(a -> a.isInCity(pointToSearch)).findFirst();
+                        if (op.isEmpty()) {
+                            World.Block b = w.getBlockEnvir((int) pointToSearch.getX(), (int) pointToSearch.getY(), false);
+                            if (b.getVal() != -1) {
+                                String s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal();
+                                client.send(s);
+                                activity = Activity.textEvent;
+                            }
+                        }
+                    } else {
+                        House h = w.getHouse(houseEntrancePos);
+                        World.Block b = h.getBlockInside((int) (getPos().getX() + dir.getVecDir().getX()), (int) (getPos().getY() + dir.getVecDir().getY()));
+                        if (b.getVal() != -1) {
+                            String s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal();
+                            client.send(s);
+                            activity = Activity.textEvent;
+                        }
                     }
-                } else {
-                    House h = w.getHouse(houseEntrancePos);
-                    World.Block b = h.getBlockInside((int) (getPos().getX() + dir.getVecDir().getX()), (int) (getPos().getY() + dir.getVecDir().getY()));
-                    if (b.getVal() != -1) {
-                        String s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal();
-                        client.send(s);
-                        activity = Activity.textEvent;
+                    synchronized (clients) {
+                        Optional<Server.ClientHandler> op = clients.values().stream()
+                                .filter(a -> a != null && a.getPlayer() != null)
+                                .filter(a -> w.getName().equals(a.getPlayer().getWorld()))
+                                .filter(a -> Objects.equals(a.getPlayer().getHouseEntrancePos(), client.getPlayer().getHouseEntrancePos()))
+                                .filter(a -> a.getPlayer().getPos().equals(new Vector2D((int) (getPos().getX() + dir.getVecDir().getX()), (int) (getPos().getY() + dir.getVecDir().getY()))))
+                                .filter(a -> a.getPlayer().getActivity() == Activity.standing)
+                                .filter(a -> a.getTimeTillNextTextField() <= System.currentTimeMillis()).findFirst();
+                        if (op.isPresent()) {
+                            System.out.println("Player found: " + op.get().getPlayer().getName());
+                            String sToQues = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsManager.PlayersMeetQues.getId() + ",name:" + op.get().getPlayer().getName();
+                            System.out.println(sToQues);
+                            client.send(sToQues);
+                            activity = Activity.textEvent;
+
+                            String sToAns = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsManager.PlayersMeetAns.getId() + ",name:" + client.getPlayer().getName();
+                            op.get().send(sToAns);
+                            op.get().getPlayer().activity = Activity.textEvent;
+                        }
                     }
                 }
             }

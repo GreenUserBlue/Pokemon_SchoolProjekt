@@ -1,7 +1,9 @@
 package InGame;
 
+import javafx.scene.paint.Color;
+
 public enum Type {
-    normal,
+    normal(Color.GRAY),
     fighting,
     flying,
     poison,
@@ -19,4 +21,18 @@ public enum Type {
     dragon,
     dark,
     fairy;
+
+    private Color c;
+
+    Type(Color c) {
+        this.c = c;
+    }
+
+    Type(){
+
+    }
+
+    public Color getColor() {
+        return c;
+    }
 }
