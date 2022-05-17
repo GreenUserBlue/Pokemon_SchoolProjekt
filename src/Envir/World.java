@@ -118,9 +118,7 @@ public class World {
     @Override
     public String toString() {
         StringBuilder res = new StringBuilder("World{\n");
-        for (City c : cities) {
-            res.append(c.toString()).append("\n");
-        }
+        for (City c : cities) res.append(c.toString()).append("\n");
         res.append("}");
         return res.toString();
     }
@@ -451,8 +449,8 @@ public class World {
     public enum Block {
         Free(-1),
         Grass(-1),
-        Tree(TextEvent.TextEventIDsManager.Tree.getId()),
-        TreeL(TextEvent.TextEventIDsManager.Tree.getId()),
+        Tree(TextEvent.TextEventIDsTranslater.Tree.getId()),
+        TreeL(TextEvent.TextEventIDsTranslater.Tree.getId()),
         Water(-1),
         House(-1),
         HouseL(-1),
@@ -462,12 +460,12 @@ public class World {
         HouseR(-1),
         HouseTable(-1),
         HouseTableL(-1),
-        HouseBigShelf(TextEvent.TextEventIDsManager.BigShelf.getId()),
-        HouseBigShelfOther(TextEvent.TextEventIDsManager.BigShelf.getId()),
-        HouseSmallShelf(TextEvent.TextEventIDsManager.SmallShelf.getId()),
-        HouseSmallShelfOther(TextEvent.TextEventIDsManager.SmallShelf.getId()),
-        HousePokeHealTalk(TextEvent.TextEventIDsManager.PokeHeal.getId()),
-        HouseMarketTalk(TextEvent.TextEventIDsManager.MarketShopMeet.getId()),
+        HouseBigShelf(TextEvent.TextEventIDsTranslater.BigShelf.getId()),
+        HouseBigShelfOther(TextEvent.TextEventIDsTranslater.BigShelf.getId()),
+        HouseSmallShelf(TextEvent.TextEventIDsTranslater.SmallShelf.getId()),
+        HouseSmallShelfOther(TextEvent.TextEventIDsTranslater.SmallShelf.getId()),
+        HousePokeHealTalk(TextEvent.TextEventIDsTranslater.PokeHeal.getId()),
+        HouseMarketTalk(TextEvent.TextEventIDsTranslater.MarketShopMeet.getId()),
         none(-1);
 
         private final int val;

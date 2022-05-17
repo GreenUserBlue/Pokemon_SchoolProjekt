@@ -1,13 +1,7 @@
 package ClientStuff;
 
 import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.image.Image;
-import javafx.scene.layout.Pane;
-import javafx.scene.paint.ImagePattern;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -38,7 +32,9 @@ public class TestMain extends Application {
 
     @Override
     public void start(Stage stage) {
-        initPokeImgs();
+
+        stage.show();
+        /*initPokeImgs();
 
         Pane p = new Pane();
         Scene s = new Scene(p, 400, 400);
@@ -85,7 +81,7 @@ public class TestMain extends Application {
             r1.setFill(new ImagePattern(allImgs.get(id[0])));
             r2.setFill(new ImagePattern(allImgs.get(-id[0])));
         });
-        p.getChildren().addAll(bef, next, t, r1, r2);
+        p.getChildren().addAll(bef, next, t, r1, r2);*/
     }
 
     private void initPokeImgs() {

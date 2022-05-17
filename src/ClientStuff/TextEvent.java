@@ -33,6 +33,7 @@ public class TextEvent {
 
     // 1000-1999 do not send to server
     // 1000-1099 single: afterwards let field open
+    // 1100-1199 multiple: afterwards let field open
 
     // 2000-2099 multiple: send only if not last
 
@@ -58,9 +59,7 @@ public class TextEvent {
 
     private int curCharsShown = 0;
 
-
     private TextEventState state = TextEventState.nothing;
-
 
     private int curTextNbr = -1;
 
@@ -71,6 +70,8 @@ public class TextEvent {
     }
 
     private static final Map<Integer, JSONValue> eventTexts = new HashMap<>();
+
+    private boolean isInstantFin = true;
 
     public TextEvent() {
         field = new TextArea();
@@ -136,28 +137,36 @@ public class TextEvent {
     }
 
     public void startNewText(int jsonValue, Map<String, String> keys) {
-        System.out.println("stating new text");
+        startNewText(jsonValue, keys, false);
+    }
+
+    public void startNewText(int jsonValue, Map<String, String> keys, boolean isInstantFin) {
         curLine = 0;
         curTextNbr = 0;
         curCharsShown = 0;
         curTextToWrite = null;
+        this.isInstantFin = isInstantFin;
         isCurFin = true;
         this.curTextNbr = jsonValue;
-//        this.showAfterwards = showAfterwards;
         List<JSONValue> h = eventTexts.get(jsonValue).getList();
         AtomicReference<String> s = new AtomicReference<>(h.get(0).getStr());
         if (keys != null) {
             keys.forEach((a, b) -> s.set(s.get().replaceAll("%[$]%" + a + "%[$]%", b)));
         }
-
         text = Objects.requireNonNull(splitToLines(s.get().replaceAll(" {3}", System.lineSeparator()), 80)).toArray(new String[0]);
+
         optionsNode.getChildren().clear();
         h.stream().skip(1).forEach(a -> {
-            optionsAfterText.add(a.getStr());
+            if (keys != null) {
+                AtomicReference<String> str = new AtomicReference<>(a.getStr());
+                keys.forEach((c, b) -> str.set(str.get().replaceAll("%[$]%" + c + "%[$]%", b)));
+                optionsAfterText.add(str.get());
+            } else {
+                optionsAfterText.add(a.getStr());
+            }
             Button t = new Button(optionsAfterText.get(optionsAfterText.size() - 1));
             optionsNode.getChildren().add(t);
         });
-//        System.out.println(Arrays.toString(text));
         optionsNode.setAlignment(Pos.BOTTOM_RIGHT);
         GridPane.setHalignment(optionsNode, HPos.RIGHT);
         nextLine();
@@ -205,8 +214,6 @@ public class TextEvent {
                 curLine++;
                 curTextToWrite = text[curLine - 1] + System.lineSeparator() + (text.length > curLine ? text[curLine] : "");
                 curCharsShown = curLine != 1 ? Math.max(curTextToWrite.indexOf(System.lineSeparator()), 1) : 1;
-
-//                System.out.println(curTextToWrite);
                 AnimationTimer timer = new AnimationTimer() {
                     long timeTillNextUse = 0;
 
@@ -215,7 +222,7 @@ public class TextEvent {
                         if (timeTillNextUse < System.currentTimeMillis()) {
                             timeTillNextUse = System.currentTimeMillis() + 15;
                             if (curCharsShown <= curTextToWrite.length()) {
-                                field.setText(curTextToWrite.substring(0, curCharsShown++));
+                                field.setText(curTextToWrite.substring(0, curCharsShown += (isInstantFin ? (Math.min(5, curTextToWrite.length() - curCharsShown+1)) : 1)));
                             } else {
                                 isCurFin = true;
                                 stop();
@@ -295,7 +302,7 @@ public class TextEvent {
         c.forEach((key, value) -> value.getMap().forEach((a, b) -> eventTexts.put(Integer.parseInt(a) + Integer.parseInt(key), b)));
     }
 
-    public static enum TextEventIDsManager {
+    public enum TextEventIDsTranslater {
         Tree(0),
         BigShelf(1),
         SmallShelf(2),
@@ -304,12 +311,13 @@ public class TextEvent {
         FightEnd(4),
         WrongItem(5),
         PlayersMeetQues(6),
-        MarketShopMeet(101),
-        PlayersMeetAns(100);
+        PlayersMeetAns(100),
+        MarketShopItems(1100),
+        MarketShopMeet(101);
 
         private final int id;
 
-        TextEventIDsManager(int val) {
+        TextEventIDsTranslater(int val) {
             id = val;
         }
 

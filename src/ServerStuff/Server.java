@@ -195,7 +195,7 @@ public class Server {
      */
     public void remOnUpdate(boolean addNew, Consumer<ClientHandler> c, int... ids) {
         if (ids.length == 0) {
-            clients.entrySet().stream().filter(e -> e.getValue() != null).forEach(e -> e.getValue().allOnMessage.remove(c));
+            clients.entrySet().stream().filter(e -> e.getValue() != null).forEach(e -> e.getValue().allOnUpdate.remove(c));
         } else {
             clients.entrySet().stream().filter(e -> Arrays.stream(ids).filter(val -> val == e.getKey() && e.getValue() != null).findFirst().isPresent()).forEach(e -> e.getValue().allOnUpdate.remove(c));
         }

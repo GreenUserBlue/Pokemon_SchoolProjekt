@@ -29,7 +29,7 @@
       "Decline"
     ],
     "1": [
-      "What do you want to do",
+      "What do you want to do?",
       "Buy stuff",
       "Sell stuff (not implemented)",
       "Leave"
@@ -46,6 +46,20 @@
     "3": [
       "I think you will regret all your life choices.",
       "I will show you what you might reach one day."
+    ]
+  },
+  "1100": {
+  "0": [
+    "What do you want to buy?",
+    "Next",
+    "%$%Item0%$%",
+    "%$%Item1%$%",
+    "%$%Item2%$%",
+    "Before",
+    "Back"
+  ],
+    "1": [
+
     ]
   }
 }
