@@ -332,12 +332,12 @@ public class Player {
                                 .filter(a -> a.getTimeTillNextTextField() <= System.currentTimeMillis()).findFirst();
                         if (op.isPresent()) {
                             System.out.println("Player found: " + op.get().getPlayer().getName());
-                            String sToQues = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsManager.PlayersMeetQues.getId() + ",name:" + op.get().getPlayer().getName();
+                            String sToQues = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsTranslater.PlayersMeetQues.getId() + ",name:" + op.get().getPlayer().getName();
                             System.out.println(sToQues);
                             client.send(sToQues);
                             activity = Activity.textEvent;
 
-                            String sToAns = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsManager.PlayersMeetAns.getId() + ",name:" + client.getPlayer().getName();
+                            String sToAns = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsTranslater.PlayersMeetAns.getId() + ",name:" + client.getPlayer().getName();
                             op.get().send(sToAns);
                             op.get().getPlayer().activity = Activity.textEvent;
                         }

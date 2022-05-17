@@ -69,6 +69,7 @@ public class MyClient extends Application {
      */
     private final TextEvent txt = new TextEvent();
 
+    private final MarketGUI marketGUI = new MarketGUI(txt);
 
     /**
      * all Images which are needed for graphics
@@ -382,16 +383,21 @@ public class MyClient extends Application {
             case 0 -> {
                 synchronized (client.getPlayers().get(0)) {
                     if (p.getActivity() != Player.Activity.textEvent) {
-                        System.out.println("MyClient.doTextEvent: got something");
+
                         p.setActivity(Player.Activity.textEvent);
                         if (s.split(",").length == 1) {
-                            Platform.runLater(() -> txt.startNewText(Integer.parseInt(s.substring(1)), null));
+                            int id = Integer.parseInt(s.substring(1));
+                            if (id == TextEvent.TextEventIDsTranslater.MarketShopMeet.getId()) {
+                                Platform.runLater(() -> marketGUI.startNewMarket(client.getPlayers().get(0)));
+                            } else {
+                                Platform.runLater(() -> txt.startNewText(id, null));
+                            }
                         } else {
                             int id = Integer.parseInt(s.substring(1).split(",")[0]);
 
                             HashMap<String, String> data = new HashMap<>();
                             Arrays.stream(s.substring(1).split(",")).skip(1).forEach(a -> data.put(a.split(":")[0], a.split(":")[1]));
-                            if (id == TextEvent.TextEventIDsManager.PlayersMeetAns.getId() || id == TextEvent.TextEventIDsManager.PlayersMeetQues.getId()) {
+                            if (id == TextEvent.TextEventIDsTranslater.PlayersMeetAns.getId() || id == TextEvent.TextEventIDsTranslater.PlayersMeetQues.getId()) {
                                 Optional<Player> op = client.getPlayers().stream().filter(a -> a.getName().equals(data.get("name"))).findFirst();
                                 op.ifPresent(a -> {
                                     client.getPlayers().get(0).setDir(Player.Dir.getDir(Vector2D.sub(a.getPos(), (client.getPlayers().get(0).getPos())), Player.Dir.none));
