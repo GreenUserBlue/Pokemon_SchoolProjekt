@@ -12,8 +12,9 @@ public class Pokemon {
     //TODO Attacken
     //TODO pokemon attackieren sich (getsAttacked())
     //TODO entwicklungen --> was is mit den viechern die Steine brauchen ? bzw getauscht (ik es gibt das enum aber mach ma das ?)
-    //TODO evolvesInto attribut befüllen mit csv liste und in konstruktor und toString und so
+    //TODO bei entwicklungen auslesen kann man schon auf level zugreifen theoretisch
     //TODO Bilder hat zwicki schon runtergeladen muss ich aber noch einbauen
+    //Evoli is muell
 
 
 
@@ -69,12 +70,8 @@ public class Pokemon {
 
          */
 
-        Pokemon a = createPokemon(new Vector2D(3000,2471), World.Block.Grass);
+        Pokemon a = createPokemon(new Vector2D(200,600), World.Block.Grass);
         System.out.println(a);
-
-    }
-
-    private void readFile(String path){
 
     }
 
@@ -86,25 +83,36 @@ public class Pokemon {
         //File file = new File(String.valueOf(Path.of("res/DataSets/pokeFile.txt")));
         BufferedReader in;
         BufferedReader in2;
+        BufferedReader in3;
         String[] lines = new String[151];
         String[] lines2 = new String[151];
+        String[] lines3 = new String[152];
         State s;
         try {
             in = new BufferedReader(new FileReader("res/DataSets/pokeFile.txt"));
             in2 = new BufferedReader(new FileReader("res/DataSets/dataList.txt"));
+            in3 = new BufferedReader(new FileReader("res/DataSets/Evolutions.csv"));
             String row;
             String row2;
+            String row3;
             for (int i = 0; (row = in.readLine()) != null; i++) {
                 lines[i] = row;
             }
             for (int i = 0; (row2 = in2.readLine()) != null && i < 151; i++) {
                 lines2[i] = row2;
             }
+            for (int i = 0; (row3 = in3.readLine()) != null; i++) {
+                //System.out.println("i: " + i + "   " + row3);
+                if (!row3.isBlank()){
+                    lines3[i] = row3;//TODO wirft exception
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        String[] oneRow;//bis jz nur 6 attribute
+        String[] oneRow;
         String[] oneRow2;
+        String[] oneRow3;
 
         int maxXp;
         World.Block block;
@@ -112,6 +120,7 @@ public class Pokemon {
             Type[] types = new Type[2];
             oneRow = lines[i].split(";");
             oneRow2 = lines2[i].split(",");
+            oneRow3 = lines3[i].split(";");
             maxXp = getXpNeeded(oneRow[5], 1);
             if (oneRow[4].contains("water") || oneRow[4].contains("sea")) {
                 block = World.Block.Water;
@@ -130,7 +139,13 @@ public class Pokemon {
                 //System.out.println(types[1]);
                 types[1] = Type.valueOf(oneRow2[3].toLowerCase());
             }
-            template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, null, null, types, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block, oneRow[5], s, new int[6]));
+            int evolvesIntoID;
+            if (oneRow3[5] != null && !oneRow3[5].equals("null")){
+                evolvesIntoID = Integer.parseInt(oneRow3[5]);
+            }else {
+                evolvesIntoID = -1;
+            }
+            template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, evolvesIntoID, null, null, types, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block, oneRow[5], s, new int[6]));
         }
 
 
@@ -156,11 +171,11 @@ public class Pokemon {
 
 
 
-
-    public Pokemon(String name, int id, EvolveType evolveType, Attack[] attacks, Nature nature, Type[] type, int level, int xp, int maxXP, int captureRate, World.Block block, String growthRate, State state, int[] iv) {
+    public Pokemon(String name, int id, EvolveType evolveType, int evolvesIntoId, Attack[] attacks, Nature nature, Type[] type, int level, int xp, int maxXP, int captureRate, World.Block block, String growthRate, State state, int[] iv) {
         this.name = name;
         this.id = id;
         this.evolveType = evolveType;
+        this.evolvesIntoId = evolvesIntoId;
         this.attacks = attacks;
         this.nature = nature;
         this.type = type;
@@ -173,9 +188,6 @@ public class Pokemon {
         this.state = state;
         this.iv = iv;
     }
-
-
-
 
     private static Pokemon getPokemon(int id, int level) {
         //da id mit 1 beginnt
@@ -201,7 +213,7 @@ public class Pokemon {
     @Override
     protected Pokemon clone() throws CloneNotSupportedException {
         //Pokemon clone = (Pokemon) super.clone();
-        return new Pokemon(name, id, evolveType, attacks, nature, type, level, xp, maxXP, captureRate, block, growthRate, state, iv);
+        return new Pokemon(name, id, evolveType, evolvesIntoId, attacks, nature, type, level, xp, maxXP, captureRate, block, growthRate, state, iv);
     }
 
     public Pokemon() {
@@ -392,6 +404,7 @@ public class Pokemon {
                 "name='" + name + '\'' +
                 ", id=" + id +
                 ", evolveType=" + evolveType +
+                ", evolvesIntoId=" + evolvesIntoId +
                 ", attacks=" + Arrays.toString(attacks) +
                 ", nature=" + nature +
                 ", type=" + Arrays.toString(type) +
