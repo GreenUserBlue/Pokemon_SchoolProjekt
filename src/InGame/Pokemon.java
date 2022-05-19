@@ -2,18 +2,27 @@ package InGame;
 
 import Calcs.Vector2D;
 import Envir.World;
+import javafx.scene.image.Image;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+/**
+ * @author Clemens Hodina
+ */
 public class Pokemon {
 
-    //TODO welches pokemon welche attacke bei welchem level bekommt
     //TODO Attacken
     //TODO pokemon attackieren sich (getsAttacked())
-    //TODO entwicklungen --> was is mit den viechern die Steine brauchen ? bzw getauscht (ik es gibt das enum aber mach ma das ?)
+    //TODO entwicklungen --> was is mit den viechern die Steine brauchen ?  und attacken
     //TODO bei entwicklungen auslesen kann man schon auf level zugreifen theoretisch
-    //TODO Bilder hat zwicki schon runtergeladen muss ich aber noch einbauen
     //Evoli is muell
 
 
@@ -104,7 +113,7 @@ public class Pokemon {
             for (int i = 0; (row3 = in3.readLine()) != null; i++) {
                 //System.out.println("i: " + i + "   " + row3);
                 if (!row3.isBlank()){
-                    lines3[i] = row3;//TODO wirft exception
+                    lines3[i] = row3;
                 }
             }
         } catch (IOException e) {
@@ -430,5 +439,56 @@ public class Pokemon {
 
     public Nature getNature() {
         return nature;
+    }
+
+    private static Map<Integer, Image> allImgs = new HashMap<>();
+
+    public  Image getImage() {
+        return allImgs.get(id);
+    }
+
+    public  Image getBackImage() {
+        return allImgs.get(-id);
+    }
+
+    private static void initPokeImgs() {
+        try {
+            int maxPoke = 151;
+            if (!Files.exists(Path.of("./res/PokemonImgs/1.png"))) {
+                Files.deleteIfExists(Path.of("./res/PokemonImgs/"));
+                Files.createDirectory(Path.of("./res/PokemonImgs/"));
+                for (int i = 1; i <= maxPoke; i++) {
+                    try (InputStream in = new URL("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/" + i + ".png").openStream()) {
+                        Files.copy(in, Paths.get("./res/PokemonImgs/" + i + ".png"));
+                    } catch (IOException ignored) {
+                    }
+                    try (InputStream in = new URL("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/" + i + ".png").openStream()) {
+                        Files.copy(in, Paths.get("./res/PokemonImgs/" + i + "_back.png"));
+                    } catch (IOException ignored) {
+                    }
+                }
+            }
+            Files.walk(Path.of("./res/PokemonImgs/")).forEach(f -> {
+                Matcher m = Pattern.compile("([0-9]+)(_back)?.[pP][nN][gG]").matcher(f.getFileName().toString());
+                if (m.find()) {
+                    try {
+                        allImgs.put(Integer.parseInt(m.group(1)) * (m.group(2) != null ? -1 : 1), new Image(String.valueOf(f.toFile().toURI().toURL())));
+                    } catch (MalformedURLException ignored) {
+                    }
+                }
+            });
+
+            for (int i = 1; i <= maxPoke; i++) {
+                if (allImgs.get(i) == null) {
+                    allImgs.put(i, new Image(String.valueOf(Path.of("./res/LogScreen/ImgNotFound.png").toUri().toURL())));
+                }
+
+                if (allImgs.get(-i) == null) {
+                    allImgs.put(-i, new Image(String.valueOf(Path.of("./res/LogScreen/ImgNotFound.png").toUri().toURL())));
+                }
+            }
+
+        } catch (IOException ignored) {
+        }
     }
 }

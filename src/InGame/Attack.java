@@ -1,36 +1,106 @@
 package InGame;
 
+import jdk.jshell.Snippet;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * @author Clemens Hodina
+ */
 public class Attack {
-    //TODO aus den files die zwicki mir geschickt hat und des infos von pokeapi wo daas schön augelistet ist kann man sich die Attacken iwie zusammenbauen
-    //iwie move namen holen und dann level learned at
-    //maybe ne map machen mit <pokemon, Map<Atacke, Level> --> is halt schwer zum auslesen
+    private int id;
+
     private String name;
 
     private Type type;
 
     private int damage;
 
+    private int AP;
+
     //z. 0.85 is 85% oder 1 = 100%
+    //TODO das fehlt noch das is in den Files glaub ich accuracy
     private double hitProbability;
 
     private boolean attacksAlwaysFirst;
 
-    //speed is bei Pokemon nd be Attacke
+    private AttackType attackType;
+
+    //TODO maybe effects (paralysieren und brennen)
 
     //iwie muss der damage mit den werten verbunden sein --> wird aber erst in der Pokemon Klasse passieren
 
+
+    public static List<Attack> template = new ArrayList<>();
 
     public Attack(String name) {
         this.name = name;
     }
 
-    public Attack(String name, Type type, int damage, double hitProbability, boolean attacksAlwaysFirst) {
+    public Attack(int id, String name, Type type, int damage, int AP, double hitProbability, boolean attacksAlwaysFirst, AttackType attackType) {
+        this.id = id;
         this.name = name;
         this.type = type;
         this.damage = damage;
+        this.AP = AP;
         this.hitProbability = hitProbability;
         this.attacksAlwaysFirst = attacksAlwaysFirst;
+        this.attackType = attackType;
     }
 
+    public static void main(String[] args) throws IOException {
+        Attack.init();
+        for (Attack attack : template) {
+            System.out.println(attack);
+        }
+        //System.out.println(template);
+    }
 
+    public static void init() throws IOException {
+        BufferedReader in;
+        String[] lines = new String[165];
+        in = new BufferedReader(new FileReader("res/DataSets/movesList"));
+        String row;
+        for (int i = 0; (row = in.readLine()) != null; i++) {
+            lines[i] = row;
+        }
+        String[] oneRow;
+        for (int i = 0; i < 165; i++) {
+            oneRow = lines[i].split(";");
+            //System.out.println(Arrays.toString(oneRow));
+            if (oneRow[1].equals("null")) {
+                template.add(new Attack(Integer.parseInt(oneRow[0]), oneRow[3], null, 0, Integer.parseInt(oneRow[2]), 1, false, AttackType.Status));
+            } else {
+                template.add(new Attack(Integer.parseInt(oneRow[0]), oneRow[3], null, Integer.parseInt(oneRow[1]), Integer.parseInt(oneRow[2]), 1, false, AttackType.Attack));
+            }
+        }
+    }
+
+    enum AttackType {
+        Attack,
+        Special,
+        Status
+    }
+
+    @Override
+    public String toString() {
+        return "Attack{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", type=" + type +
+                ", damage=" + damage +
+                ", AP=" + AP +
+                ", hitProbability=" + hitProbability +
+                ", attacksAlwaysFirst=" + attacksAlwaysFirst +
+                ", attackType=" + attackType +
+                '}';
+    }
 }
+
+

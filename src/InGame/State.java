@@ -1,11 +1,9 @@
 package InGame;
+/**
+ * @author Clemens Hodina
+ */
 
 public class State {
-    //Klasse Status{
-    // int HP, Attack, Defense,	Sp. Atk, 	Sp. Def, 	Speed
-    // void add(int[]);
-    // int[] mult(double[](zB von Wesen))
-    //}
     double HP;
 
     double attack;

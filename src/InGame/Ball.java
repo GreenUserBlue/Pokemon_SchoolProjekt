@@ -1,5 +1,8 @@
 package InGame;
 
+/**
+ * @author Clemens Hodina
+ */
 public class Ball extends Item{
     private int ballId;
 

@@ -1,5 +1,8 @@
 package InGame;
 
+/**
+ * @author Clemens Hodina
+ */
 public class Potion extends Item{
     private int potionId;
 

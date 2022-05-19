@@ -3,6 +3,9 @@ package InGame;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author Clemens Hodina
+ */
 public class Item {
 
     private String name;
