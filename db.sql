@@ -23,10 +23,11 @@ create TABLE Player
 (
     PK_Player_ID int AUTO_INCREMENT,
 
-    skinID       int,
+    skinID       int        default (0),
     startPokID   int,
     FK_User_ID   int,
-    language     varchar(3),
+    money        int        default (0),
+    language     varchar(3) default ('eng'),
     PRIMARY KEY (PK_Player_ID),
     foreign key (FK_User_ID) REFERENCES User (PK_User_ID),
     check ( skinID >= 0 )
@@ -74,24 +75,29 @@ CREATE TABLE House
     FOREIGN KEY (FK_Owner_ID) REFERENCES Player (PK_Player_ID)
 );
 
-CREATE TABLE Position
+CREATE TABLE MyPosition
 (
     FK_PK_Player_ID int,
     FK_PK_World_ID  int,
     posX            int,
     posY            int,
-    PRIMARY KEY (FK_PK_Player_ID, FK_PK_Player_ID),
+    PRIMARY KEY (FK_PK_Player_ID, FK_PK_World_ID),
     FOREIGN KEY (FK_PK_Player_ID) REFERENCES Player (PK_Player_ID),
     FOREIGN KEY (FK_PK_World_ID) REFERENCES World (PK_World_ID)
 );
+
 
 CREATE TABLE ItemToPlayer
 (
     PK_ItemToPlayer_ID int auto_increment,
     Item_ID            int,
     FK_Player          int,
+    quantity           int,
+    ItemTypName        varchar(255),
     PRIMARY KEY (PK_ItemToPlayer_ID),
-    FOREIGN KEY (FK_Player) REFERENCES Player (PK_Player_ID)
+    FOREIGN KEY (FK_Player) REFERENCES Player (PK_Player_ID),
+    check ( ItemTypName in ('Ball', 'Potion', 'WaterItem') ),
+    check ( quantity >= 0 )
 );
 
 insert into User (name, password, email)
@@ -101,10 +107,10 @@ values ('Name', '$2a$06$fUbqoClTr0U0.CWyp5PdPekyWHpXhPdr53.d.S7pkRgwmyyRCo9My', 
        ('Name3', '$2a$06$zWhy4d6V4vyOIFtqPR5CleF7FMTC4m7TcMfIFa.ie7Xoxp8Id7nZa', 'a@g.com');
 
 
-insert into Player (FK_User_ID, language, skinID, startPokID)
-values (1, 'eng', 0, 0),
-       (1, 'eng', 0, 2),
-       (3, 'eng', 0, 2);
+insert into Player (FK_User_ID, language, skinID, startPokID, money)
+values (1, 'eng', 0, 0, 17000),
+       (1, 'eng', 0, 2, 2000),
+       (3, 'eng', 0, 2, 0);
 
 insert into Badge (badgeTypeID, FK_Player_ID)
 VALUES (1, 2),
@@ -117,8 +123,17 @@ VALUES ('Franz', 1, 3, 1),
        ('Franz2', 2, 3, 2),
        ('Franz3', 2, 3, 1);
 
-# select count(PK_Badge_ID) as nbr from Badge inner join Player P on Badge.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID = 4;
+insert into player (skinID, startPokID, FK_User_ID, language, money)
+    VALUE (
+           0, 2, (select PK_User_ID from User where name = 'Name'), 'eng', 100
+    );
 
+insert into MyPosition(FK_PK_Player_ID, FK_PK_World_ID, posX, posY)
+VALUES (1, 1, 10, 15),
+       (2, 1, 10, 10),
+       (3, 1, 10, 15);
+
+# select count(PK_Badge_ID) as nbr from Badge inner join Player P on Badge.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID = 4;
 
 # select count(*) as nbr from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = 1 && User.name = 'Name';
 
@@ -128,11 +143,6 @@ VALUES ('Franz', 1, 3, 1),
 
 # delete from World;
 
-insert into player (skinID, startPokID, FK_User_ID, language)
-    VALUE
-    (
-     0, 2, (select PK_User_ID from User where name = 'Name'), 'eng'
-        );
 
 # select PK_User_ID from User where name = 'Name';
 

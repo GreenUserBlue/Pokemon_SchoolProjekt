@@ -1,13 +1,13 @@
 package InGame;
 
-public class Ball extends Item{
-    private int ballId;
+public class Ball extends Item {
 
     private double catchRate;
 
-    public Ball(String name, int prize, boolean isBuyable, int ballId, double catchRate) {
-        super(name, prize, isBuyable);
-        this.ballId = ballId;
+    private static int curIDs=0;
+
+    public Ball(String name, int prize, boolean isBuyable, int badgesNeeded, double catchRate) {
+        super(name, prize, isBuyable, curIDs++, badgesNeeded);
         this.catchRate = catchRate;
     }
 }

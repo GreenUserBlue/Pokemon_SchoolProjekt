@@ -1,13 +1,13 @@
 package InGame;
 
-public class Potion extends Item{
-    private int potionId;
+public class Potion extends Item {
 
-    private int healQuantity;
+    private static int curIDs = 0;
 
-    public Potion(String name, int prize, boolean isBuyable, int potionId, int healQuantity) {
-        super(name, prize, isBuyable);
-        this.potionId = potionId;
+    private double healQuantity;
+
+    public Potion(String name, int price, boolean isBuyable, int badgesNeeded, double healQuantity) {
+        super(name, price, isBuyable, curIDs++, badgesNeeded);
         this.healQuantity = healQuantity;
     }
 }

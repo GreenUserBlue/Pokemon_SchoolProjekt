@@ -17,14 +17,24 @@ import java.util.*;
 public class Player {
 
     /**
-     * the unique id of the player
-     */
-    private int id;
-
-    /**
      * how fast a player walks normally (not fast)
      */
     private static final double walkingSpeed = 0.1;
+
+    /**
+     * the id of the player in relation of the user
+     */
+    private int idFromPlayer;
+
+    private int idForDB;
+
+
+//    private HashMap<>
+
+    /**
+     * the amount of money the player processes
+     */
+    private long money;
 
     /**
      * the name of the player
@@ -96,24 +106,38 @@ public class Player {
         dir = Dir.down;
     }
 
-    public void setWorld(String world) {
-        this.world = world;
-    }
-
     /**
      * initializes the player
      *
-     * @param name {@link Player#name}
-     * @param pos  {@link Player#pos}
-     * @param skin {@link Player#skin}
-     * @param id   {@link Player#id}
+     * @param name         {@link Player#name}
+     * @param pos          {@link Player#pos}
+     * @param skin         {@link Player#skin}
+     * @param idFromPlayer {@link Player#idFromPlayer}
      */
-    public Player(String name, Vector2D pos, int skin, int id) {
+    public Player(String name, Vector2D pos, int skin, int idFromPlayer, int idForDB, long money) {
         this.name = name;
         this.pos = pos;
         this.skin = skin;
-        this.id = id;
+        this.idFromPlayer = idFromPlayer;
+        this.idForDB = idForDB;
+        this.money = money;
         dir = Dir.down;
+    }
+
+    public int getIdForDB() {
+        return idForDB;
+    }
+
+    public void setIdForDB(int idForDB) {
+        this.idForDB = idForDB;
+    }
+
+    public long getMoney() {
+        return money;
+    }
+
+    public void setMoney(long money) {
+        this.money = money;
     }
 
     public Vector2D getHouseEntrancePos() {
@@ -158,6 +182,10 @@ public class Player {
 
     public String getWorld() {
         return world;
+    }
+
+    public void setWorld(String world) {
+        this.world = world;
     }
 
     @Override
@@ -281,12 +309,12 @@ public class Player {
         }
     }
 
-    public int getId() {
-        return id;
+    public int getIdFromPlayer() {
+        return idFromPlayer;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setIdFromPlayer(int idFromPlayer) {
+        this.idFromPlayer = idFromPlayer;
     }
 
 
@@ -317,7 +345,10 @@ public class Player {
                         House h = w.getHouse(houseEntrancePos);
                         World.Block b = h.getBlockInside((int) (getPos().getX() + dir.getVecDir().getX()), (int) (getPos().getY() + dir.getVecDir().getY()));
                         if (b.getVal() != -1) {
-                            String s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal();
+                            String s;
+                            synchronized (client.getPlayer()) {
+                                s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal() + (b.getVal() == TextEvent.TextEventIDsTranslater.MarketShopMeet.getId() ? "," + client.getPlayer().money : "");
+                            }
                             client.send(s);
                             activity = Activity.textEvent;
                         }

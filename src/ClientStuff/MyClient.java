@@ -4,6 +4,7 @@ import Calcs.Crypto;
 import Calcs.Vector2D;
 import Envir.House;
 import Envir.World;
+import InGame.Item;
 import ServerStuff.MessageType;
 import ServerStuff.User;
 import javafx.animation.AnimationTimer;
@@ -29,8 +30,10 @@ import javafx.util.Duration;
 
 import java.math.BigInteger;
 import java.net.MalformedURLException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -121,10 +124,10 @@ public class MyClient extends Application {
                     } else if (keys.contains(Keys.confirm) && client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
                         if (txt.nextLine()) {
                             if (txt.getState() == TextEvent.TextEventState.selection) {
-                                System.out.println("now in selection");
+                                System.out.println("MyClient.handle: now in selection");
                             } else {
                                 client.getPlayers().get(0).setActivity(Player.Activity.standing);
-                                System.out.println("finished");
+                                System.out.println("MyClient.handle: finished");
                             }
                         }
                     } else if (client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
@@ -336,11 +339,11 @@ public class MyClient extends Application {
         stage.setY(80);
         initImgs();
         TextEvent.initTexts();
-        client = new Client(33333, "127.0.0.1", false);
-        client.onMessage((a, b) -> {
+        Item.init(Path.of("./res/DataSets/Items.csv"));
+        client = new Client(33333, "127.0.0.1", false, (a, b) -> {
             if (b instanceof String s && !s.startsWith(MessageType.toStr(MessageType.updatePos)) && !s.startsWith(MessageType.toStr(MessageType.textEvent)))
                 System.out.println("From Server: '" + b + '\'');
-        });
+        }, getOnMsgClient());
         txt.setClient(client);
         int height = 300;
         stage.setScene(new Scene(LoginScreens.getLoadingScreen(), height / 9D * 16, height));
@@ -353,7 +356,6 @@ public class MyClient extends Application {
         stage.show();
     }
 
-
     /**
      * adds all the listeners to the stage/client
      */
@@ -363,7 +365,10 @@ public class MyClient extends Application {
             if (e.getCode() == KeyCode.F11) stage.setFullScreen(!stage.isFullScreen());
         });
         stage.getScene().setOnKeyReleased(e -> keysPressed.remove(e.getCode()));
-        client.onMessage((a, b) -> {
+    }
+
+    private BiConsumer<Client, Object> getOnMsgClient() {
+        return (a, b) -> {
             if (b instanceof String s) {
                 MessageType mT = MessageType.getType(s.length() > 2 && Pattern.matches("[0-9]{3}", s.substring(0, 3)) ? Integer.parseInt(s.substring(0, 3)) : 999);
                 switch (mT) {
@@ -374,7 +379,7 @@ public class MyClient extends Application {
                     case textEvent -> doTextEvent(s.substring(3));
                 }
             }
-        });
+        };
     }
 
     private void doTextEvent(String s) {
@@ -383,30 +388,29 @@ public class MyClient extends Application {
             case 0 -> {
                 synchronized (client.getPlayers().get(0)) {
                     if (p.getActivity() != Player.Activity.textEvent) {
-
                         p.setActivity(Player.Activity.textEvent);
+                        System.out.println("MyClient.doTextEvent: " + s);
                         if (s.split(",").length == 1) {
                             int id = Integer.parseInt(s.substring(1));
-                            if (id == TextEvent.TextEventIDsTranslater.MarketShopMeet.getId()) {
-                                Platform.runLater(() -> marketGUI.startNewMarket(client.getPlayers().get(0)));
-                            } else {
-                                Platform.runLater(() -> txt.startNewText(id, null));
-                            }
+                            Platform.runLater(() -> txt.startNewText(id, null));
                         } else {
                             int id = Integer.parseInt(s.substring(1).split(",")[0]);
-
-                            HashMap<String, String> data = new HashMap<>();
-                            Arrays.stream(s.substring(1).split(",")).skip(1).forEach(a -> data.put(a.split(":")[0], a.split(":")[1]));
-                            if (id == TextEvent.TextEventIDsTranslater.PlayersMeetAns.getId() || id == TextEvent.TextEventIDsTranslater.PlayersMeetQues.getId()) {
-                                Optional<Player> op = client.getPlayers().stream().filter(a -> a.getName().equals(data.get("name"))).findFirst();
-                                op.ifPresent(a -> {
-                                    client.getPlayers().get(0).setDir(Player.Dir.getDir(Vector2D.sub(a.getPos(), (client.getPlayers().get(0).getPos())), Player.Dir.none));
-                                    a.setDir(Player.Dir.getDir(Vector2D.sub((client.getPlayers().get(0).getPos()), a.getPos()), Player.Dir.none));
-                                });
-
-                                client.getPlayers().get(0).setDir(Player.Dir.getDir(Vector2D.sub(client.getPlayers().stream().filter(a -> a.getName().equals(data.get("name"))).map(Player::getPos).findFirst().orElse(new Vector2D()), (client.getPlayers().get(0).getPos())), Player.Dir.none));
+                            System.out.println("MyClient.doTextEvent: " + id);
+                            if (id == TextEvent.TextEventIDsTranslater.MarketShopMeet.getId()) {
+                                Platform.runLater(() -> marketGUI.startNewMarket(client.getPlayers().get(0), Integer.parseInt(s.split(",")[1])));
+                            } else {
+                                HashMap<String, String> data = new HashMap<>();
+                                Arrays.stream(s.substring(1).split(",")).skip(1).forEach(a -> data.put(a.split(":")[0], a.split(":")[1]));
+                                if (id == TextEvent.TextEventIDsTranslater.PlayersMeetAns.getId() || id == TextEvent.TextEventIDsTranslater.PlayersMeetQues.getId()) {
+                                    Optional<Player> op = client.getPlayers().stream().filter(a -> a.getName().equals(data.get("name"))).findFirst();
+                                    op.ifPresent(a -> {
+                                        client.getPlayers().get(0).setDir(Player.Dir.getDir(Vector2D.sub(a.getPos(), (client.getPlayers().get(0).getPos())), Player.Dir.none));
+                                        a.setDir(Player.Dir.getDir(Vector2D.sub((client.getPlayers().get(0).getPos()), a.getPos()), Player.Dir.none));
+                                    });
+                                    client.getPlayers().get(0).setDir(Player.Dir.getDir(Vector2D.sub(client.getPlayers().stream().filter(a -> a.getName().equals(data.get("name"))).map(Player::getPos).findFirst().orElse(new Vector2D()), (client.getPlayers().get(0).getPos())), Player.Dir.none));
+                                }
+                                Platform.runLater(() -> txt.startNewText(id, data));
                             }
-                            Platform.runLater(() -> txt.startNewText(id, data));
                         }
                     }
                 }

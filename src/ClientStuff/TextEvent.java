@@ -142,7 +142,6 @@ public class TextEvent {
 
     public void startNewText(int jsonValue, Map<String, String> keys, boolean isInstantFin) {
         curLine = 0;
-        curTextNbr = 0;
         curCharsShown = 0;
         curTextToWrite = null;
         this.isInstantFin = isInstantFin;
@@ -156,6 +155,7 @@ public class TextEvent {
         text = Objects.requireNonNull(splitToLines(s.get().replaceAll(" {3}", System.lineSeparator()), 80)).toArray(new String[0]);
 
         optionsNode.getChildren().clear();
+        optionsAfterText.clear();
         h.stream().skip(1).forEach(a -> {
             if (keys != null) {
                 AtomicReference<String> str = new AtomicReference<>(a.getStr());
@@ -221,8 +221,12 @@ public class TextEvent {
                     public void handle(long l) {
                         if (timeTillNextUse < System.currentTimeMillis()) {
                             timeTillNextUse = System.currentTimeMillis() + 15;
-                            if (curCharsShown <= curTextToWrite.length()) {
-                                field.setText(curTextToWrite.substring(0, curCharsShown += (isInstantFin ? (Math.min(5, curTextToWrite.length() - curCharsShown+1)) : 1)));
+                            if (curCharsShown < curTextToWrite.length()) {
+//                                field.setText(curTextToWrite.substring(0, (curCharsShown += (isInstantFin ? (Math.min(5, curTextToWrite.length() - curCharsShown)) : 1))));
+                                field.setText(curTextToWrite.substring(0, Math.min((curCharsShown += (isInstantFin ? (Math.min(5, curTextToWrite.length() - curCharsShown)) : 1)), curTextToWrite.length())));
+                                if (field.getText().equals(curTextToWrite)) {
+                                    curCharsShown = curTextToWrite.length() + 1;
+                                }
                             } else {
                                 isCurFin = true;
                                 stop();
@@ -234,6 +238,7 @@ public class TextEvent {
                 field.setText("");
                 state = TextEventState.reading;
             } else {
+
                 if (hasOptions()) {
                     state = TextEventState.selection;
                     optionsNode.setVisible(true);
@@ -241,6 +246,7 @@ public class TextEvent {
                 } else {
                     state = TextEventState.nothing;
                     if (curTextNbr < 1000) {
+                        System.out.println("");//TODO something here
                         if (curTextNbr < 100) {
                             field.setVisible(false);
                         }
@@ -249,7 +255,7 @@ public class TextEvent {
                         }
                     } else {
                         if (curTextNbr < 1100) {
-                            System.out.println("TextEvent.nextLine: fieldStaysVisible");
+//                            System.out.println("TextEvent.nextLine: fieldStaysVisible");
                         }
                     }
                 }
@@ -313,7 +319,8 @@ public class TextEvent {
         PlayersMeetQues(6),
         PlayersMeetAns(100),
         MarketShopItems(1100),
-        MarketShopMeet(101);
+        MarketShopMeet(101),
+        MarketShopGoodBye(7);
 
         private final int id;
 

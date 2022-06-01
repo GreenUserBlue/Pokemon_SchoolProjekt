@@ -20,6 +20,9 @@
     ],
     "6": [
       "You asked %$%name%$% to fight. Waiting for answer..."
+    ],
+    "7": [
+      "Thanks for stopping by, see you soon."
     ]
   },
   "100": {
@@ -49,17 +52,21 @@
     ]
   },
   "1100": {
-  "0": [
-    "What do you want to buy?",
-    "Next",
-    "%$%Item0%$%",
-    "%$%Item1%$%",
-    "%$%Item2%$%",
-    "Before",
-    "Back"
-  ],
+    "0": [
+      "What do you want to buy? (You have %$%money%$%)",
+      "Next",
+      "%$%Item0%$%",
+      "%$%Item1%$%",
+      "%$%Item2%$%",
+      "Before",
+      "Back"
+    ],
     "1": [
-
+      "How often do you want to buy %$%Item%$%",
+      1,
+      5,
+      10,
+      "Back"
     ]
   }
 }
