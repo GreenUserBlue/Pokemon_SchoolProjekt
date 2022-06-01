@@ -25,7 +25,7 @@ public class Attack {
     private int AP;
 
     //z. 0.85 is 85% oder 1 = 100%
-    //TODO das fehlt noch das is in den Files glaub ich accuracy
+    //TODO das fehlt noch, das is in den Files glaub ich accuracy
     private double hitProbability;
 
     private boolean attacksAlwaysFirst;
@@ -73,11 +73,18 @@ public class Attack {
         String[] oneRow;
         for (int i = 0; i < 165; i++) {
             oneRow = lines[i].split(";");
-            //System.out.println(Arrays.toString(oneRow));
+            int a;
+            double b;
+            if (oneRow[4].equals("null")){
+                b = -1;//trifft immer
+            }else{
+                a = Integer.parseInt(oneRow[4]);
+                b = (double) (a/100);
+            }
             if (oneRow[1].equals("null")) {
-                template.add(new Attack(Integer.parseInt(oneRow[0]), oneRow[3], null, 0, Integer.parseInt(oneRow[2]), 1, false, AttackType.Status));
+                template.add(new Attack(Integer.parseInt(oneRow[0]), oneRow[3], Type.valueOf(oneRow[5].toLowerCase()), 0, Integer.parseInt(oneRow[2]), b, false, AttackType.Status));
             } else {
-                template.add(new Attack(Integer.parseInt(oneRow[0]), oneRow[3], null, Integer.parseInt(oneRow[1]), Integer.parseInt(oneRow[2]), 1, false, AttackType.Attack));
+                template.add(new Attack(Integer.parseInt(oneRow[0]), oneRow[3], Type.valueOf(oneRow[5].toLowerCase()), Integer.parseInt(oneRow[1]), Integer.parseInt(oneRow[2]), b, false, AttackType.Attack));
             }
         }
     }
@@ -100,6 +107,10 @@ public class Attack {
                 ", attacksAlwaysFirst=" + attacksAlwaysFirst +
                 ", attackType=" + attackType +
                 '}';
+    }
+
+    public int getDamage() {
+        return damage;
     }
 }
 

@@ -18,13 +18,11 @@ import java.util.regex.Pattern;
  * @author Clemens Hodina
  */
 public class Pokemon {
-
-    //TODO Attacken
+    //TODO curHP bei pokemon und die state hp sind quasi das maximale
     //TODO pokemon attackieren sich (getsAttacked())
-    //TODO entwicklungen --> was is mit den viechern die Steine brauchen ?  und attacken
-    //TODO bei entwicklungen auslesen kann man schon auf level zugreifen theoretisch
-    //Evoli is muell
-
+    //TODO entwicklungen
+    //TODO bei entwicklungen auslesen kann man schon auf level zugreifen theoretisch dafür noch attribut
+    //Evoli is muell (einfach nur flamara und fertig)
 
 
     private String name;
@@ -67,11 +65,15 @@ public class Pokemon {
 
     public static List<Pokemon> template = new ArrayList<>();
 
-        private static final Random rnd=new Random(696969);
+    private static final Random rnd = new Random(696969);
+    private static final Random attackRnd = new Random(420420);
+
+    //attacke mit id x hat type an der stelle x
+    public static Type[] attackTypes;
 
 
-
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        Attack.init();
         Pokemon.init();
         /*for (Pokemon pokemon : template) {
             System.out.println(pokemon);
@@ -79,11 +81,18 @@ public class Pokemon {
 
          */
 
-        Pokemon a = createPokemon(new Vector2D(200,600), World.Block.Grass);
+        Pokemon a = createPokemon(new Vector2D(200, 600), World.Block.Grass);
         System.out.println(a);
 
-    }
+        /*
+            getAttacks(0,40);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+         */
+
+    }
 
 
     //liest File aus und gibts in Liste
@@ -112,7 +121,7 @@ public class Pokemon {
             }
             for (int i = 0; (row3 = in3.readLine()) != null; i++) {
                 //System.out.println("i: " + i + "   " + row3);
-                if (!row3.isBlank()){
+                if (!row3.isBlank()) {
                     lines3[i] = row3;
                 }
             }
@@ -139,19 +148,19 @@ public class Pokemon {
                 block = World.Block.Grass;
             }
             s = new State(Integer.parseInt(oneRow2[5]), Integer.parseInt(oneRow2[6]), Integer.parseInt(oneRow2[7]), Integer.parseInt(oneRow2[8]), Integer.parseInt(oneRow2[9]), Integer.parseInt(oneRow2[10]));
-            if (oneRow2[3].equals("")){
+            if (oneRow2[3].equals("")) {
                 //oneRow2[3] = null;
                 types[0] = Type.valueOf(oneRow2[2].toLowerCase());
                 types[1] = null;
-            }else{
+            } else {
                 types[0] = Type.valueOf(oneRow2[2].toLowerCase());
                 //System.out.println(types[1]);
                 types[1] = Type.valueOf(oneRow2[3].toLowerCase());
             }
             int evolvesIntoID;
-            if (oneRow3[5] != null && !oneRow3[5].equals("null")){
+            if (oneRow3[5] != null && !oneRow3[5].equals("null")) {
                 evolvesIntoID = Integer.parseInt(oneRow3[5]);
-            }else {
+            } else {
                 evolvesIntoID = -1;
             }
             template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, evolvesIntoID, null, null, types, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block, oneRow[5], s, new int[6]));
@@ -162,7 +171,7 @@ public class Pokemon {
 
     /**
      * @param levelType how fast a pokemons gains xp
-     * @param curLevel the current level
+     * @param curLevel  the current level
      * @return how much exp needed for next level
      */
     private static int getXpNeeded(String levelType, int curLevel) {
@@ -177,7 +186,6 @@ public class Pokemon {
         };
         return maxXp;
     }
-
 
 
     public Pokemon(String name, int id, EvolveType evolveType, int evolvesIntoId, Attack[] attacks, Nature nature, Type[] type, int level, int xp, int maxXP, int captureRate, World.Block block, String growthRate, State state, int[] iv) {
@@ -208,13 +216,18 @@ public class Pokemon {
             e.printStackTrace();
         }
         a.level = level;
-        a.xp = getXpNeeded(a.growthRate, level-1);//is die xp wenn man gerade auf das level gekommen ist
-        a.maxXP=getXpNeeded(a.growthRate, level);
+        a.xp = getXpNeeded(a.growthRate, level - 1);//is die xp wenn man gerade auf das level gekommen ist
+        a.maxXP = getXpNeeded(a.growthRate, level);
         a.nature = Nature.values()[(int) ((Math.random()) * Nature.values().length)];
         for (int i = 0; i < 6; i++) {
             a.iv[i] = rnd.nextInt(16);
         }
         a.state.add(id, level, a.nature);
+        try {
+            a.attacks = getAttacks(id, level);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return a;
     }
 
@@ -266,16 +279,6 @@ public class Pokemon {
         level++;
         state.add(id, level, nature);
         xp = xpOverride;
-    }
-
-    /**
-     * zieht die aktuellen HP ab und verbraucht bei der attacke ein AP
-     *
-     * @param a
-     * @param attackId
-     */
-    public void getsAttacked(Pokemon a, int attackId){
-
     }
 
 
@@ -357,6 +360,63 @@ public class Pokemon {
         //3000-10000 alles nicht legänderen von 4-100
 
         return new Pokemon();
+    }
+
+
+    /**
+     * zieht die aktuellen HP ab und verbraucht bei der attacke ein AP
+     * man übergibt der Methode ich greife mit Pokemon a das pokemon this mit der Attacke attackId an
+     *
+     * @param a        das attackierende pokemon
+     * @param attackId die attacke mit der es angreift wobei das keinen sinn macht lol
+     */
+    public void getsAttacked(Pokemon a, int attackId, boolean isCrit) {
+        Attack at = Attack.template.get(attackId);
+        double crit = 1.5;
+        double random = (attackRnd.nextInt(15) + 85) / 100D;//TODO testen ob das stimme
+        if (isCrit) {
+            this.state.HP = this.state.HP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / a.state.defense) / 50) + 2) * crit * random;
+        }
+        this.state.HP = this.state.HP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / a.state.defense) / 50) + 2) * random;
+
+        //TODO STAB(Same type attack bonus), Type
+    }
+
+    public static Attack[] getAttacks(int id, int level) throws IOException {
+        Attack[] erg;
+        int counter = 0;
+        List<Attack> attackList = new ArrayList<>();
+        if (level <= 10) {
+            erg = new Attack[3];
+        } else {
+            erg = new Attack[4];
+        }
+        BufferedReader in;
+        List<String> allLines = new ArrayList<>();
+        in = new BufferedReader(new FileReader("res/DataSets/movesForPokemon"));
+        String row;
+        for (int i = 0; (row = in.readLine()) != null; i++) {
+            allLines.add(row);
+        }
+        //System.out.println(allLines.get(id));
+        String[] oneRow;
+        String[] oneAttack;
+        oneRow = allLines.get(id).split(";");
+        //System.out.println(Arrays.toString(oneRow));//bis da gehts
+        for (String s : oneRow) {
+            if (counter > 0) {
+                oneAttack = s.split("/");
+                //System.out.println(Arrays.toString(oneAttack));
+                if (Integer.parseInt(oneAttack[2]) <= level) {
+                    attackList.add(Attack.template.get(Integer.parseInt(oneAttack[0]) - 1));
+                }
+            } else {
+                counter++;
+            }
+            //System.out.println(Integer.parseInt(oneAttack[0]));
+        }
+        for (int i = 0; i < Math.min(erg.length, attackList.size()); i++) erg[i] = attackList.get(i);
+        return erg;
     }
 
     enum EvolveType {
@@ -443,11 +503,11 @@ public class Pokemon {
 
     private static Map<Integer, Image> allImgs = new HashMap<>();
 
-    public  Image getImage() {
+    public Image getImage() {
         return allImgs.get(id);
     }
 
-    public  Image getBackImage() {
+    public Image getBackImage() {
         return allImgs.get(-id);
     }
 
@@ -490,5 +550,10 @@ public class Pokemon {
 
         } catch (IOException ignored) {
         }
+    }
+
+    public static void fillAttackTypes() {//TODO nicht abtippen sondern text kopieren und regexe
+        //attackTypes[0] = Type.normal;
+        //attackTypes[1] = Type.fighting;
     }
 }
