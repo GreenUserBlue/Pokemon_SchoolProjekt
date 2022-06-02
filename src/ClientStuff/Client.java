@@ -51,7 +51,7 @@ public class Client extends Thread {
     /**
      * saves all Consumer which will be accepted if the OldMain connects to the Server
      */
-    ArrayList<Consumer<Client>> allOnConnects = new ArrayList<>();
+    private final ArrayList<Consumer<Client>> allOnConnects = new ArrayList<>();
 
     /**
      * saves all Consumer which will be accepted if the OldMain receives a message

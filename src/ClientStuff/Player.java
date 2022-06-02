@@ -28,8 +28,7 @@ public class Player {
 
     private int idForDB;
 
-
-//    private HashMap<>
+    private final HashMap<Integer, Integer> items = new HashMap<>();
 
     /**
      * the amount of money the player processes
@@ -188,6 +187,10 @@ public class Player {
         this.world = world;
     }
 
+    public HashMap<Integer, Integer> getItems() {
+        return items;
+    }
+
     @Override
     public String toString() {
         return "Player{" +
@@ -321,7 +324,7 @@ public class Player {
     /**
      * updates the text events for the player (server)
      *
-     * @param client      the clientHandler
+     * @param client      the clientHandlerwf13
      * @param keysPressed the current keys which the client has pressed
      * @param w           the world the player is inside
      * @param clients     all players, to check if you want to talk to one of them
@@ -346,6 +349,10 @@ public class Player {
                         World.Block b = h.getBlockInside((int) (getPos().getX() + dir.getVecDir().getX()), (int) (getPos().getY() + dir.getVecDir().getY()));
                         if (b.getVal() != -1) {
                             String s;
+
+                            if (b.getVal() == TextEvent.TextEventIDsTranslater.MarketShopMeet.getId()) {
+                                sendItemData(client);
+                            }
                             synchronized (client.getPlayer()) {
                                 s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal() + (b.getVal() == TextEvent.TextEventIDsTranslater.MarketShopMeet.getId() ? "," + client.getPlayer().money : "");
                             }
@@ -376,6 +383,15 @@ public class Player {
                 }
             }
         }
+    }
+
+    public void sendItemData(Server.ClientHandler client) {
+        StringBuilder str = new StringBuilder(MessageType.toStr(MessageType.itemData));
+        for (Map.Entry<Integer, Integer> entry : items.entrySet()) {
+            str.append(";").append(entry.getKey()).append(",").append(entry.getValue());
+        }
+        System.out.println("Player.sendItemData: " + str);
+        client.send(str.toString());
     }
 
     /**

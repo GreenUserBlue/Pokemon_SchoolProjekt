@@ -93,10 +93,10 @@ CREATE TABLE ItemToPlayer
     Item_ID            int,
     FK_Player          int,
     quantity           int,
-    ItemTypName        varchar(255),
+#     ItemTypName        varchar(255),
     PRIMARY KEY (PK_ItemToPlayer_ID),
     FOREIGN KEY (FK_Player) REFERENCES Player (PK_Player_ID),
-    check ( ItemTypName in ('Ball', 'Potion', 'WaterItem') ),
+#     check ( ItemTypName in ('Ball', 'Potion', 'WaterItem')),
     check ( quantity >= 0 )
 );
 
@@ -110,7 +110,7 @@ values ('Name', '$2a$06$fUbqoClTr0U0.CWyp5PdPekyWHpXhPdr53.d.S7pkRgwmyyRCo9My', 
 insert into Player (FK_User_ID, language, skinID, startPokID, money)
 values (1, 'eng', 0, 0, 17000),
        (1, 'eng', 0, 2, 2000),
-       (3, 'eng', 0, 2, 0);
+       (3, 'eng', 0, 2, 10);
 
 insert into Badge (badgeTypeID, FK_Player_ID)
 VALUES (1, 2),
@@ -125,13 +125,27 @@ VALUES ('Franz', 1, 3, 1),
 
 insert into player (skinID, startPokID, FK_User_ID, language, money)
     VALUE (
-           0, 2, (select PK_User_ID from User where name = 'Name'), 'eng', 100
+           0, 2, (select PK_User_ID from User where name = 'Name'), 'eng', 200
     );
+
+insert into world(seed, FK_User_ID) value (69420, 1);
 
 insert into MyPosition(FK_PK_Player_ID, FK_PK_World_ID, posX, posY)
 VALUES (1, 1, 10, 15),
        (2, 1, 10, 10),
        (3, 1, 10, 15);
+
+insert into ItemToPlayer (Item_ID, FK_Player, quantity)
+VALUES (1, 1, 10),
+       (2, 1, 16),
+       (3, 1, 12),
+       (2, 2, 230),
+       (4, 2, 134),
+       (5, 3, 15),
+       (9, 3, 198),
+       (6, 4, 156);
+
+select user.name, Item_ID, quantity from user inner join Player P on User.PK_User_ID = P.FK_User_ID inner join ItemToPlayer ITP on P.PK_Player_ID = ITP.FK_Player
 
 # select count(PK_Badge_ID) as nbr from Badge inner join Player P on Badge.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID = 4;
 

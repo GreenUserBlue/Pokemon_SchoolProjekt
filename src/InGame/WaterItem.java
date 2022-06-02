@@ -2,9 +2,7 @@ package InGame;
 
 public class WaterItem extends Item {
 
-    private static int curIDs = 0;
-
-    public WaterItem(String name, int price, boolean isBuyable, int badgesNeeded) {
-        super(name, price, isBuyable, curIDs++, badgesNeeded);
+    public WaterItem(int id,String name, int price, boolean isBuyable, int badgesNeeded) {
+        super(id,name, price, isBuyable, badgesNeeded);
     }
 }

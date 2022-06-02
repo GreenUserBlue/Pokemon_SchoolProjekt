@@ -8,7 +8,7 @@ import java.util.List;
 
 public class Item {
 
-    private final int idForType;
+    private final int id;
 
     private final String name;
 
@@ -28,9 +28,9 @@ public class Item {
 
     private final static List<Item> allItems = new ArrayList<>();
 
-    public Item(String name, int prize, boolean isBuyable, int idForType, int badgesNeeded) {
+    public Item(int id, String name, int prize, boolean isBuyable, int badgesNeeded) {
+        this.id = id;
         this.name = name;
-        this.idForType = idForType;
         this.prize = prize;
         this.isBuyable = isBuyable;
         this.badgesNeeded = badgesNeeded;
@@ -41,17 +41,17 @@ public class Item {
             List<String> file = Files.readAllLines(p);
             file.forEach(a -> {
                 String[] list = a.split(",");
-                allItems.add(getItem(list[0].trim(), list[1].trim(), Integer.parseInt(list[2].trim()), Boolean.parseBoolean(list[3].trim()), Integer.parseInt(list[4].trim()), Double.parseDouble(list[5].trim())));
+                allItems.add(getItem(list[0].trim(), Integer.parseInt(list[1].trim()), list[2].trim(), Integer.parseInt(list[3].trim()), Boolean.parseBoolean(list[4].trim()), Integer.parseInt(list[5].trim()), Double.parseDouble(list[6].trim())));
             });
         } catch (IOException ignored) {
         }
     }
 
-    private static Item getItem(String type, String name, int price, boolean isBuyable, int badgesNeeded, double extraValue) {
+    private static Item getItem(String type, int id, String name, int price, boolean isBuyable, int badgesNeeded, double extraValue) {
         return switch (type) {
-            case "Ball" -> new Ball(name, price, isBuyable, badgesNeeded, extraValue);
-            case "Potion" -> new Potion(name, price, isBuyable, badgesNeeded, extraValue);
-            default -> new WaterItem(name, price, isBuyable, badgesNeeded);
+            case "Ball" -> new Ball(id, name, price, isBuyable, badgesNeeded, extraValue);
+            case "Potion" -> new Potion(id, name, price, isBuyable, badgesNeeded, extraValue);
+            default -> new WaterItem(id, name, price, isBuyable, badgesNeeded);
         };
     }
 
@@ -62,7 +62,7 @@ public class Item {
     @Override
     public String toString() {
         return "Item{" +
-                "idForType=" + idForType +
+                "id=" + id +
                 ", name='" + name + '\'' +
                 ", prize=" + prize +
                 ", isBuyable=" + isBuyable +

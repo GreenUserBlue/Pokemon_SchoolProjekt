@@ -51,6 +51,7 @@ public class MyServer {
                     case worldSelect -> doRegion(c, s);
                     case keysPres -> doKeys(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
                     case textEvent -> doTextEvents(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
+                    //TODO Clemenzzzzz zB wenn Client sagt, ich moechte angreifen, dann kommt das hier hin (on Message halt)
                     case error -> System.out.println("ERROR-Message: " + s);
                 }
             }
@@ -133,7 +134,9 @@ public class MyServer {
             } else {
                 ResultSet nbr = Database.get("select * from World inner join User U on World.FK_User_ID = U.PK_User_ID where U.name='" + worldName + "';");
                 try {
+                    //@TODO carry moritz übeall
                     if (nbr != null && nbr.first()) {
+                        server.getWorlds().add(new World(worldName.hashCode(), worldName));
                         c.getPlayer().setWorld(worldName);
                         c.send(MessageType.toStr(MessageType.worldSelect) + 0 + nbr.getInt("seed") + "," + c.getUsername());
                         sendPosUpdate(c);
@@ -174,7 +177,6 @@ public class MyServer {
         try {
             if (curPlayer == null) throw new SQLException();
             if (curPlayer.first()) {
-
                 ResultSet curPos = Database.get("select MP.* from Player join MyPosition MP on Player.PK_Player_ID = MP.FK_PK_Player_ID join World W on W.PK_World_ID = MP.FK_PK_World_ID;");
                 pos.setX((Integer) curPlayer.getObject("posX"));
                 pos.setY((Integer) curPlayer.getObject("posY"));

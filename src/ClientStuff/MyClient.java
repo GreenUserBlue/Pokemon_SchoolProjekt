@@ -109,9 +109,10 @@ public class MyClient extends Application {
 
                 txt.updateSize(stage.getScene());
                 Canvas c = (Canvas) (stage.getScene().getRoot().getChildrenUnmodifiable().get(0));
-//             a   c.setWidth(stage.getScene().getWidth());
-//                c.setHeight(stage.getScene().getHeight());
+
+                //client.getPlayers().get(0) = der Player dem dieser Client gehört
                 synchronized (client.getPlayers()) {
+                    //if client.getPlayers().get(0).getActivity()==fighting, dann dein Bulllshit, else mein Bullshit
                     if (client.getPlayers().get(0).getHouseEntrancePos() == null) {
                         client.getWorld().drawEnvir(c, client.getPlayers(), new Vector2D(stage.getScene().getWidth(), stage.getScene().getHeight()), allImgs);
                     } else {
@@ -377,6 +378,7 @@ public class MyClient extends Application {
                     case worldSelect -> doWorldSelect(s);
                     case updatePos -> updatePos(s);
                     case textEvent -> doTextEvent(s.substring(3));
+                    //TODO Clemenzzzzzz on Msg From Server
                 }
             }
         };

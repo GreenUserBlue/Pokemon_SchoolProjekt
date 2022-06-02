@@ -81,5 +81,4 @@ public class MarketGUI {
             startNewMarket(curPlayer, this.curMoney);
         });
     }
-
 }

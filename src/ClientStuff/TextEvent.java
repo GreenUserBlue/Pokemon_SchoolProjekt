@@ -78,8 +78,6 @@ public class TextEvent {
         field.setMinHeight(field.getFont().getSize() * 3);
         field.setEditable(false);
         field.setFocusTraversable(false);
-        //TO DO error, weil server nie updates, so that you can run again
-
         field.setWrapText(true);
         field.setMouseTransparent(true);
         field.heightProperty().addListener((a, oldVal, newVal) -> {

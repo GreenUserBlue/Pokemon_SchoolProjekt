@@ -1,7 +1,7 @@
-Ball,Pokeball, 100, true, 0,1
-Ball,Superball, 200, true, 2,1.5
-Ball,Hyperball, 500, true, 5,2
-Potion,Potion, 250, true, 0, 20
-Potion,Superpotion, 500, true,1, 50
-Potion,Hyperpotion, 700, true,5, 120
-WaterItem,WaterItem, 1000, false, 9 ,12.5
+Ball,1,Pokeball, 100, true, 0,1
+Ball,2,Superball, 200, true, 2,1.5
+Ball,3,Hyperball, 500, true, 5,2
+Potion,4,Potion, 250, true, 0, 20
+Potion,5,Superpotion, 500, true,1, 50
+Potion,6,Hyperpotion, 700, true,5, 120
+WaterItem,7,WaterItem, 1000, false, 9 ,12.5
