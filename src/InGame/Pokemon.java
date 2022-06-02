@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
  * @author Clemens Hodina
  */
 public class Pokemon {
-    //TODO curHP bei pokemon und die state hp sind quasi das maximale
     //TODO pokemon attackieren sich (getsAttacked())
     //TODO entwicklungen
     //TODO bei entwicklungen auslesen kann man schon auf level zugreifen theoretisch dafür noch attribut
@@ -53,6 +52,8 @@ public class Pokemon {
     private World.Block block;
 
     private String growthRate;
+
+    private double curHP;
 
     private State state;
 
@@ -91,6 +92,8 @@ public class Pokemon {
         }
 
          */
+        Pokemon b = createPokemon(new Vector2D(4000, 7000), World.Block.Grass);
+        a.getsAttacked(b, 2, false);
 
     }
 
@@ -163,7 +166,7 @@ public class Pokemon {
             } else {
                 evolvesIntoID = -1;
             }
-            template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, evolvesIntoID, null, null, types, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block, oneRow[5], s, new int[6]));
+            template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, evolvesIntoID, null, null, types, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block, oneRow[5], s.getHP(), s, new int[6]));
         }
 
 
@@ -187,8 +190,7 @@ public class Pokemon {
         return maxXp;
     }
 
-
-    public Pokemon(String name, int id, EvolveType evolveType, int evolvesIntoId, Attack[] attacks, Nature nature, Type[] type, int level, int xp, int maxXP, int captureRate, World.Block block, String growthRate, State state, int[] iv) {
+    public Pokemon(String name, int id, EvolveType evolveType, int evolvesIntoId, Attack[] attacks, Nature nature, Type[] type, int level, int xp, int maxXP, int captureRate, World.Block block, String growthRate, double curHP, State state, int[] iv) {
         this.name = name;
         this.id = id;
         this.evolveType = evolveType;
@@ -202,6 +204,7 @@ public class Pokemon {
         this.captureRate = captureRate;
         this.block = block;
         this.growthRate = growthRate;
+        this.curHP = curHP;
         this.state = state;
         this.iv = iv;
     }
@@ -235,7 +238,7 @@ public class Pokemon {
     @Override
     protected Pokemon clone() throws CloneNotSupportedException {
         //Pokemon clone = (Pokemon) super.clone();
-        return new Pokemon(name, id, evolveType, evolvesIntoId, attacks, nature, type, level, xp, maxXP, captureRate, block, growthRate, state, iv);
+        return new Pokemon(name, id, evolveType, evolvesIntoId, attacks, nature, type, level, xp, maxXP, captureRate, block, growthRate, curHP, state, iv);
     }
 
     public Pokemon() {
@@ -372,13 +375,16 @@ public class Pokemon {
      */
     public void getsAttacked(Pokemon a, int attackId, boolean isCrit) {
         Attack at = Attack.template.get(attackId);
-        double crit = 1.5;
-        double random = (attackRnd.nextInt(15) + 85) / 100D;//TODO testen ob das stimme
+        double crit = 1.5;//mimimi leben dürfen nd negativ sein
+        double random = (attackRnd.nextInt(15) + 85) / 100D;
         if (isCrit) {
-            this.state.HP = this.state.HP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / a.state.defense) / 50) + 2) * crit * random;
+            curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / a.state.defense) / 50) + 2) * crit * random;
+        } else {
+            curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / a.state.defense) / 50) + 2) * random;
         }
-        this.state.HP = this.state.HP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / a.state.defense) / 50) + 2) * random;
 
+        System.out.println(random);
+        System.out.println(curHP);
         //TODO STAB(Same type attack bonus), Type
     }
 
@@ -483,6 +489,7 @@ public class Pokemon {
                 ", captureRate=" + captureRate +
                 ", block=" + block +
                 ", growthRate='" + growthRate + '\'' +
+                ", curHP=" + curHP +
                 ", state=" + state.toString() +
                 ", iv=" + Arrays.toString(iv) +
                 '}';
