@@ -6,6 +6,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author Clemens Hodina
+ */
 public class Item {
 
     private final int id;
