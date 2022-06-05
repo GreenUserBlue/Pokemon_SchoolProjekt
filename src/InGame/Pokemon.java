@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  * @author Clemens Hodina
  */
 public class Pokemon {
-    //TODO entwicklungen
+    //TODO Entwicklungen mit Steinen oder trades
     //Evoli is muell (einfach nur flamara und fertig)
 
     private String name;
@@ -290,6 +290,13 @@ public class Pokemon {
         level++;
         state.add(id, level, nature);
         xp = xpOverride;
+        if (level == evolvesAtLevel){
+            evolve();
+        }
+    }
+
+    private void evolve(){
+        id = evolvesIntoId;
     }
 
 
