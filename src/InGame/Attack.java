@@ -25,16 +25,13 @@ public class Attack {
     private int AP;
 
     //z. 0.85 is 85% oder 1 = 100%
-    //TODO das fehlt noch, das is in den Files glaub ich accuracy
     private double hitProbability;
 
     private boolean attacksAlwaysFirst;
 
     private AttackType attackType;
 
-    //TODO maybe effects (paralysieren und brennen)
-
-    //iwie muss der damage mit den werten verbunden sein --> wird aber erst in der Pokemon Klasse passieren
+    //maybe effects (paralysieren und brennen)
 
 
     public static List<Attack> template = new ArrayList<>();
@@ -107,6 +104,10 @@ public class Attack {
                 ", attacksAlwaysFirst=" + attacksAlwaysFirst +
                 ", attackType=" + attackType +
                 '}';
+    }
+
+    public Type getType() {
+        return type;
     }
 
     public int getDamage() {

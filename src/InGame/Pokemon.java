@@ -286,7 +286,7 @@ public class Pokemon {
 
 
     //pos für wie weit vom spawnt entfernt
-    //TODO vl schöner machen und sachen in Methoden auslagern
+    //vl schöner machen und sachen in Methoden auslagern
     private static Pokemon createPokemon(Vector2D pos, World.Block block) {
         int distance = (int) pos.magnitude();
         int level = (int) Math.sqrt(distance);
@@ -368,24 +368,28 @@ public class Pokemon {
 
     /**
      * zieht die aktuellen HP ab und verbraucht bei der attacke ein AP
-     * man übergibt der Methode ich greife mit Pokemon a das pokemon this mit der Attacke attackId an
+     * man übergibt der Methode ich greife mit Pokemon attacker das pokemon this mit der Attacke attackId an
      *
-     * @param a        das attackierende pokemon
+     * @param attacker        das attackierende pokemon
      * @param attackId die attacke mit der es angreift wobei das keinen sinn macht lol
      */
-    public void getsAttacked(Pokemon a, int attackId, boolean isCrit) {
+    public void getsAttacked(Pokemon attacker, int attackId, boolean isCrit) {
         Attack at = Attack.template.get(attackId);
         double crit = 1.5;//mimimi leben dürfen nd negativ sein
         double random = (attackRnd.nextInt(15) + 85) / 100D;
+        double stab = 1;
+        if (at.getType().equals(this.type[0]) || at.getType().equals(this.type[1])){
+            stab = 1.5;
+        }
         if (isCrit) {
-            curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / a.state.defense) / 50) + 2) * crit * random;
+            curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * crit * random * stab;
         } else {
-            curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / a.state.defense) / 50) + 2) * random;
+            curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * random * stab;
         }
 
-        System.out.println(random);
+        //System.out.println(random);
         System.out.println(curHP);
-        //TODO STAB(Same type attack bonus), Type
+        //TODO Type (ich bekomme getMult methode), hitProbability also ob trifft oder nd
     }
 
     public static Attack[] getAttacks(int id, int level) throws IOException {
@@ -559,8 +563,5 @@ public class Pokemon {
         }
     }
 
-    public static void fillAttackTypes() {//TODO nicht abtippen sondern text kopieren und regexe
-        //attackTypes[0] = Type.normal;
-        //attackTypes[1] = Type.fighting;
-    }
+
 }
