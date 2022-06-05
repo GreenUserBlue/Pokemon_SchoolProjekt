@@ -19,58 +19,110 @@ import java.util.regex.Pattern;
  */
 public class Pokemon {
     //TODO Entwicklungen mit Steinen oder trades
+    //TODO bei attacks muss man die AP abziehen wenn man angreift
     //Evoli is muell (einfach nur flamara und fertig)
 
+    /**
+     * name of the pokemon
+     */
     private String name;
 
+    /**
+     * id of the pokemon
+     */
     private int id;
 
+    /**
+     * how the pokemon evolves
+     */
     private EvolveType evolveType;
 
+    /**
+     * in which pokemon it evolves
+     */
     private int evolvesIntoId;
 
+    /**
+     * level at which the pokemon evolves
+     */
     private int evolvesAtLevel;
 
+    /**
+     * the attacks of the pokemon
+     */
     private Attack[] attacks;
 
+    /**
+     * the nature of the pokemon, which adds or subs stats
+     */
     private Nature nature;
 
+    /**
+     * the types of the pokemon
+     */
     private Type[] type;
 
+    /**
+     * the current level of the pokemon
+     */
     private int level;
 
     //wie viele xp hat man grade
+    /**
+     * how many xp the pokemon holds at this moment
+     */
     private int xp;
 
     //wie viele xp kann man auf dem Level erreichen maximal
+    /**
+     * the xp the pokemon needs to go to the next level
+     */
     private int maxXP;
 
+    /**
+     * how hard it is to find and capture the pokemon
+     */
     private int captureRate;
 
     //block auf dem das Pokemon spawnen kann
+    /**
+     * type of block on which the pokemon is abled to spawn
+     */
     private World.Block block;
 
+    /**
+     * how fast the pokemon gains xp
+     */
     private String growthRate;
 
+    /**
+     * The HP the Pokemon has at this moment
+     */
     private double curHP;
 
+    /**
+     * the set of stats one Pokemon has
+     */
     private State state;
 
     //individual values für stats
+    /**
+     * individual values for the stats for a single pokemon
+     */
     private int[] iv;
 
     //noch nicht im Konstruktor oder so
     //da steht level bei dem das Pokemon die jeweilige attacke bekommt
     //private final TreeMap<Integer, Attack> attackAtLevel = new TreeMap<Integer, Attack>();
 
+    /**
+     * A List with every Pokemon
+     */
     public static List<Pokemon> template = new ArrayList<>();
 
     private static final Random rnd = new Random(696969);
     private static final Random attackRnd = new Random(420420);
     private static final Random hitProbRnd = new Random(9824756);
-
-    //attacke mit id x hat type an der stelle x
-    public static Type[] attackTypes;
 
 
     public static void main(String[] args) throws IOException {
@@ -99,8 +151,11 @@ public class Pokemon {
     }
 
 
-    //liest File aus und gibts in Liste
+    //liest Files aus und gibts in Liste
     //und gibts in die tatsächliche Liste
+    /**
+     * creates the template for every pokemon with the necessary data
+     */
     public static void init() {
         //File file = new File(String.valueOf(Path.of("res/DataSets/pokeFile.txt")));
         BufferedReader in;
@@ -217,6 +272,21 @@ public class Pokemon {
         this.iv = iv;
     }
 
+    public Pokemon() {
+    }
+
+    public Pokemon(int id, int level) {
+        this.id = id;
+        this.level = level;
+    }
+
+    /**
+     * gives the pokemon with the exact id and level and changed stats, attacks and so on
+     *
+     * @param id the needed pokemon
+     * @param level the needed level
+     * @return the pokemon at the id with the right stats and attacks
+     */
     private static Pokemon getPokemon(int id, int level) {
         //da id mit 1 beginnt
         id--;
@@ -249,13 +319,7 @@ public class Pokemon {
         return new Pokemon(name, id, evolveType, evolvesIntoId, evolvesAtLevel, attacks, nature, type, level, xp, maxXP, captureRate, block, growthRate, curHP, state, iv);
     }
 
-    public Pokemon() {
-    }
 
-    public Pokemon(int id, int level) {
-        this.id = id;
-        this.level = level;
-    }
 
     /**
      * makes a Pokemon from the String which was sent from the server
@@ -277,6 +341,10 @@ public class Pokemon {
         return "Hier ist ein Pokemon namens Ditto mit den Attacken {Tackle,AP4,MAXAP17}{Platcher,AP30,MAXAP30} und dem Wesen usw.";
     }
 
+    /**
+     * sffd xp to a pokemon, for example after a fight
+     * @param newExP the xp the pokemon gets from the fight
+     */
     private void addExp(int newExP) {
         if (newExP + xp >= maxXP) {
             levelUp(maxXP - xp - newExP);
@@ -286,6 +354,12 @@ public class Pokemon {
     }
 
     //xpoverride is wie viele xp man ins nächste level mitnimmt
+
+    /**
+     * takes the pokemon to the nect level
+     *
+     * @param xpOverride how much xp the pokemon takes with it to the next level
+     */
     private void levelUp(int xpOverride) {
         level++;
         state.add(id, level, nature);
@@ -295,6 +369,9 @@ public class Pokemon {
         }
     }
 
+    /**
+     * lets the pokemon evolve
+     */
     private void evolve(){
         id = evolvesIntoId;
     }
@@ -302,6 +379,14 @@ public class Pokemon {
 
     //pos für wie weit vom spawnt entfernt
     //vl schöner machen und sachen in Methoden auslagern
+
+    /**
+     * creates a Pokemon from the place the player is, and block the pokemon should spawn
+     *
+     * @param pos the position the player is
+     * @param block the block the pokemon should spawn
+     * @return a pokemon for the given data
+     */
     private static Pokemon createPokemon(Vector2D pos, World.Block block) {
         int distance = (int) pos.magnitude();
         int level = (int) Math.sqrt(distance);
@@ -382,11 +467,11 @@ public class Pokemon {
 
 
     /**
-     * zieht die aktuellen HP ab und verbraucht bei der attacke ein AP
-     * man übergibt der Methode ich greife mit Pokemon attacker das pokemon this mit der Attacke attackId an
+     * subs the current HP and takes an AP from the attack
+     * the methods needs to know "i attack with the pokemon attacker the pokemon this with the attack attackID"
      *
-     * @param attacker das attackierende pokemon
-     * @param attackId die attacke mit der es angreift wobei das keinen sinn macht lol
+     * @param attacker the attacking pokemon
+     * @param attackId the attack with which it attacks
      */
     public void getsAttacked(Pokemon attacker, int attackId, boolean isCrit) {
         Attack at = Attack.template.get(attackId);
@@ -424,6 +509,14 @@ public class Pokemon {
         System.out.println(curHP);
     }
 
+    /**
+     * gets the attacks for the pokemon id at the level level
+     *
+     * @param id the pokemon from which you need the attacks
+     * @param level the level of the pokemon you need
+     * @return an attack array with the attacks of the pokemon at this level
+     * @throws IOException lol
+     */
     public static Attack[] getAttacks(int id, int level) throws IOException {
         Attack[] erg;
         int counter = 0;
@@ -555,6 +648,9 @@ public class Pokemon {
         return allImgs.get(-id);
     }
 
+    /**
+     * method to load the images of the pokemon
+     */
     private static void initPokeImgs() {
         try {
             int maxPoke = 151;

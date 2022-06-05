@@ -14,26 +14,53 @@ import java.util.List;
  * @author Clemens Hodina
  */
 public class Attack {
+    /**
+     * id of the attack
+     */
     private int id;
 
+    /**
+     * name of the attack
+     */
     private String name;
 
+    /**
+     * type of the attack
+     */
     private Type type;
 
+    /**
+     * the damage the attack deals
+     */
     private int damage;
 
+    /**
+     * how often you can use an attack
+     */
     private int AP;
 
     //z. 0.85 is 85% oder 1 = 100%
+    /**
+     * how probable it is that the attack hits
+     */
     private double hitProbability;
 
+    /**
+     * if the attack always attacks first
+     */
     private boolean attacksAlwaysFirst;
 
+    /**
+     * the type of the attack
+     */
     private AttackType attackType;
 
     //maybe effects (paralysieren und brennen)
 
 
+    /**
+     * list of all attacks
+     */
     public static List<Attack> template = new ArrayList<>();
 
     public Attack(String name) {
@@ -59,6 +86,9 @@ public class Attack {
         //System.out.println(template);
     }
 
+    /**
+     * creates the template for every attack with the necessary data
+     */
     public static void init() throws IOException {
         BufferedReader in;
         String[] lines = new String[165];
