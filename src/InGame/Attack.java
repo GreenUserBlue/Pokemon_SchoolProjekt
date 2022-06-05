@@ -70,7 +70,7 @@ public class Attack {
         String[] oneRow;
         for (int i = 0; i < 165; i++) {
             oneRow = lines[i].split(";");
-            int a;
+            int a = 0;
             double b;
             if (oneRow[4].equals("null")){
                 b = -1;//trifft immer
@@ -79,9 +79,9 @@ public class Attack {
                 b = (double) (a/100);
             }
             if (oneRow[1].equals("null")) {
-                template.add(new Attack(Integer.parseInt(oneRow[0]), oneRow[3], Type.valueOf(oneRow[5].toLowerCase()), 0, Integer.parseInt(oneRow[2]), b, false, AttackType.Status));
+                template.add(new Attack(Integer.parseInt(oneRow[0]), oneRow[3], Type.valueOf(oneRow[5].toLowerCase()), 0, Integer.parseInt(oneRow[2]), a, false, AttackType.Status));
             } else {
-                template.add(new Attack(Integer.parseInt(oneRow[0]), oneRow[3], Type.valueOf(oneRow[5].toLowerCase()), Integer.parseInt(oneRow[1]), Integer.parseInt(oneRow[2]), b, false, AttackType.Attack));
+                template.add(new Attack(Integer.parseInt(oneRow[0]), oneRow[3], Type.valueOf(oneRow[5].toLowerCase()), Integer.parseInt(oneRow[1]), Integer.parseInt(oneRow[2]), a, false, AttackType.Attack));
             }
         }
     }
@@ -112,6 +112,10 @@ public class Attack {
 
     public int getDamage() {
         return damage;
+    }
+
+    public double getHitProbability() {
+        return hitProbability;
     }
 }
 

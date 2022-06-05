@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
  * @author Clemens Hodina
  */
 public class Pokemon {
-    //TODO pokemon attackieren sich (getsAttacked())
     //TODO entwicklungen
     //TODO bei entwicklungen auslesen kann man schon auf level zugreifen theoretisch dafür noch attribut
     //Evoli is muell (einfach nur flamara und fertig)
@@ -68,6 +67,7 @@ public class Pokemon {
 
     private static final Random rnd = new Random(696969);
     private static final Random attackRnd = new Random(420420);
+    private static final Random hitProbRnd = new Random(9824756);
 
     //attacke mit id x hat type an der stelle x
     public static Type[] attackTypes;
@@ -76,6 +76,7 @@ public class Pokemon {
     public static void main(String[] args) throws IOException {
         Attack.init();
         Pokemon.init();
+        Type.init();
         /*for (Pokemon pokemon : template) {
             System.out.println(pokemon);
         }
@@ -93,7 +94,7 @@ public class Pokemon {
 
          */
         Pokemon b = createPokemon(new Vector2D(4000, 7000), World.Block.Grass);
-        a.getsAttacked(b, 2, false);
+        a.getsAttacked(b, 4, false);
 
     }
 
@@ -370,26 +371,43 @@ public class Pokemon {
      * zieht die aktuellen HP ab und verbraucht bei der attacke ein AP
      * man übergibt der Methode ich greife mit Pokemon attacker das pokemon this mit der Attacke attackId an
      *
-     * @param attacker        das attackierende pokemon
+     * @param attacker das attackierende pokemon
      * @param attackId die attacke mit der es angreift wobei das keinen sinn macht lol
      */
     public void getsAttacked(Pokemon attacker, int attackId, boolean isCrit) {
         Attack at = Attack.template.get(attackId);
         double crit = 1.5;//mimimi leben dürfen nd negativ sein
         double random = (attackRnd.nextInt(15) + 85) / 100D;
+        int hitRandom = hitProbRnd.nextInt(100);
         double stab = 1;
-        if (at.getType().equals(this.type[0]) || at.getType().equals(this.type[1])){
+        if (at.getType().equals(this.type[0]) || at.getType().equals(this.type[1])) {
             stab = 1.5;
         }
-        if (isCrit) {
-            curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * crit * random * stab;
-        } else {
-            curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * random * stab;
+        boolean[] isHitting = new boolean[100];
+        double hitProb = at.getHitProbability();
+        for (int i = 0; i < 100; i++) {
+            if (i < hitProb) {
+                isHitting[i] = true;
+            }
         }
-
-        //System.out.println(random);
+        if (isHitting[hitRandom]) {
+            if (isCrit) {
+                if (this.type[1] == null) {
+                    curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * crit * random * stab * at.getType().getAttackMult(this.type[0]);
+                } else {
+                    curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * crit * random * stab * at.getType().getAttackMult(this.type[0]) * at.getType().getAttackMult(this.type[1]);
+                }
+            } else {
+                if (this.type[1] == null) {
+                    curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * random * stab * at.getType().getAttackMult(this.type[0]);
+                } else {
+                    curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * random * stab * at.getType().getAttackMult(this.type[0]) * at.getType().getAttackMult(this.type[1]);
+                }
+            }
+        } else {
+            System.out.println("Attacke hat nicht getroffen");
+        }
         System.out.println(curHP);
-        //TODO Type (ich bekomme getMult methode), hitProbability also ob trifft oder nd
     }
 
     public static Attack[] getAttacks(int id, int level) throws IOException {
