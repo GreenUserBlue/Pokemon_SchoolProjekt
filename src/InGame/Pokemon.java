@@ -19,9 +19,7 @@ import java.util.regex.Pattern;
  */
 public class Pokemon {
     //TODO entwicklungen
-    //TODO bei entwicklungen auslesen kann man schon auf level zugreifen theoretisch dafür noch attribut
     //Evoli is muell (einfach nur flamara und fertig)
-
 
     private String name;
 
@@ -30,6 +28,8 @@ public class Pokemon {
     private EvolveType evolveType;
 
     private int evolvesIntoId;
+
+    private int evolvesAtLevel;
 
     private Attack[] attacks;
 
@@ -162,12 +162,18 @@ public class Pokemon {
                 types[1] = Type.valueOf(oneRow2[3].toLowerCase());
             }
             int evolvesIntoID;
+            int evolvesAtLevel = -1;
             if (oneRow3[5] != null && !oneRow3[5].equals("null")) {
                 evolvesIntoID = Integer.parseInt(oneRow3[5]);
+                try {
+                    evolvesAtLevel = Integer.parseInt(oneRow3[3]);
+                }catch (NumberFormatException e){
+                }
+
             } else {
                 evolvesIntoID = -1;
             }
-            template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, evolvesIntoID, null, null, types, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block, oneRow[5], s.getHP(), s, new int[6]));
+            template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, evolvesIntoID, evolvesAtLevel, null, null, types, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block, oneRow[5], s.getHP(), s, new int[6]));
         }
 
 
@@ -191,11 +197,12 @@ public class Pokemon {
         return maxXp;
     }
 
-    public Pokemon(String name, int id, EvolveType evolveType, int evolvesIntoId, Attack[] attacks, Nature nature, Type[] type, int level, int xp, int maxXP, int captureRate, World.Block block, String growthRate, double curHP, State state, int[] iv) {
+    public Pokemon(String name, int id, EvolveType evolveType, int evolvesIntoId, int evolvesAtLevel, Attack[] attacks, Nature nature, Type[] type, int level, int xp, int maxXP, int captureRate, World.Block block, String growthRate, double curHP, State state, int[] iv) {
         this.name = name;
         this.id = id;
         this.evolveType = evolveType;
         this.evolvesIntoId = evolvesIntoId;
+        this.evolvesAtLevel = evolvesAtLevel;
         this.attacks = attacks;
         this.nature = nature;
         this.type = type;
@@ -239,7 +246,7 @@ public class Pokemon {
     @Override
     protected Pokemon clone() throws CloneNotSupportedException {
         //Pokemon clone = (Pokemon) super.clone();
-        return new Pokemon(name, id, evolveType, evolvesIntoId, attacks, nature, type, level, xp, maxXP, captureRate, block, growthRate, curHP, state, iv);
+        return new Pokemon(name, id, evolveType, evolvesIntoId, evolvesAtLevel, attacks, nature, type, level, xp, maxXP, captureRate, block, growthRate, curHP, state, iv);
     }
 
     public Pokemon() {
@@ -502,6 +509,7 @@ public class Pokemon {
                 ", id=" + id +
                 ", evolveType=" + evolveType +
                 ", evolvesIntoId=" + evolvesIntoId +
+                ", evolvesAtLevel=" + evolvesAtLevel +
                 ", attacks=" + Arrays.toString(attacks) +
                 ", nature=" + nature +
                 ", type=" + Arrays.toString(type) +
