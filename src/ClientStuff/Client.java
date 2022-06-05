@@ -51,7 +51,7 @@ public class Client extends Thread {
     /**
      * saves all Consumer which will be accepted if the OldMain connects to the Server
      */
-    ArrayList<Consumer<Client>> allOnConnects = new ArrayList<>();
+    private final ArrayList<Consumer<Client>> allOnConnects = new ArrayList<>();
 
     /**
      * saves all Consumer which will be accepted if the OldMain receives a message
@@ -96,7 +96,7 @@ public class Client extends Thread {
         this(port, ip, waitTillConnected, onConnect, null);
     }
 
-    public Client(int port, String ip, boolean waitTillConnected, BiConsumer<Client, Object> onMessage) {
+    public Client(int port, String ip, boolean waitTillConnected, BiConsumer<Client, Object>... onMessage) {
         this(port, ip, waitTillConnected, null, onMessage);
     }
 
@@ -104,9 +104,13 @@ public class Client extends Thread {
         this(port, ip, waitTillConnected, null, null);
     }
 
-    public Client(int port, String ip, boolean waitTillConnected, Consumer<Client> onConnect, BiConsumer<Client, Object> onMessage) {
+    public Client(int port, String ip, boolean waitTillConnected, Consumer<Client> onConnect, BiConsumer<Client, Object>... onMessage) {
         if (onConnect != null) onConnect(onConnect);
-        if (onMessage != null) onMessage(onMessage);
+        if (onMessage != null) {
+            for (BiConsumer<Client, Object> onMes : onMessage) {
+                onMessage(onMes);
+            }
+        }
         this.port = port;
         this.ip = ip;
         if (waitTillConnected) {

@@ -1,5 +1,8 @@
 package InGame;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,7 +11,9 @@ import java.util.List;
  */
 public class Item {
 
-    private String name;
+    private final int id;
+
+    private final String name;
 
     public String getName() {
         return name;
@@ -18,41 +23,53 @@ public class Item {
         return prize;
     }
 
-    private int prize;
+    private final int prize;
 
-    private boolean isBuyable;
+    private final boolean isBuyable;
 
-    public Item(String name, int prize, boolean isBuyable) {
+    protected final int badgesNeeded;
+
+    private final static List<Item> allItems = new ArrayList<>();
+
+    public Item(int id, String name, int prize, boolean isBuyable, int badgesNeeded) {
+        this.id = id;
         this.name = name;
         this.prize = prize;
         this.isBuyable = isBuyable;
+        this.badgesNeeded = badgesNeeded;
     }
 
-    public List<Item> getStandardShop() {
-        List<Item> erg = new ArrayList<>();
-        erg.add(new Ball("Pokeball", 100, true, 1, 1));
-        erg.add(new Ball("Superball", 200, true, 2, 1.5));
-        erg.add(new Ball("Hyperball", 500, true, 3, 2));
-        erg.add(new Potion("Potion", 250, true, 1, 20));
-        erg.add(new Potion("Superpotion", 500, true, 1, 50));
-        erg.add(new Potion("Hyperpotion", 700, true, 1, 120));
-        return erg;
+    public static void init(Path p) {
+        try {
+            List<String> file = Files.readAllLines(p);
+            file.forEach(a -> {
+                String[] list = a.split(",");
+                allItems.add(getItem(list[0].trim(), Integer.parseInt(list[1].trim()), list[2].trim(), Integer.parseInt(list[3].trim()), Boolean.parseBoolean(list[4].trim()), Integer.parseInt(list[5].trim()), Double.parseDouble(list[6].trim())));
+            });
+        } catch (IOException ignored) {
+        }
+    }
+
+    private static Item getItem(String type, int id, String name, int price, boolean isBuyable, int badgesNeeded, double extraValue) {
+        return switch (type) {
+            case "Ball" -> new Ball(id, name, price, isBuyable, badgesNeeded, extraValue);
+            case "Potion" -> new Potion(id, name, price, isBuyable, badgesNeeded, extraValue);
+            default -> new WaterItem(id, name, price, isBuyable, badgesNeeded);
+        };
     }
 
     public static List<Item> getShop(int badges) {
-        List<Item> erg = new ArrayList<>();
-        erg.add(new Ball("Pokeball", 100, true, 1, 1));
-        erg.add(new Potion("Potion", 250, true, 1, 20));
-        if (badges >= 2) {
-            erg.add(new Ball("Superball", 200, true, 2, 1.5));
-            erg.add(new Potion("Superpotion", 500, true, 1, 50));
-        }
-        if (badges >= 5) {
-            erg.add(new Ball("Hyperball", 500, true, 3, 2));
-            erg.add(new Potion("Hyperpotion", 700, true, 1, 120));
-        }
-        return erg;
+        return new ArrayList<>(allItems.stream().filter(i -> i.isBuyable).filter(i -> i.badgesNeeded <= badges).toList());
     }
 
-
+    @Override
+    public String toString() {
+        return "Item{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", prize=" + prize +
+                ", isBuyable=" + isBuyable +
+                ", badgesNeeded=" + badgesNeeded +
+                '}';
+    }
 }

@@ -14,7 +14,8 @@ public enum MessageType {
     houseRequest,        //Client
     pokAppear,           //Server
     playerInteraction,   //Client + Server
-    itemUse,             //Client
+    itemBuy,             //Client
+    itemData,            //Server
     itemRequest,         //Client
     inFight,             //Client + Server
     pokRequest,          //Client
@@ -22,7 +23,6 @@ public enum MessageType {
     badgeRequest,        //Client
     error,               //Client + Server
     ;
-
 
     public static MessageType getType(int val) {
         for (MessageType m : MessageType.values()) {

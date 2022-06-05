@@ -193,7 +193,6 @@ public class Vector2D {
                 Math.abs(y - vector2D.y) < e;
     }
 
-
     /**
      * checks if either x or y absolute value is bigger than d
      *

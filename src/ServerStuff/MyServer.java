@@ -51,6 +51,7 @@ public class MyServer {
                     case worldSelect -> doRegion(c, s);
                     case keysPres -> doKeys(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
                     case textEvent -> doTextEvents(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
+                    //TODO Clemenzzzzz zB wenn Client sagt, ich moechte angreifen, dann kommt das hier hin (on Message halt)
                     case error -> System.out.println("ERROR-Message: " + s);
                 }
             }
@@ -65,12 +66,13 @@ public class MyServer {
             s = s.substring(1);
             if (s.split(";").length == 1) {
                 int val = Integer.parseInt(s);
-                System.out.println(val);
                 if (val < 100) {
                     c.setTimeTillNextTextField(System.currentTimeMillis() + 500);
                     c.getPlayer().setActivity(Player.Activity.standing);
                 }
             }
+        } else if (s.startsWith("1")) {//TODO something here
+            s = s.substring(1);
         }
     }
 
@@ -85,6 +87,12 @@ public class MyServer {
             if (data != null && data.next()) {
                 c.setPlayer(initPlayer(c.getUsername(), data.getInt("PK_Player_ID")));
                 System.out.println("Player initialized");
+                /* TODO so shit
+                 * insert into MyPosition(FK_PK_Player_ID, FK_PK_World_ID, posX, posY)
+                 * VALUES (1, 1, 10, 15),
+                 *        (2, 1, 10, 10),
+                 *        (3, 1, 10, 15);
+                 */
             }
         } catch (SQLException ignored) {
         }
@@ -126,7 +134,9 @@ public class MyServer {
             } else {
                 ResultSet nbr = Database.get("select * from World inner join User U on World.FK_User_ID = U.PK_User_ID where U.name='" + worldName + "';");
                 try {
+                    //@TODO carry moritz übeall
                     if (nbr != null && nbr.first()) {
+                        server.getWorlds().add(new World(worldName.hashCode(), worldName));
                         c.getPlayer().setWorld(worldName);
                         c.send(MessageType.toStr(MessageType.worldSelect) + 0 + nbr.getInt("seed") + "," + c.getUsername());
                         sendPosUpdate(c);
@@ -143,33 +153,40 @@ public class MyServer {
     }
 
     private static void update(Server.ClientHandler c) {
+
         server.setOnUpdate(false, client -> {
             synchronized (client.getKeysPressed()) {
                 Vector2D tar = Vector2D.add(client.getPlayer().getPos(), Player.Dir.getDirFromKeys(client.getKeysPressed()));
                 client.getPlayer().setTargetPos(tar);
                 Optional<World> w = server.getWorlds().stream().filter(e -> e.getName().equals(c.getPlayer().getWorld())).findFirst();
                 w.ifPresent(world -> client.getPlayer().updatePos(client, client.getKeysPressed().contains(Keys.decline), world));
-                w.ifPresent(world -> client.getPlayer().updateTextEvents(client, client.getKeysPressed(), world,server.getClients()));
+                w.ifPresent(world -> client.getPlayer().updateTextEvents(client, client.getKeysPressed(), world, server.getClients()));
             }
             sendPosUpdate(client);
 //            System.out.println("MyServer.update: " + client.getPlayer().getActivity());
         }, (int) c.getId());
     }
 
-    private static Player initPlayer(String name, int id) {
+    private static Player initPlayer(String name, int idFromPlayer) {
         ResultSet curPlayer = Database.get("select * from User inner join Player P on User.PK_User_ID = P.FK_User_ID where name='" + name + "' OR email='" + name + "';");
         Vector2D pos = new Vector2D();
         int skinID = 0;
+        int idForDB = 0;
+        long money = 0;
+        System.out.println("MyServer.initPlayer: " + idFromPlayer);
         try {
             if (curPlayer == null) throw new SQLException();
             if (curPlayer.first()) {
+                ResultSet curPos = Database.get("select MP.* from Player join MyPosition MP on Player.PK_Player_ID = MP.FK_PK_Player_ID join World W on W.PK_World_ID = MP.FK_PK_World_ID;");
                 pos.setX((Integer) curPlayer.getObject("posX"));
                 pos.setY((Integer) curPlayer.getObject("posY"));
                 skinID = (int) curPlayer.getObject("skinID");
+                money = (int) curPlayer.getObject("money");
+                System.out.println(money);
             } else throw new SQLException();
         } catch (SQLException ignored) {
         }
-        return new Player(name, pos, skinID, id);
+        return new Player(name, pos, skinID, idFromPlayer, idForDB, money);
     }
 
     private static void sendPosUpdate(Server.ClientHandler c) {
