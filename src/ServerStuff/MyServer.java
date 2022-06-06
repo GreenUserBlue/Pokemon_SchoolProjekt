@@ -4,9 +4,11 @@ import Calcs.Vector2D;
 import ClientStuff.Keys;
 import ClientStuff.Player;
 import Envir.World;
+import InGame.Item;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -26,7 +28,9 @@ public class MyServer {
 
     public static void main(String[] args) throws IOException, SQLException {
         Database.init();
+        Item.init(Path.of("./res/DataSets/Items.csv"));
         initServer();
+
     }
 
     private static void initServer() throws IOException {
@@ -51,6 +55,7 @@ public class MyServer {
                     case worldSelect -> doRegion(c, s);
                     case keysPres -> doKeys(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
                     case textEvent -> doTextEvents(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
+                    case itemBuy -> doItemBuy(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
                     //TODO Clemenzzzzz zB wenn Client sagt, ich moechte angreifen, dann kommt das hier hin (on Message halt)
                     case error -> System.out.println("ERROR-Message: " + s);
                 }
@@ -59,6 +64,24 @@ public class MyServer {
         Random r = new Random();
         for (int i = 0; i < 5; i++) server.getWorlds().add(new World((int) (69420 + r.nextDouble() * 100000), "" + i));
         server.getWorlds().add(new World(696969, "K"));
+    }
+
+    private static void doItemBuy(Server.ClientHandler c, String s) {
+        String[] strs = s.split(",");
+        Item it = Item.getItem(Integer.parseInt(strs[1].trim()));
+        int amount = Integer.parseInt(strs[2].trim());
+        System.out.println("MyServer.doItemBuy: " + strs[1].trim());
+        System.out.println("MyServer.doItemBuy: " + it);
+        System.out.println("MyServer.doItemBuy: " + amount);
+        synchronized (c.getPlayer()) {
+            long curMoney = c.getPlayer().getMoney();
+            System.out.println("MyServer.doItemBuy: " + curMoney);
+            if (curMoney >= (long) amount * it.getPrize()) {
+                c.getPlayer().setMoney(curMoney - (long) amount * it.getPrize());
+                c.getPlayer().getItems().putIfAbsent(it.getId(), 0);
+                c.getPlayer().getItems().put(it.getId(), c.getPlayer().getItems().get(it.getId()) + amount);
+            }
+        }
     }
 
     private static void doTextEvents(Server.ClientHandler c, String s) {
@@ -134,7 +157,6 @@ public class MyServer {
             } else {
                 ResultSet nbr = Database.get("select * from World inner join User U on World.FK_User_ID = U.PK_User_ID where U.name='" + worldName + "';");
                 try {
-                    //@TODO carry moritz übeall
                     if (nbr != null && nbr.first()) {
                         server.getWorlds().add(new World(worldName.hashCode(), worldName));
                         c.getPlayer().setWorld(worldName);
@@ -173,20 +195,37 @@ public class MyServer {
         int skinID = 0;
         int idForDB = 0;
         long money = 0;
+
+        List<Item> items = new ArrayList<>();
         System.out.println("MyServer.initPlayer: " + idFromPlayer);
         try {
             if (curPlayer == null) throw new SQLException();
             if (curPlayer.first()) {
-                ResultSet curPos = Database.get("select MP.* from Player join MyPosition MP on Player.PK_Player_ID = MP.FK_PK_Player_ID join World W on W.PK_World_ID = MP.FK_PK_World_ID;");
-                pos.setX((Integer) curPlayer.getObject("posX"));
-                pos.setY((Integer) curPlayer.getObject("posY"));
+//                ResultSet curPos = Database.getItem("select MP.* from Player join MyPosition MP on Player.PK_Player_ID = MP.FK_PK_Player_ID join World W on W.PK_World_ID = MP.FK_PK_World_ID ");
                 skinID = (int) curPlayer.getObject("skinID");
                 money = (int) curPlayer.getObject("money");
-                System.out.println(money);
+                System.out.println("MyServer.initPlayer: " + money);
+                pos.setX((Integer) curPlayer.getObject("posX"));
+                pos.setY((Integer) curPlayer.getObject("posY"));
+//                System.out.println(money);
             } else throw new SQLException();
         } catch (SQLException ignored) {
         }
-        return new Player(name, pos, skinID, idFromPlayer, idForDB, money);
+
+        Player p = new Player(name, pos, skinID, idFromPlayer, idForDB, money);
+        try {
+            assert curPlayer != null;
+            ResultSet itemsInDB = Database.get("select user.name, Item_ID, quantity from user inner join Player P on User.PK_User_ID = P.FK_User_ID inner join ItemToPlayer ITP on P.PK_Player_ID = ITP.FK_Player where PK_Player_ID =" + curPlayer.getObject("PK_Player_ID") + ";");
+            assert itemsInDB != null;
+            while (itemsInDB.next()) {
+                p.getItems().put(itemsInDB.getInt("Item_ID"), itemsInDB.getInt("quantity"));
+            }
+            System.out.println(p.getItems());
+        } catch (SQLException ignored) {
+        }
+
+
+        return p;
     }
 
     private static void sendPosUpdate(Server.ClientHandler c) {

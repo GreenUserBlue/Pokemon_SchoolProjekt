@@ -3,6 +3,7 @@ package ClientStuff;
 
 import Calcs.Crypto;
 import Envir.World;
+import javafx.scene.input.KeyCode;
 import javafx.scene.text.Text;
 
 import java.io.IOException;
@@ -99,6 +100,15 @@ public class Client extends Thread {
     public Client(int port, String ip, boolean waitTillConnected, BiConsumer<Client, Object>... onMessage) {
         this(port, ip, waitTillConnected, null, onMessage);
     }
+
+    public List<KeyCode> getKeysPressed() {
+        return keysPressed;
+    }
+
+    /**
+     * saves all Keys which are currently pressed
+     */
+    private final List<KeyCode> keysPressed = new ArrayList<>();
 
     public Client(int port, String ip, boolean waitTillConnected) {
         this(port, ip, waitTillConnected, null, null);

@@ -10,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TextArea;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 
@@ -65,8 +66,18 @@ public class TextEvent {
 
     private Client client;
 
+    /**
+     * what happens if
+     */
+    private List<Runnable> onFin = new ArrayList<>();
+
     public void setClient(Client client) {
         this.client = client;
+    }
+
+
+    public void addOnFin(Runnable c) {
+        onFin.add(c);
     }
 
     private static final Map<Integer, JSONValue> eventTexts = new HashMap<>();
@@ -151,7 +162,6 @@ public class TextEvent {
             keys.forEach((a, b) -> s.set(s.get().replaceAll("%[$]%" + a + "%[$]%", b)));
         }
         text = Objects.requireNonNull(splitToLines(s.get().replaceAll(" {3}", System.lineSeparator()), 80)).toArray(new String[0]);
-
         optionsNode.getChildren().clear();
         optionsAfterText.clear();
         h.stream().skip(1).forEach(a -> {
@@ -208,7 +218,7 @@ public class TextEvent {
     public boolean nextLine() {
         if (text != null && isCurFin) {
             isCurFin = false;
-            if (text.length > curLine + 1 || text.length == 1 && curLine == 0) {
+            if (text.length > curLine + 1 || (text.length == 1 && curLine == 0)) {
                 curLine++;
                 curTextToWrite = text[curLine - 1] + System.lineSeparator() + (text.length > curLine ? text[curLine] : "");
                 curCharsShown = curLine != 1 ? Math.max(curTextToWrite.indexOf(System.lineSeparator()), 1) : 1;
@@ -228,6 +238,7 @@ public class TextEvent {
                             } else {
                                 isCurFin = true;
                                 stop();
+                                if (hasOptions()) nextLine();
                             }
                         }
                     }
@@ -236,11 +247,14 @@ public class TextEvent {
                 field.setText("");
                 state = TextEventState.reading;
             } else {
-
                 if (hasOptions()) {
                     state = TextEventState.selection;
                     optionsNode.setVisible(true);
+                    if (client != null) {
+                        client.getKeysPressed().removeAll(Arrays.asList(KeyCode.SPACE, KeyCode.ENTER));
+                    }
                     updateSize();
+
                 } else {
                     state = TextEventState.nothing;
                     if (curTextNbr < 1000) {
@@ -261,6 +275,13 @@ public class TextEvent {
                 if (text.length <= 1) {
                     field.setText(text[0]);
                 }
+                onFin.forEach(a -> {
+//                    Platform.runLater(() -> {
+                    a.run();
+                    System.out.print("");
+//                    });
+                });
+                onFin.clear();
                 return true;
             }
         }
@@ -295,6 +316,10 @@ public class TextEvent {
         grid.setPrefSize(scene.getWidth(), scene.getHeight());
     }
 
+    public boolean isFinToWalk() {
+        return Arrays.stream(TextEventIDsTranslator.values()).filter(a -> a.getId() == curTextNbr).findFirst().orElse(TextEventIDsTranslator.Tree).isWalkableAfterwards;
+    }
+
     public enum TextEventState {
         nothing,
         reading,
@@ -306,28 +331,39 @@ public class TextEvent {
         c.forEach((key, value) -> value.getMap().forEach((a, b) -> eventTexts.put(Integer.parseInt(a) + Integer.parseInt(key), b)));
     }
 
-    public enum TextEventIDsTranslater {
-        Tree(0),
-        BigShelf(1),
-        SmallShelf(2),
-        OnlyDeco(2),
-        PokeHeal(3),
-        FightEnd(4),
-        WrongItem(5),
-        PlayersMeetQues(6),
-        PlayersMeetAns(100),
-        MarketShopItems(1100),
-        MarketShopMeet(101),
-        MarketShopGoodBye(7);
+    public enum TextEventIDsTranslator {
+        Tree(0, true),
+        BigShelf(1, true),
+        SmallShelf(2, true),
+        OnlyDeco(2, true),
+        PokeHeal(3, true),
+        FightEnd(4, true),
+        WrongItem(5, false),
+        PlayersMeetQues(6, false),
+        PlayersMeetAns(100, false),
+        MarketShopItems(1100, false),
+        MarketShopItemsBuy(1101, false),
+        MarketShopMeet(101, false),
+        MarketShopNoMoney(1004, false),
+        MarketShopEnoughMoney(1005, false),
+        MarketShopGoodBye(7, true);
 
         private final int id;
 
-        TextEventIDsTranslater(int val) {
+
+        private final boolean isWalkableAfterwards;
+
+        TextEventIDsTranslator(int val, boolean isWalkableAfterwards) {
+            this.isWalkableAfterwards = isWalkableAfterwards;
             id = val;
         }
 
         public int getId() {
             return id;
+        }
+
+        public boolean getIsWalkableAfterwards() {
+            return isWalkableAfterwards;
         }
     }
 }

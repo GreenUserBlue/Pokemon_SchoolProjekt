@@ -49,6 +49,12 @@
     "3": [
       "I think you will regret all your life choices.",
       "I will show you what you might reach one day."
+    ],
+    "4": [
+      "You do not have enough money to buy this."
+    ],
+    "5": [
+      "You have bought %$%amount%$% %$%item%$% successfully."
     ]
   },
   "1100": {
@@ -62,10 +68,10 @@
       "Back"
     ],
     "1": [
-      "How often do you want to buy %$%Item%$%",
-      1,
-      5,
-      10,
+      "How often do you want to buy a %$%item%$%? (You own it %$%amount%$% and have %$%money%$% left)",
+      "1 (%$%cost0%$%)",
+      "5 (%$%cost1%$%)",
+      "10 (%$%cost2%$%)",
       "Back"
     ]
   }

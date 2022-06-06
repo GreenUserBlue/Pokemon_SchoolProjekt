@@ -449,8 +449,8 @@ public class World {
     public enum Block {
         Free(-1),
         Grass(-1),
-        Tree(TextEvent.TextEventIDsTranslater.Tree.getId()),
-        TreeL(TextEvent.TextEventIDsTranslater.Tree.getId()),
+        Tree(TextEvent.TextEventIDsTranslator.Tree.getId()),
+        TreeL(TextEvent.TextEventIDsTranslator.Tree.getId()),
         Water(-1),
         House(-1),
         HouseL(-1),
@@ -460,12 +460,12 @@ public class World {
         HouseR(-1),
         HouseTable(-1),
         HouseTableL(-1),
-        HouseBigShelf(TextEvent.TextEventIDsTranslater.BigShelf.getId()),
-        HouseBigShelfOther(TextEvent.TextEventIDsTranslater.BigShelf.getId()),
-        HouseSmallShelf(TextEvent.TextEventIDsTranslater.SmallShelf.getId()),
-        HouseSmallShelfOther(TextEvent.TextEventIDsTranslater.SmallShelf.getId()),
-        HousePokeHealTalk(TextEvent.TextEventIDsTranslater.PokeHeal.getId()),
-        HouseMarketTalk(TextEvent.TextEventIDsTranslater.MarketShopMeet.getId()),
+        HouseBigShelf(TextEvent.TextEventIDsTranslator.BigShelf.getId()),
+        HouseBigShelfOther(TextEvent.TextEventIDsTranslator.BigShelf.getId()),
+        HouseSmallShelf(TextEvent.TextEventIDsTranslator.SmallShelf.getId()),
+        HouseSmallShelfOther(TextEvent.TextEventIDsTranslator.SmallShelf.getId()),
+        HousePokeHealTalk(TextEvent.TextEventIDsTranslator.PokeHeal.getId()),
+        HouseMarketTalk(TextEvent.TextEventIDsTranslator.MarketShopMeet.getId()),
         none(-1);
 
         private final int val;
@@ -538,7 +538,7 @@ public class World {
     }
 
     /**
-     * get the house which stands on the position
+     * getItem the house which stands on the position
      *
      * @param pos the position which will be checked
      */

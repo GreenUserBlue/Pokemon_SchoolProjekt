@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public enum Keys {
-    confirm(KeyCode.SPACE, KeyCode.ENTER),
+    confirm(KeyCode.SPACE, KeyCode.ENTER,KeyCode.Q),
     decline(KeyCode.SHIFT),
     menu(KeyCode.X, KeyCode.E),
     up(KeyCode.W, KeyCode.UP),
