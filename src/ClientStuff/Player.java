@@ -13,6 +13,7 @@ import java.util.*;
  * a player inside the game
  *
  * @author Zwickelstorfer Felix
+ * @version 1.18.2
  */
 public class Player {
 
@@ -26,8 +27,14 @@ public class Player {
      */
     private int idFromPlayer;
 
+    /**
+     * the id of the player in the database
+     */
     private int idForDB;
 
+    /**
+     * the database of the player
+     */
     private final HashMap<Integer, Integer> items = new HashMap<>();
 
     /**
@@ -384,8 +391,11 @@ public class Player {
         }
     }
 
+    /**
+     * sends the data for the player
+     */
     public void sendItemData(Server.ClientHandler client) {
-        StringBuilder str = new StringBuilder(MessageType.toStr(MessageType.itemData));
+        StringBuilder str = new StringBuilder(MessageType.toStr(MessageType.itemData) + ";" + money);
         items.forEach((key, value) -> str.append(";").append(key).append(",").append(value));
         client.send(str.toString());
     }
@@ -412,6 +422,9 @@ public class Player {
         right(new Vector2D(1, 0)),
         none(new Vector2D());
 
+        /**
+         * the direction on the units-circle
+         */
         private final Vector2D var;
 
         Dir(Vector2D var) {
@@ -498,6 +511,9 @@ public class Player {
          */
         protected static boolean nextLeft = false;
 
+        /**
+         * @return the next hand (left->normal->right->normal->left)
+         */
         public abstract Hands next();
     }
 }

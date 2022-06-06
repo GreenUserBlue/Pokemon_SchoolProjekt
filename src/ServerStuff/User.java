@@ -51,6 +51,9 @@ public class User {
         }
     }
 
+    /**
+     * checks if the userLogin is correct
+     */
     public static int isCorrect(String username, String password) {
         try {
             ResultSet r = Database.get("select * from User where name='" + username + "' OR email='" + username + "'");
@@ -94,6 +97,9 @@ public class User {
         System.out.println(getLogin());
     }
 
+    /**
+     * deletes the local saved login data
+     */
     public static void delLoginData() {
         try {
             Files.writeString(Path.of(User.getDataDir() + "User.creds"), "");
@@ -101,6 +107,9 @@ public class User {
         }
     }
 
+    /**
+     * reads the local saved login data
+     */
     public static String getLogin() {
         try {
             List<String> l = Files.readAllLines(Path.of(getDataDir() + "User.creds"));
@@ -111,6 +120,9 @@ public class User {
         return null;
     }
 
+    /**
+     * makes an int array as a string back to normal coded string
+     */
     private static String intArrToString(String s) {
         ArrayList<Integer> ints = new ArrayList<>();
         Matcher m = Pattern.compile("(-?[0-9]+)[,\\]]").matcher(s);
@@ -120,6 +132,11 @@ public class User {
         return res.toString();
     }
 
+    /**
+     * stores the local storage login data
+     * @param name
+     * @param pwd
+     */
     public static void storePwd(String name, String pwd) {
         int r = (int) (Math.random() * 1_133_574_420) + 666;//353569;//
         pwd = encrypt(pwd, r);
@@ -138,6 +155,11 @@ public class User {
         }
     }
 
+    /**
+     * encryps the local storage data
+     * @param s the string to encrypt
+     * @param seed the seed to encrypt
+     */
     private static String encrypt(String s, int seed) {
         int[] ints = new int[(s.length() + 1) / 2];
         Random r = new Random(seed);
@@ -163,6 +185,9 @@ public class User {
         return res.toString();
     }
 
+    /**
+     * reverses {@link User#encrypt}
+     */
     private static String decrypt(String s, int seed) {
         int[] ints = new int[(s.length() + 1) / 2];
         Random r = new Random(seed);
@@ -193,6 +218,10 @@ public class User {
         return res.toString();
     }
 
+    /**
+     * adds a user
+     * @return the error message if illegal
+     */
     public static String add(String name, String password, String email) {
         if (password.length() < 8) return "Password too short";
         User cur = new User(name, password, email);
@@ -203,6 +232,9 @@ public class User {
         return s;
     }
 
+    /**
+     * @return the path to the local storage
+     */
     public static String getDataDir() {
         String workingDirectory;
         String OS = (System.getProperty("os.name")).toUpperCase();
@@ -210,9 +242,13 @@ public class User {
         else if (OS.contains("MAC"))
             workingDirectory = System.getProperty("user.home") + "/Library/Application Support";
         else workingDirectory = System.getProperty("user.home");
-        return (workingDirectory.endsWith("/") || workingDirectory.endsWith("\\") ? workingDirectory : workingDirectory + "/") + ".ZwickelstorferPokemon/";
+        return (workingDirectory.endsWith("/") || workingDirectory.endsWith("\\") ? workingDirectory : workingDirectory + "/") + ".SchoolProject_Pokemon/";
     }
 
+    /**
+     * deletes a user
+     * @return the error message if something went wrong
+     */
     public static int delete(String name, String pwd) {
         int error = isCorrect(name, pwd);
         if (error == 0) {

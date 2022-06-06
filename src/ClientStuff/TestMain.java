@@ -17,6 +17,10 @@ import java.util.regex.Pattern;
 
 //--module-path "C:\Program Files\Java\openjfx-16_windows-x64_bin-sdk\javafx-sdk-16\lib" --add-modules javafx.controls,javafx.fxml
 
+/**
+ * @author Zwickelstorfer Felix and Clemenzzzzzzzz Hodina
+ * @version idk about 3-4
+ */
 public class TestMain extends Application {
 
     /**

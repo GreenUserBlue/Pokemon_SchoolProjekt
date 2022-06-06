@@ -126,10 +126,10 @@ public class MyClient extends Application {
                         if (txt.nextLine()) {
                             if (txt.getState() == TextEvent.TextEventState.selection) {
                                 System.out.println("MyClient.handle: now in selection");
-                            } else if(txt.isFinToWalk()){
+                            } else if (txt.isWalkableAfterwards()) {
                                 client.getPlayers().get(0).setActivity(Player.Activity.standing);
                                 System.out.println("MyClient.handle: finished");
-                            }else{
+                            } else {
                                 System.out.println("MyClient.handle: finished");
                             }
 
@@ -167,6 +167,9 @@ public class MyClient extends Application {
         }
     }*/
 
+    /**
+     * updates the design for the login parts
+     */
     private final AnimationTimer designUpdater = new AnimationTimer() {
 
         long timeTillNextUse = 0;
@@ -185,6 +188,10 @@ public class MyClient extends Application {
             }
         }
 
+        /**
+         * updates the progressbar which is displayed at the beginning
+         * @param bar the bar
+         */
         private void updateBarsAndPos(ProgressBar bar) {
             if (stage.getScene().getRoot().getChildrenUnmodifiable().get(1) instanceof ProgressBar barHidden) {
                 bar.setPrefWidth(stage.getWidth() / 3 * 2);
@@ -280,6 +287,9 @@ public class MyClient extends Application {
         }
     }
 
+    /**
+     * read the f*cking name of the method
+     */
     private List<Keys> getUpdatedKeysToSendAndUpdatePlayerDir(List<Keys> lastKeysPressed, List<Keys> keys, Player p) {
         if (keys.stream().anyMatch(a -> p.getDir().toString().equalsIgnoreCase(a.toString()))) return keys;
         else {
@@ -368,6 +378,9 @@ public class MyClient extends Application {
         stage.getScene().setOnKeyReleased(e -> client.getKeysPressed().remove(e.getCode()));
     }
 
+    /**
+     * @return what happens when the client gets a message from the server
+     */
     private BiConsumer<Client, Object> getOnMsgClient() {
         return (a, b) -> {
             if (b instanceof String s) {
@@ -385,15 +398,25 @@ public class MyClient extends Application {
         };
     }
 
+    /**
+     * updates the items the player possesses currently
+     * @param str the message from the server
+     */
     private void updateItemData(String str) {
-        synchronized (client.getPlayers().get(0).getItems()) {
-            Arrays.stream(str.split(";")).skip(1).forEach(a -> {
+        synchronized (client.getPlayers().get(0)) {
+            client.getPlayers().get(0).setMoney(Long.parseLong(str.split(";")[1].trim()));
+
+            Arrays.stream(str.split(";")).skip(2).forEach(a -> {
                 String[] s = a.split(",");
                 client.getPlayers().get(0).getItems().put(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
             });
         }
     }
 
+    /**
+     * starts textevents
+     * @param s the message from the server
+     */
     private void doTextEvent(String s) {
         Player p = client.getPlayers().get(0);
         switch (s.charAt(0) - '0') {
@@ -430,6 +453,10 @@ public class MyClient extends Application {
         }
     }
 
+    /**
+     * updates everything for the profileselect
+     * @param str the message from the server
+     */
     private void doProfiles(String str) {
         switch (str.charAt(0) - '0') {
             case 0 -> {
@@ -457,6 +484,10 @@ public class MyClient extends Application {
         }
     }
 
+    /**
+     * puts the player in the world
+     * @param s the message from the server
+     */
     private void doWorldSelect(String s) {
         if (s.charAt(3) - '0' != 0) client.getErrorTxt().setVisible(true);
         switch (s.charAt(3) - '0') {

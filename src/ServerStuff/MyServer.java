@@ -24,6 +24,9 @@ public class MyServer {
         return server;
     }
 
+    /**
+     * the server for the connection
+     */
     private static Server server;
 
     public static void main(String[] args) throws IOException, SQLException {
@@ -33,6 +36,9 @@ public class MyServer {
 
     }
 
+    /**
+     * starts the server
+     */
     private static void initServer() throws IOException {
         server = new Server(33333, "localhost", 5);
         server.setAcceptAll(true);
@@ -66,16 +72,18 @@ public class MyServer {
         server.getWorlds().add(new World(696969, "K"));
     }
 
+    /**
+     * what happens when a player tries to buy an item
+     *
+     * @param c the client where the player is from
+     * @param s the message from the client
+     */
     private static void doItemBuy(Server.ClientHandler c, String s) {
         String[] strs = s.split(",");
         Item it = Item.getItem(Integer.parseInt(strs[1].trim()));
         int amount = Integer.parseInt(strs[2].trim());
-        System.out.println("MyServer.doItemBuy: " + strs[1].trim());
-        System.out.println("MyServer.doItemBuy: " + it);
-        System.out.println("MyServer.doItemBuy: " + amount);
         synchronized (c.getPlayer()) {
             long curMoney = c.getPlayer().getMoney();
-            System.out.println("MyServer.doItemBuy: " + curMoney);
             if (curMoney >= (long) amount * it.getPrize()) {
                 c.getPlayer().setMoney(curMoney - (long) amount * it.getPrize());
                 c.getPlayer().getItems().putIfAbsent(it.getId(), 0);
@@ -84,6 +92,12 @@ public class MyServer {
         }
     }
 
+    /**
+     * handels what happens when the player gives information about the textfields
+     *
+     * @param c the client where the player is from
+     * @param s the message from the client
+     */
     private static void doTextEvents(Server.ClientHandler c, String s) {
         if (s.startsWith("0")) {
             s = s.substring(1);
@@ -99,6 +113,12 @@ public class MyServer {
         }
     }
 
+    /**
+     * what should happen when a player tries to login
+     *
+     * @param c the client where the player is from
+     * @param s the message from the client
+     */
     private static void doProfile(Server.ClientHandler c, String s) {
         try {
             ResultSet exists = Database.get("select count(*) as nbr from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "';");
@@ -121,6 +141,10 @@ public class MyServer {
         }
     }
 
+    /**
+     * @param c the client where the player is from
+     * @param s the message from the client
+     */
     private static void doKeys(Server.ClientHandler c, String s) {
         String keys = s.replaceAll(",.*", "");
         String dir = s.replaceAll(".*,", "");
@@ -138,6 +162,10 @@ public class MyServer {
         }
     }
 
+    /**
+     * @param c the client where the player is from
+     * @param s the message from the client
+     */
     private static void doRegion(Server.ClientHandler c, String s) {
         Matcher mRegion = Pattern.compile("n='(.*?)'[,}]").matcher(s);
         String worldName = mRegion.find() ? mRegion.group(1) : "";
@@ -174,6 +202,9 @@ public class MyServer {
         System.out.println("MyServer.doRegion: " + c.getPlayer().getPos());
     }
 
+    /**
+     * @param c which clientHandler should be updated
+     */
     private static void update(Server.ClientHandler c) {
 
         server.setOnUpdate(false, client -> {
@@ -189,6 +220,13 @@ public class MyServer {
         }, (int) c.getId());
     }
 
+    /**
+     * inits a new player
+     *
+     * @param name         the name of the player/email
+     * @param idFromPlayer the id for the user from the player (0-2)
+     * @return the playerobject with all the information
+     */
     private static Player initPlayer(String name, int idFromPlayer) {
         ResultSet curPlayer = Database.get("select * from User inner join Player P on User.PK_User_ID = P.FK_User_ID where name='" + name + "' OR email='" + name + "';");
         Vector2D pos = new Vector2D();
@@ -196,7 +234,6 @@ public class MyServer {
         int idForDB = 0;
         long money = 0;
 
-        List<Item> items = new ArrayList<>();
         System.out.println("MyServer.initPlayer: " + idFromPlayer);
         try {
             if (curPlayer == null) throw new SQLException();
@@ -228,14 +265,32 @@ public class MyServer {
         return p;
     }
 
+    /**
+     * sends an update to the player about the positions for all the other plyers in the area
+     *
+     * @param c the client where the player is from
+     */
     private static void sendPosUpdate(Server.ClientHandler c) {
         int loadingAreaWidth = 28;
-        List<Player> all = new ArrayList<>(server.getClients().values()).parallelStream().filter(Objects::nonNull).map(Server.ClientHandler::getPlayer).filter(e -> e != null && c.getPlayer().getWorld().equals(e.getWorld()) && Math.abs(e.getPos().getX() - c.getPlayer().getPos().getX()) < loadingAreaWidth && Math.abs(e.getPos().getY() - c.getPlayer().getPos().getY()) < loadingAreaWidth && (c.getPlayer().getHouseEntrancePos() == null ? e.getHouseEntrancePos() == null : c.getPlayer().getHouseEntrancePos().equals(e.getHouseEntrancePos()))).collect(Collectors.toList());
+        List<Player> all = new ArrayList<>(server.getClients().values())
+                .parallelStream()
+                .filter(Objects::nonNull)
+                .map(Server.ClientHandler::getPlayer)
+                .filter(e -> e != null && c.getPlayer().getWorld().equals(e.getWorld()))
+                .filter(e -> Math.abs(e.getPos().getX() - c.getPlayer().getPos().getX()) < loadingAreaWidth)
+                .filter(e -> Math.abs(e.getPos().getY() - c.getPlayer().getPos().getY()) < loadingAreaWidth)
+                .filter(e -> (c.getPlayer().getHouseEntrancePos() == null ? e.getHouseEntrancePos() == null : c.getPlayer().getHouseEntrancePos().equals(e.getHouseEntrancePos())))
+                .collect(Collectors.toList());
         StringBuilder str = new StringBuilder();
         all.forEach(e -> str.append('{').append(e.getName()).append(',').append(e.getPos().getX() + e.getCurWalked().getX()).append(',').append(e.getPos().getY() + e.getCurWalked().getY()).append(',').append(e.getSkin()).append('}'));
         c.send(MessageType.toStr(MessageType.updatePos) + str);
     }
 
+    /**
+     * when a user tries to delete its account
+     * @param c the client where the player is from
+     * @param s the message from the client
+     */
     private static void doDel(Server.ClientHandler c, String s) {
         Matcher mName = Pattern.compile("name='(.*?)'[,}]").matcher(s);
         Matcher mPwd = Pattern.compile("pwd='(.*?)'[,}]").matcher(s);
@@ -247,6 +302,11 @@ public class MyServer {
         System.out.println("User-Delete request received: " + name);
     }
 
+    /**
+     * when a User tries to Login
+     * @param c the client where the player is from
+     * @param s the message from the client
+     */
     private static void doLogin(Server.ClientHandler c, String s) {
         Matcher mName = Pattern.compile("name='(.*?)'[,}]").matcher(s);
         Matcher mPwd = Pattern.compile("pwd='(.*?)'[,}]").matcher(s);
@@ -262,6 +322,11 @@ public class MyServer {
         }
     }
 
+    /**
+     * sending the client all data about the playerProfiles
+     * @param c the client where the player is from
+     * @param name the name of the player
+     */
     private static void sendPlayerProfiles(Server.ClientHandler c, String name) {
         c.setUsername(name);
         ResultSet r = Database.get("select PK_Player_ID,skinID,startPokID,language from Player INNER JOIN User U on Player.FK_User_ID = U.PK_User_ID where U.name='" + name + "' OR email='" + name + "';");
@@ -284,6 +349,11 @@ public class MyServer {
         }
     }
 
+    /**
+     * when a user tries to register
+     * @param c the client where the player is from
+     * @param s the message from the client
+     */
     private static void doRegister(Server.ClientHandler c, String s) {
         Matcher mName = Pattern.compile("name='(.*?)'[,}]").matcher(s);
         Matcher mPwd = Pattern.compile("pwd='(.*?)'[,}]").matcher(s);
@@ -309,6 +379,11 @@ public class MyServer {
         }
     }
 
+    /**
+     * for the encryption for the password
+     * @param c the client where the player is from
+     * @param s the message from the client
+     */
     private static void doHellman(Server.ClientHandler c, String s) {
         Matcher m = Pattern.compile("pub=([0-9]+)[,}]").matcher(s);
         c.getCrypto().createKey(new BigInteger(m.find() ? m.group(1) : "1"), c.getCrypto().getPub().intValue());

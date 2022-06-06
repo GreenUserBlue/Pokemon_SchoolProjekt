@@ -15,6 +15,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
+/**
+ * @author Zwickelstorfer Felix
+ * represents a world where players can walk inside of an interact with each other
+ */
 public class World {
 
     /**

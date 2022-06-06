@@ -10,18 +10,41 @@ import javafx.scene.layout.VBox;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * @author Zwickelstorfer Felix
+ * @version 1.0
+ *
+ */
 public class MarketGUI {
 
+    /**
+     * the current top item which will be displayed at the select screen
+     */
     private int page = 0;
 
+    /**
+     * the client to send data
+     */
     private Client client;
 
+    /**
+     * the textevent to show everything
+     */
     private final TextEvent txtEvent;
 
+    /**
+     * the items which are currently displayed
+     */
     private List<Item> curShopItems;
 
+    /**
+     * the player of the shop
+     */
     private Player curPlayer;
 
+    /**
+     * how much money the player currently has (if there is any delay between server and client, so that the correct sum is always shown)
+     */
     private long curMoney = 0;
 
     public void setClient(Client client) {
@@ -32,7 +55,11 @@ public class MarketGUI {
         this.txtEvent = t;
     }
 
-    //TODO ein Bug weil wenn man nicht schnell genug weggeht, dann kommt das auswahlfeld nochmals
+    /**
+     * starts a new market
+     * @param p the player
+     * @param money the money the player possesses
+     */
     public void startNewMarket(Player p, long money) {
         this.curMoney = money;
         curPlayer = p;
@@ -42,11 +69,12 @@ public class MarketGUI {
         txtEvent.startNewText(TextEvent.TextEventIDsTranslator.MarketShopMeet.getId(), null);
         VBox v = txtEvent.getOptionsNode();
         ((Button) v.getChildren().get(0)).setOnAction(e -> showItemChooser());
-        ((Button) v.getChildren().get(v.getChildren().size() - 1)).setOnAction(e -> {
-            txtEvent.startNewText(TextEvent.TextEventIDsTranslator.MarketShopGoodBye.getId(), null);
-        });
+        ((Button) v.getChildren().get(v.getChildren().size() - 1)).setOnAction(e -> txtEvent.startNewText(TextEvent.TextEventIDsTranslator.MarketShopGoodBye.getId(), null));
     }
 
+    /**
+     * displays the selection for the items
+     */
     private void showItemChooser() {
         HashMap<String, String> items = new HashMap<>();
         for (int i = 0; i < 3; i++) {
@@ -79,9 +107,14 @@ public class MarketGUI {
         });
     }
 
+    /**
+     * displays the opportunity to buy an item
+     * @param itemNbr the id of the item which will be bought
+     */
     private void showItemBuyer(int itemNbr) {
         HashMap<String, String> vals = new HashMap<>();
         Item it = Item.getItem(itemNbr);
+        curMoney = curPlayer.getMoney();
         vals.put("money", curMoney + "¥");
         vals.put("item", it.getName());
         int[] nbrs = new int[]{1, 5, 10};
@@ -104,6 +137,7 @@ public class MarketGUI {
                     if (curMoney >= (long) it.getPrize() * nbr) {
                         client.send(MessageType.toStr(MessageType.itemBuy) + "," + itemNbr + "," + nbrs[finalI]);
                         synchronized (curPlayer.getItems()) {
+                            curPlayer.getItems().putIfAbsent(itemNbr, 0);
                             curPlayer.getItems().put(itemNbr, curPlayer.getItems().get(itemNbr) + nbrs[finalI]);
                         }
                         curMoney -= (long) it.getPrize() * nbr;

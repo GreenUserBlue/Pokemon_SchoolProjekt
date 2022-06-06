@@ -5,6 +5,11 @@ import javafx.scene.input.KeyCode;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author Zwickelstorfer Felix
+ * @version 2.32
+ * all Keys which are pressed
+ */
 public enum Keys {
     confirm(KeyCode.SPACE, KeyCode.ENTER,KeyCode.Q),
     decline(KeyCode.SHIFT),
@@ -14,6 +19,9 @@ public enum Keys {
     left(KeyCode.A, KeyCode.LEFT),
     right(KeyCode.D, KeyCode.RIGHT);
 
+    /**
+     * saves the keys which are needed for the keyEvents
+     */
     private final KeyCode[] triggerKeys;
 
     Keys(KeyCode... keyCodes) {
@@ -30,6 +38,10 @@ public enum Keys {
         return res;
     }
 
+    /**
+     * returns a list from keys from all which are pressed
+     * @param strings the keys
+     */
     public static ArrayList<Keys> getKeysFromString(String strings) {
         ArrayList<Keys> res = new ArrayList<>();
         for (Keys d : Keys.values()) {
@@ -38,6 +50,9 @@ public enum Keys {
         return res;
     }
 
+    /**
+     * removes all keys which would cancel each other out
+     */
     public static List<Keys> getSmartKeys(List<KeyCode> keysPressed) {
         ArrayList<Keys> res = getKeys(keysPressed);
         if (res.contains(left) || res.contains(up) || res.contains(right) || res.contains(down)) {

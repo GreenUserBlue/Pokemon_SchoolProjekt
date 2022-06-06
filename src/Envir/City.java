@@ -6,16 +6,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * @author Zwickelstorfer Felix
+ * a city which breaks the random environment and has houses instead
+ */
 public class City {
 
+    /**
+     * the start pos of the city
+     */
     private final Vector2D pos;
 
+    /**
+     * the size of the city
+     */
     private final Vector2D size;
 
     public List<House> getHouses() {
         return houses;
     }
 
+    /**
+     * all houses inside a city
+     */
     private final List<House> houses = new ArrayList<>();
 
 //    public static void main(String[] args) {
@@ -54,10 +67,19 @@ public class City {
         for (House h : houses) h.setId(worldID, houseIDs++);
     }
 
+    /**
+     * creates a new house
+     * @param rnd the rnd value
+     * @param type which type of house
+     */
     private House createNewHouse(Random rnd, House.Type type) {
         return new House(new Vector2D(pos.getX() + rnd.nextInt((int) (size.getX() - type.getSize().getX() - 1)), pos.getY() + rnd.nextInt((int) (size.getY() - type.getSize().getY() - 1))), type);
     }
 
+    /**
+     * to check if a block is inside the city
+     * @param v the block to check
+     */
     public boolean isInCity(Vector2D v) {
         return pos.getX() <= v.getX() && pos.getX() + size.getX() >= v.getX() && pos.getY() <= v.getY() && pos.getY() + size.getY() >= v.getY();
     }
