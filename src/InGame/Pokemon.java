@@ -348,6 +348,7 @@ public class Pokemon {
         return a;
     }
 
+
     //return  name + ";" + id + ";" + Arrays.toString(attacks) + ";" + nature + ";" + level + ";" + xp + ";" + maxXP + ";" +curHP + ";" +state.toString() + ";" + Arrays.toString(iv);
 
     //Pokemon{name='venomoth', id=49, evolveType=null, evolvesIntoId=-1, evolvesAtLevel=-1, attacks=[Attack{id=13, name='razor-wind', type=normal, damage=80, AP=10, hitProbability=100.0, attacksAlwaysFirst=false, attackType=Attack}, Attack{id=36, name='take-down', type=normal, damage=90, AP=20, hitProbability=85.0, attacksAlwaysFirst=false, attackType=Attack}, Attack{id=38, name='double-edge', type=normal, damage=120, AP=15, hitProbability=100.0, attacksAlwaysFirst=false, attackType=Attack}, Attack{id=63, name='hyper-beam', type=normal, damage=150, AP=5, hitProbability=90.0, attacksAlwaysFirst=false, attackType=Attack}], nature=hasty, type=[bug, poison], level=25, xp=15625, maxXP=17576, captureRate=75, block=Grass, growthRate='medium', curHP=70.0, state=State{HP=73.0, attack=41.0, defense=35.22727272727273, spAttack=51.75, spDefense=44.25, speed=55.825}, iv=[12, 14, 15, 7, 3, 4]}
