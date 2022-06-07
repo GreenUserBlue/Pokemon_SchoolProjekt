@@ -13,6 +13,7 @@ import java.util.*;
  * a player inside the game
  *
  * @author Zwickelstorfer Felix
+ * @version 1.18.2
  */
 public class Player {
 
@@ -26,8 +27,14 @@ public class Player {
      */
     private int idFromPlayer;
 
+    /**
+     * the id of the player in the database
+     */
     private int idForDB;
 
+    /**
+     * the database of the player
+     */
     private final HashMap<Integer, Integer> items = new HashMap<>();
 
     /**
@@ -350,11 +357,11 @@ public class Player {
                         if (b.getVal() != -1) {
                             String s;
 
-                            if (b.getVal() == TextEvent.TextEventIDsTranslater.MarketShopMeet.getId()) {
+                            if (b.getVal() == TextEvent.TextEventIDsTranslator.MarketShopMeet.getId()) {
                                 sendItemData(client);
                             }
                             synchronized (client.getPlayer()) {
-                                s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal() + (b.getVal() == TextEvent.TextEventIDsTranslater.MarketShopMeet.getId() ? "," + client.getPlayer().money : "");
+                                s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal() + (b.getVal() == TextEvent.TextEventIDsTranslator.MarketShopMeet.getId() ? "," + client.getPlayer().money : "");
                             }
                             client.send(s);
                             activity = Activity.textEvent;
@@ -370,12 +377,11 @@ public class Player {
                                 .filter(a -> a.getTimeTillNextTextField() <= System.currentTimeMillis()).findFirst();
                         if (op.isPresent()) {
                             System.out.println("Player found: " + op.get().getPlayer().getName());
-                            String sToQues = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsTranslater.PlayersMeetQues.getId() + ",name:" + op.get().getPlayer().getName();
+                            String sToQues = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsTranslator.PlayersMeetQues.getId() + ",name:" + op.get().getPlayer().getName();
                             System.out.println(sToQues);
                             client.send(sToQues);
                             activity = Activity.textEvent;
-
-                            String sToAns = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsTranslater.PlayersMeetAns.getId() + ",name:" + client.getPlayer().getName();
+                            String sToAns = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsTranslator.PlayersMeetAns.getId() + ",name:" + client.getPlayer().getName();
                             op.get().send(sToAns);
                             op.get().getPlayer().activity = Activity.textEvent;
                         }
@@ -385,12 +391,12 @@ public class Player {
         }
     }
 
+    /**
+     * sends the data for the player
+     */
     public void sendItemData(Server.ClientHandler client) {
-        StringBuilder str = new StringBuilder(MessageType.toStr(MessageType.itemData));
-        for (Map.Entry<Integer, Integer> entry : items.entrySet()) {
-            str.append(";").append(entry.getKey()).append(",").append(entry.getValue());
-        }
-        System.out.println("Player.sendItemData: " + str);
+        StringBuilder str = new StringBuilder(MessageType.toStr(MessageType.itemData) + ";" + money);
+        items.forEach((key, value) -> str.append(";").append(key).append(",").append(value));
         client.send(str.toString());
     }
 
@@ -416,6 +422,9 @@ public class Player {
         right(new Vector2D(1, 0)),
         none(new Vector2D());
 
+        /**
+         * the direction on the units-circle
+         */
         private final Vector2D var;
 
         Dir(Vector2D var) {
@@ -502,6 +511,9 @@ public class Player {
          */
         protected static boolean nextLeft = false;
 
+        /**
+         * @return the next hand (left->normal->right->normal->left)
+         */
         public abstract Hands next();
     }
 }

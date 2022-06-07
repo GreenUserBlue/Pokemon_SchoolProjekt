@@ -15,6 +15,10 @@ public class Item {
 
     private final String name;
 
+    public static Item getItem(int itemNbr) {
+        return allItems.stream().filter(a -> a.id == itemNbr).findFirst().orElse(null);
+    }
+
     public String getName() {
         return name;
     }
@@ -71,5 +75,9 @@ public class Item {
                 ", isBuyable=" + isBuyable +
                 ", badgesNeeded=" + badgesNeeded +
                 '}';
+    }
+
+    public Integer getId() {
+        return id;
     }
 }

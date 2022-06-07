@@ -571,7 +571,7 @@ public class Pokemon {
         for (int i = 0; (row = in.readLine()) != null; i++) {
             allLines.add(row);
         }
-        //System.out.println(allLines.get(id));
+        //System.out.println(allLines.getItem(id));
         String[] oneRow;
         String[] oneAttack;
         oneRow = allLines.get(id).split(";");

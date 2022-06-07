@@ -110,15 +110,15 @@ public class MyClient extends Application {
                 txt.updateSize(stage.getScene());
                 Canvas c = (Canvas) (stage.getScene().getRoot().getChildrenUnmodifiable().get(0));
 
-                //client.getPlayers().get(0) = der Player dem dieser Client gehört
+                //client.getPlayers().getItem(0) = der Player dem dieser Client gehört
                 synchronized (client.getPlayers()) {
-                    //if client.getPlayers().get(0).getActivity()==fighting, dann dein Bulllshit, else mein Bullshit
+                    //if client.getPlayers().getItem(0).getActivity()==fighting, dann dein Bulllshit, else mein Bullshit
                     if (client.getPlayers().get(0).getHouseEntrancePos() == null) {
                         client.getWorld().drawEnvir(c, client.getPlayers(), new Vector2D(stage.getScene().getWidth(), stage.getScene().getHeight()), allImgs);
                     } else {
                         client.getWorld().drawInsideHouse(c, client.getPlayers(), new Vector2D(stage.getScene().getWidth(), stage.getScene().getHeight()), allImgs);
                     }
-                    List<Keys> keys = (Keys.getSmartKeys(keysPressed));
+                    List<Keys> keys = (Keys.getSmartKeys(client.getKeysPressed()));
                     if (keys.contains(Keys.menu) && client.getPlayers().get(0).getActivity() != Player.Activity.menu) {
                         menu = new Menu(getMyClient());
                         menu.showMenu();
@@ -126,10 +126,13 @@ public class MyClient extends Application {
                         if (txt.nextLine()) {
                             if (txt.getState() == TextEvent.TextEventState.selection) {
                                 System.out.println("MyClient.handle: now in selection");
-                            } else {
+                            } else if (txt.isWalkableAfterwards()) {
                                 client.getPlayers().get(0).setActivity(Player.Activity.standing);
                                 System.out.println("MyClient.handle: finished");
+                            } else {
+                                System.out.println("MyClient.handle: finished");
                             }
+
                         }
                     } else if (client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
                         txt.getField().setVisible(true);
@@ -164,6 +167,9 @@ public class MyClient extends Application {
         }
     }*/
 
+    /**
+     * updates the design for the login parts
+     */
     private final AnimationTimer designUpdater = new AnimationTimer() {
 
         long timeTillNextUse = 0;
@@ -182,6 +188,10 @@ public class MyClient extends Application {
             }
         }
 
+        /**
+         * updates the progressbar which is displayed at the beginning
+         * @param bar the bar
+         */
         private void updateBarsAndPos(ProgressBar bar) {
             if (stage.getScene().getRoot().getChildrenUnmodifiable().get(1) instanceof ProgressBar barHidden) {
                 bar.setPrefWidth(stage.getWidth() / 3 * 2);
@@ -239,7 +249,7 @@ public class MyClient extends Application {
                         r.setArcHeight(r.getWidth() * 0.2);
                         r.setArcWidth(r.getWidth() * 0.2);
                         if (p.getChildren().size() > 2) {
-                            /* a if (p.getChildren().get(2) instanceof TextField poke) {
+                            /* a if (p.getChildren().getItem(2) instanceof TextField poke) {
                                 poke.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
                                 poke.setFont(new Font(r.getHeight() * 0.12));
                                 poke.setLayoutY(r.getLayoutY() + poke.getFont().getSize());
@@ -253,16 +263,16 @@ public class MyClient extends Application {
                                 badge.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
                                 badge.setFont(new Font(r.getHeight() * 0.1));
                                 badge.setLayoutY(r.getLayoutY() + r.getHeight() * 0.3 + badge.getFont().getSize());
-                               /*a if (p.getChildren().size() > 4 && p.getChildren().get(4) instanceof Text badge) {
+                               /*a if (p.getChildren().size() > 4 && p.getChildren().getItem(4) instanceof Text badge) {
                                     badge.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
                                     badge.setFont(new Font(r.getHeight() * 0.1));
                                     badge.setLayoutY(r.getLayoutY() + r.getHeight() * 0.42 + badge.getFont().getSize());
-                                    if (p.getChildren().size() > 5 && p.getChildren().get(5) instanceof Button changeName) {
+                                    if (p.getChildren().size() > 5 && p.getChildren().getItem(5) instanceof Button changeName) {
                                         changeName.setLayoutX(r.getLayoutX() + r.getWidth() * 0.85);
                                         changeName.setLayoutY(r.getLayoutY() + r.getHeight() * 0.1);
                                         changeName.setMaxSize(r.getHeight() * 0.15, r.getHeight() * 0.15);
                                         changeName.setMinSize(r.getHeight() * 0.15, r.getHeight() * 0.15);
-                                        if (p.getChildren().size() > 6 && p.getChildren().get(6) instanceof Text error) {
+                                        if (p.getChildren().size() > 6 && p.getChildren().getItem(6) instanceof Text error) {
                                             error.setLayoutX(r.getLayoutX() + r.getWidth() * 0.1);
                                             error.setFont(new Font(r.getHeight() * 0.1));
                                             error.setLayoutY(r.getLayoutY() + r.getHeight() * 0.62 + error.getFont().getSize());
@@ -277,6 +287,9 @@ public class MyClient extends Application {
         }
     }
 
+    /**
+     * read the f*cking name of the method
+     */
     private List<Keys> getUpdatedKeysToSendAndUpdatePlayerDir(List<Keys> lastKeysPressed, List<Keys> keys, Player p) {
         if (keys.stream().anyMatch(a -> p.getDir().toString().equalsIgnoreCase(a.toString()))) return keys;
         else {
@@ -319,10 +332,6 @@ public class MyClient extends Application {
         }
     }
 
-    /**
-     * saves all KEys which are currently pressed
-     */
-    private final List<KeyCode> keysPressed = new ArrayList<>();
 
     /**
      * Starts the program
@@ -342,10 +351,11 @@ public class MyClient extends Application {
         TextEvent.initTexts();
         Item.init(Path.of("./res/DataSets/Items.csv"));
         client = new Client(33333, "127.0.0.1", false, (a, b) -> {
-            if (b instanceof String s && !s.startsWith(MessageType.toStr(MessageType.updatePos)) && !s.startsWith(MessageType.toStr(MessageType.textEvent)))
+            if (b instanceof String s && !s.startsWith(MessageType.toStr(MessageType.updatePos)) && !s.startsWith(MessageType.toStr(MessageType.textEvent)) && !s.startsWith(MessageType.toStr(MessageType.itemData)))
                 System.out.println("From Server: '" + b + '\'');
         }, getOnMsgClient());
         txt.setClient(client);
+        marketGUI.setClient(client);
         int height = 300;
         stage.setScene(new Scene(LoginScreens.getLoadingScreen(), height / 9D * 16, height));
         addListener();
@@ -362,12 +372,15 @@ public class MyClient extends Application {
      */
     private void addListener() {
         stage.getScene().setOnKeyPressed(e -> {
-            if (!keysPressed.contains(e.getCode())) keysPressed.add(e.getCode());
+            if (!client.getKeysPressed().contains(e.getCode())) client.getKeysPressed().add(e.getCode());
             if (e.getCode() == KeyCode.F11) stage.setFullScreen(!stage.isFullScreen());
         });
-        stage.getScene().setOnKeyReleased(e -> keysPressed.remove(e.getCode()));
+        stage.getScene().setOnKeyReleased(e -> client.getKeysPressed().remove(e.getCode()));
     }
 
+    /**
+     * @return what happens when the client gets a message from the server
+     */
     private BiConsumer<Client, Object> getOnMsgClient() {
         return (a, b) -> {
             if (b instanceof String s) {
@@ -378,12 +391,32 @@ public class MyClient extends Application {
                     case worldSelect -> doWorldSelect(s);
                     case updatePos -> updatePos(s);
                     case textEvent -> doTextEvent(s.substring(3));
+                    case itemData -> updateItemData(s.substring(MessageType.toStr(MessageType.itemData).length()));
                     //TODO Clemenzzzzzz on Msg From Server
                 }
             }
         };
     }
 
+    /**
+     * updates the items the player possesses currently
+     * @param str the message from the server
+     */
+    private void updateItemData(String str) {
+        synchronized (client.getPlayers().get(0)) {
+            client.getPlayers().get(0).setMoney(Long.parseLong(str.split(";")[1].trim()));
+
+            Arrays.stream(str.split(";")).skip(2).forEach(a -> {
+                String[] s = a.split(",");
+                client.getPlayers().get(0).getItems().put(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
+            });
+        }
+    }
+
+    /**
+     * starts textevents
+     * @param s the message from the server
+     */
     private void doTextEvent(String s) {
         Player p = client.getPlayers().get(0);
         switch (s.charAt(0) - '0') {
@@ -391,19 +424,18 @@ public class MyClient extends Application {
                 synchronized (client.getPlayers().get(0)) {
                     if (p.getActivity() != Player.Activity.textEvent) {
                         p.setActivity(Player.Activity.textEvent);
-                        System.out.println("MyClient.doTextEvent: " + s);
                         if (s.split(",").length == 1) {
                             int id = Integer.parseInt(s.substring(1));
                             Platform.runLater(() -> txt.startNewText(id, null));
                         } else {
                             int id = Integer.parseInt(s.substring(1).split(",")[0]);
                             System.out.println("MyClient.doTextEvent: " + id);
-                            if (id == TextEvent.TextEventIDsTranslater.MarketShopMeet.getId()) {
+                            if (id == TextEvent.TextEventIDsTranslator.MarketShopMeet.getId()) {
                                 Platform.runLater(() -> marketGUI.startNewMarket(client.getPlayers().get(0), Integer.parseInt(s.split(",")[1])));
                             } else {
                                 HashMap<String, String> data = new HashMap<>();
                                 Arrays.stream(s.substring(1).split(",")).skip(1).forEach(a -> data.put(a.split(":")[0], a.split(":")[1]));
-                                if (id == TextEvent.TextEventIDsTranslater.PlayersMeetAns.getId() || id == TextEvent.TextEventIDsTranslater.PlayersMeetQues.getId()) {
+                                if (id == TextEvent.TextEventIDsTranslator.PlayersMeetAns.getId() || id == TextEvent.TextEventIDsTranslator.PlayersMeetQues.getId()) {
                                     Optional<Player> op = client.getPlayers().stream().filter(a -> a.getName().equals(data.get("name"))).findFirst();
                                     op.ifPresent(a -> {
                                         client.getPlayers().get(0).setDir(Player.Dir.getDir(Vector2D.sub(a.getPos(), (client.getPlayers().get(0).getPos())), Player.Dir.none));
@@ -421,6 +453,10 @@ public class MyClient extends Application {
         }
     }
 
+    /**
+     * updates everything for the profileselect
+     * @param str the message from the server
+     */
     private void doProfiles(String str) {
         switch (str.charAt(0) - '0') {
             case 0 -> {
@@ -448,6 +484,10 @@ public class MyClient extends Application {
         }
     }
 
+    /**
+     * puts the player in the world
+     * @param s the message from the server
+     */
     private void doWorldSelect(String s) {
         if (s.charAt(3) - '0' != 0) client.getErrorTxt().setVisible(true);
         switch (s.charAt(3) - '0') {

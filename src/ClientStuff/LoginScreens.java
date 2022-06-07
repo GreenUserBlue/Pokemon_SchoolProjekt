@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author Zwickelstorfer Felix
  * creates a login, register and delete screen
+ * @version 3.2
  */
 public class LoginScreens {
 
@@ -61,7 +62,6 @@ public class LoginScreens {
         }
         return p;
     }
-
 
     /**
      * sends a message to the server that you want to login

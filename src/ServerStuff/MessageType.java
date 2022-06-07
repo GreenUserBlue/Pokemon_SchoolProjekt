@@ -1,5 +1,8 @@
 package ServerStuff;
 
+/**
+ * @author Zwickelstorfer Felix and Clemenzzzz Hodina
+ */
 public enum MessageType {
     hellman,             //Client + Server
     register,            //Client
@@ -24,6 +27,9 @@ public enum MessageType {
     error,               //Client + Server
     ;
 
+    /**
+     * @return the type of message from the integer
+     */
     public static MessageType getType(int val) {
         for (MessageType m : MessageType.values()) {
             if (val == m.ordinal()) return m;
@@ -31,6 +37,9 @@ public enum MessageType {
         return error;
     }
 
+    /**
+     * makes it to a string to send between server and client
+     */
     public static String toStr(MessageType m) {
         return String.format("%03d", m.ordinal());
     }

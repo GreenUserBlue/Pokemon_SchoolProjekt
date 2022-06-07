@@ -10,10 +10,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * @author Zwickelstorfer Felix
+ * a house where a player can walk inside
+ */
 public class House {
 
+    /**
+     * the id of the house
+     */
     private int id;
 
+    /**
+     * the id of the world
+     */
     private int worldID;
 
     public void setId(int worldID, int id) {
@@ -36,14 +46,29 @@ public class House {
         }
     }
 
+    /**
+     * the pos of the house
+     */
     private final Vector2D pos;
 
+    /**
+     * the size of the house
+     */
     private final Vector2D size;
 
+    /**
+     * the housetype
+     */
     private final Type type;
 
+    /**
+     * all players inside the house
+     */
     private final List<Player> players = new ArrayList<>();
 
+    /**
+     * the name of the owner of the house (not implemented)
+     */
     private String playerName = null;
 
     public String getPlayerName() {
@@ -91,6 +116,11 @@ public class House {
         this.type = type;
     }
 
+    /**
+     * if this house can be placed where it wants in relation to he other houses
+     * @param houses the other houses
+     * @param distance the min distance to other houses
+     */
     public boolean isNotFreeForHouse(List<House> houses, int distance) {
         for (House h : houses) {
             if (h.pos.getX() < pos.getX() + size.getX() && pos.getX() < h.pos.getX() + h.size.getX() && h.pos.getY() < pos.getY() + size.getY() + distance && pos.getY() < h.pos.getY() + h.size.getY() + distance) {
@@ -114,6 +144,11 @@ public class House {
         return size;
     }
 
+    /**
+     * get the block from an enviromental POV
+     * @param x the x coordinate
+     * @param y the y coordinate
+     */
     public World.Block getBlockEnvir(int x, int y) {
         if (pos.getX() <= x && pos.getX() + size.getX() > x && pos.getY() <= y && pos.getY() + size.getY() > y && (type != Type.arena || (!pos.equals(new Vector2D(x, y)) && !pos.equals(new Vector2D(x - size.getX() + 1, y))))) {
             Vector2D last = Vector2D.add(pos, new Vector2D(0, size.getY() - 1));
@@ -125,6 +160,11 @@ public class House {
         return World.Block.none;
     }
 
+    /**
+     * get the block from an "inside the House" POV
+     * @param x the x coordinate
+     * @param y the y coordinate
+     */
     public World.Block getBlockInside(int x, int y) {
         Vector2D pos = new Vector2D();
         pos.add(this.pos);
@@ -327,16 +367,34 @@ public class House {
             }
         };
 
+        /**
+         * @return the size of the house
+         */
         public abstract Vector2D getSize();
 
+        /**
+         * @return the size inside the house
+         */
         public abstract Vector2D getInnerSize();
 
+        /**
+         * @return the position of the door outside
+         */
         public abstract Vector2D getDoorPos();
 
+        /**
+         * @return the position of the door inside
+         */
         public abstract Vector2D getInnerDoorPos();
 
+        /**
+         * @return all Blocks inside the house
+         */
         public abstract World.Block[][] getInside();
 
+        /**
+         * @return how many blocks the image of the wall is
+         */
         public abstract double getInnerWallHeight();
     }
 }

@@ -17,6 +17,10 @@ import java.util.regex.Pattern;
 
 //--module-path "C:\Program Files\Java\openjfx-16_windows-x64_bin-sdk\javafx-sdk-16\lib" --add-modules javafx.controls,javafx.fxml
 
+/**
+ * @author Zwickelstorfer Felix and Clemenzzzzzzzz Hodina
+ * @version idk about 3-4
+ */
 public class TestMain extends Application {
 
     /**
@@ -64,22 +68,22 @@ public class TestMain extends Application {
         r2.setLayoutX(200);
         r2.setLayoutY(100);
 
-        r1.setFill(new ImagePattern(allImgs.get(id[0])));
-        r2.setFill(new ImagePattern(allImgs.get(-id[0])));
+        r1.setFill(new ImagePattern(allImgs.getItem(id[0])));
+        r2.setFill(new ImagePattern(allImgs.getItem(-id[0])));
         next.setOnAction(a -> {
             id[0] = id[0] + 1;
             if (id[0] > 151) id[0] = 1;
             t.setText(id[0] + "");
-            r1.setFill(new ImagePattern(allImgs.get(id[0])));
-            r2.setFill(new ImagePattern(allImgs.get(-id[0])));
+            r1.setFill(new ImagePattern(allImgs.getItem(id[0])));
+            r2.setFill(new ImagePattern(allImgs.getItem(-id[0])));
         });
 
         bef.setOnAction(a -> {
             id[0] = id[0] - 1;
             if (id[0] < 1) id[0] = max;
             t.setText(id[0] + "");
-            r1.setFill(new ImagePattern(allImgs.get(id[0])));
-            r2.setFill(new ImagePattern(allImgs.get(-id[0])));
+            r1.setFill(new ImagePattern(allImgs.getItem(id[0])));
+            r2.setFill(new ImagePattern(allImgs.getItem(-id[0])));
         });
         p.getChildren().addAll(bef, next, t, r1, r2);*/
     }

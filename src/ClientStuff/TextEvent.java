@@ -10,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TextArea;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 
@@ -19,58 +20,130 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 /**
- * @author Zwickelstorfer Felix
- * @version 2.1
  * <p>
  * presents a graphic grid-pane with a textarea, which always presents two lines of a text
+ * </p>
+ * <br>
+ * <br>
+ * <p>
+ * The code for the keyEvents:
+ *
+ * <ul>
+ * <li>0-999 send to server result <br>
+
+ *     <ul>
+ *         <li> 0-99 single: afterwards close field</li>
+ *         <li> 100-199 multiple: show and if last then close field</li>
+ *         <li> 200-299</li>
+ *     </ul>
+ * </li>
+ * <br>
+ * <li>1000-1999 do not send to server <br>
+ *
+ *     <ul>
+ *         <li> 1000-1099 single: afterwards let field open</li>
+ *         <li> 1100-1199 multiple: afterwards let field open</li>
+ *     </ul>
+ * </li>
+ * <br>
+ * <li>2000-2099 multiple: send only if not last</li>
+ * </ul>
+ * </p>
+ *
+ * <p>
+ * @author Zwickelstorfer Felix
+ * @version 2.1
+ * </p>
  */
 public class TextEvent {
 
-    // 0-999 send to server result
-    // 0-99 single: afterwards close field
-    // 100-199 multiple: show and if last then close field
-    // 200-299
 
-    // 1000-1999 do not send to server
-    // 1000-1099 single: afterwards let field open
-    // 1100-1199 multiple: afterwards let field open
-
-    // 2000-2099 multiple: send only if not last
-
+    /**
+     * the options which will be displayed after the text is shown
+     */
     private final List<String> optionsAfterText = new ArrayList<>();
 
     public TextArea getField() {
         return field;
     }
 
+    /**
+     * the textarea where the text is shown
+     */
     private final TextArea field;
 
+    /**
+     * the vbox where all the {@link TextEvent#optionsAfterText} will be displayed
+     */
     private final VBox optionsNode = new VBox();
 
+    /**
+     * the gridpane where everything will be shown on
+     */
     private final GridPane grid = new GridPane();
 
+    /**
+     * all texts that will be shown
+     */
     private String[] text;
 
+    /**
+     * if the next line is finished and the next line can be shown
+     */
     private boolean isCurFin = true;
 
+    /**
+     * the current text which will be written
+     */
     private String curTextToWrite = "";
 
+    /**
+     * the line the text currently is inside
+     */
     private int curLine = 0;
 
+    /**
+     * how many chars are currently displayed (for animation effect)
+     */
     private int curCharsShown = 0;
 
+    /**
+     * in which "state" the event currently is, look by {@link TextEventState}
+     */
     private TextEventState state = TextEventState.nothing;
 
+    /**
+     * the id of the textevent
+     */
     private int curTextNbr = -1;
 
+    /**
+     * the client to send msgs
+     */
     private Client client;
+
+    /**
+     * what happens if a textfield is finished with showing
+     */
+    private final List<Runnable> onFin = new ArrayList<>();
 
     public void setClient(Client client) {
         this.client = client;
     }
 
+
+    public void addOnFin(Runnable c) {
+        onFin.add(c);
+    }
+
+    /**
+     * all texts that can be shown
+     */
     private static final Map<Integer, JSONValue> eventTexts = new HashMap<>();
 
+    /**
+     * if the text will be displayed faster than normal
+     */
     private boolean isInstantFin = true;
 
     public TextEvent() {
@@ -138,6 +211,13 @@ public class TextEvent {
         startNewText(jsonValue, keys, false);
     }
 
+    /**
+     * starts a new text
+     *
+     * @param jsonValue    the id of the text
+     * @param keys         all keys and values for the placeholders in the text
+     * @param isInstantFin {@link TextEvent#isInstantFin}
+     */
     public void startNewText(int jsonValue, Map<String, String> keys, boolean isInstantFin) {
         curLine = 0;
         curCharsShown = 0;
@@ -151,7 +231,6 @@ public class TextEvent {
             keys.forEach((a, b) -> s.set(s.get().replaceAll("%[$]%" + a + "%[$]%", b)));
         }
         text = Objects.requireNonNull(splitToLines(s.get().replaceAll(" {3}", System.lineSeparator()), 80)).toArray(new String[0]);
-
         optionsNode.getChildren().clear();
         optionsAfterText.clear();
         h.stream().skip(1).forEach(a -> {
@@ -172,6 +251,10 @@ public class TextEvent {
     }
 
     // My Guess is that this text will go on for now an that you will have some fun for waiting till you can press again and then you shall die because i have depression and i want to tell you about it.   I hope you won't delete this game now because this text-box is going on for now.
+
+    /**
+     * creates the gripane for the current options/textfield
+     */
     private void createGrid() {
         grid.getChildren().clear();
         grid.getColumnConstraints().clear();
@@ -208,7 +291,7 @@ public class TextEvent {
     public boolean nextLine() {
         if (text != null && isCurFin) {
             isCurFin = false;
-            if (text.length > curLine + 1 || text.length == 1 && curLine == 0) {
+            if (text.length > curLine + 1 || (text.length == 1 && curLine == 0)) {
                 curLine++;
                 curTextToWrite = text[curLine - 1] + System.lineSeparator() + (text.length > curLine ? text[curLine] : "");
                 curCharsShown = curLine != 1 ? Math.max(curTextToWrite.indexOf(System.lineSeparator()), 1) : 1;
@@ -228,6 +311,7 @@ public class TextEvent {
                             } else {
                                 isCurFin = true;
                                 stop();
+                                if (hasOptions()) nextLine();
                             }
                         }
                     }
@@ -236,11 +320,14 @@ public class TextEvent {
                 field.setText("");
                 state = TextEventState.reading;
             } else {
-
                 if (hasOptions()) {
                     state = TextEventState.selection;
                     optionsNode.setVisible(true);
+                    if (client != null) {
+                        client.getKeysPressed().removeAll(Arrays.asList(KeyCode.SPACE, KeyCode.ENTER));
+                    }
                     updateSize();
+
                 } else {
                     state = TextEventState.nothing;
                     if (curTextNbr < 1000) {
@@ -261,6 +348,13 @@ public class TextEvent {
                 if (text.length <= 1) {
                     field.setText(text[0]);
                 }
+                onFin.forEach(a -> {
+//                    Platform.runLater(() -> {
+                    a.run();
+                    System.out.print("");
+//                    });
+                });
+                onFin.clear();
                 return true;
             }
         }
@@ -279,6 +373,9 @@ public class TextEvent {
         return grid;
     }
 
+    /**
+     * updates the size of the options inside the gridpane
+     */
     void updateSize() {
         optionsNode.setPrefWidth(((GridPane) optionsNode.getParent()).getWidth() * 0.2);
         Optional<Button> b = optionsNode.getChildren().stream().map(Button.class::cast).max(Comparator.comparingDouble(Region::getWidth));
@@ -289,40 +386,74 @@ public class TextEvent {
         }
     }
 
+    /**
+     * updates the size of the gridpane
+     *
+     * @param scene the scene the gridpane is inside
+     */
     public void updateSize(Scene scene) {
         grid.setMinSize(scene.getWidth(), scene.getHeight());
         grid.setMaxSize(scene.getWidth(), scene.getHeight());
         grid.setPrefSize(scene.getWidth(), scene.getHeight());
     }
 
+    /**
+     * @return {@link TextEventIDsTranslator#isWalkableAfterwards}
+     */
+    public boolean isWalkableAfterwards() {
+        return Arrays.stream(TextEventIDsTranslator.values()).filter(a -> a.getId() == curTextNbr).findFirst().orElse(TextEventIDsTranslator.Tree).isWalkableAfterwards;
+    }
+
+    /**
+     * as the name says, the state of the textevent, for example reading, selection
+     */
     public enum TextEventState {
         nothing,
         reading,
         selection
     }
 
+    /**
+     * initializes {@link TextEvent#eventTexts}
+     */
     public static void initTexts() {
         Map<String, JSONValue> c = JSONParser.read(Path.of("./res/DataSets/texts.json"));
         c.forEach((key, value) -> value.getMap().forEach((a, b) -> eventTexts.put(Integer.parseInt(a) + Integer.parseInt(key), b)));
     }
 
-    public enum TextEventIDsTranslater {
-        Tree(0),
-        BigShelf(1),
-        SmallShelf(2),
-        OnlyDeco(2),
-        PokeHeal(3),
-        FightEnd(4),
-        WrongItem(5),
-        PlayersMeetQues(6),
-        PlayersMeetAns(100),
-        MarketShopItems(1100),
-        MarketShopMeet(101),
-        MarketShopGoodBye(7);
+    public enum TextEventIDsTranslator {
+        Tree(0, true),
+        BigShelf(1, true),
+        SmallShelf(2, true),
+        OnlyDeco(2, true),
+        PokeHeal(3, true),
+        FightEnd(4, true),
+        WrongItem(5, false),
+        PlayersMeetQues(6, false),
+        PlayersMeetAns(100, false),
+        MarketShopItems(1100, false),
+        MarketShopItemsBuy(1101, false),
+        MarketShopMeet(101, false),
+        MarketShopNoMoney(1004, false),
+        MarketShopEnoughMoney(1005, false),
+        MarketShopGoodBye(7, true);
 
+        /**
+         * the id which it is inside of the textfield
+         */
         private final int id;
 
-        TextEventIDsTranslater(int val) {
+        /**
+         * if the player can walk/move around after this textEvent
+         */
+        private final boolean isWalkableAfterwards;
+
+        /**
+         * @param val                  {@link TextEventIDsTranslator#id}
+         * @param isWalkableAfterwards {@link TextEventIDsTranslator#isWalkableAfterwards}
+         */
+        TextEventIDsTranslator(int val, boolean isWalkableAfterwards) {
+            this.isWalkableAfterwards = isWalkableAfterwards;
             id = val;
         }
 
