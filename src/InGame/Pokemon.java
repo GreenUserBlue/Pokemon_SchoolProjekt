@@ -148,11 +148,14 @@ public class Pokemon {
         Pokemon b = createPokemon(new Vector2D(4000, 7000), World.Block.Grass);
         a.getsAttacked(b, 4, false);
 
+        System.out.println(a.toMsg());
+
     }
 
 
     //liest Files aus und gibts in Liste
     //und gibts in die tatsächliche Liste
+
     /**
      * creates the template for every pokemon with the necessary data
      */
@@ -222,7 +225,7 @@ public class Pokemon {
                 evolvesIntoID = Integer.parseInt(oneRow3[5]);
                 try {
                     evolvesAtLevel = Integer.parseInt(oneRow3[3]);
-                }catch (NumberFormatException e){
+                } catch (NumberFormatException e) {
                 }
 
             } else {
@@ -283,7 +286,7 @@ public class Pokemon {
     /**
      * gives the pokemon with the exact id and level and changed stats, attacks and so on
      *
-     * @param id the needed pokemon
+     * @param id    the needed pokemon
      * @param level the needed level
      * @return the pokemon at the id with the right stats and attacks
      */
@@ -320,17 +323,49 @@ public class Pokemon {
     }
 
 
-
     /**
      * makes a Pokemon from the String which was sent from the server
      *
      * @param msg the message from the server
      * @return pokemon from server
      */
-    private static Pokemon getFromMsg(String msg) {
-
-        return new Pokemon();
+    private static Pokemon getFromMsg(String msg) throws CloneNotSupportedException {
+        String[] messg = msg.split(";");
+        int id = Integer.parseInt(messg[1]);
+        Pokemon a = template.get(id).clone();
+        a.setLevel(Integer.parseInt(messg[4]));//hierdurch auch iwie attacken und maxXp uns sowas
+        a.setXp(Integer.parseInt(messg[5]));
+        a.setCurHP(Integer.parseInt(messg[7]));
+        String wholeState = messg[8];
+        System.out.println(wholeState);
+        Pattern getStates = Pattern.compile("HP=([0-9]+.[0-9]+), attack=([0-9]+.[0-9]+), defense=([0-9]+.[0-9]+), spAttack=([0-9]+.[0-9]+), spDefense=([0-9]+.[0-9]+), speed=([0-9]+.[0-9]+)");
+        Matcher m = getStates.matcher(wholeState);
+        while (m.find()) {
+            a.setState(new State(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)), Integer.parseInt(m.group(3)), Integer.parseInt(m.group(4)), Integer.parseInt(m.group(5)), Integer.parseInt(m.group(6))));
+        }
+        a.setIv(new int[]{rnd.nextInt(16)});
+        //in msg steht die id mit den attacken und den ap und dem level und allem
+        return a;
     }
+
+    //return  name + ";" + id + ";" + Arrays.toString(attacks) + ";" + nature + ";" + level + ";" + xp + ";" + maxXP + ";" +curHP + ";" +state.toString() + ";" + Arrays.toString(iv);
+
+    //Pokemon{name='venomoth', id=49, evolveType=null, evolvesIntoId=-1, evolvesAtLevel=-1, attacks=[Attack{id=13, name='razor-wind', type=normal, damage=80, AP=10, hitProbability=100.0, attacksAlwaysFirst=false, attackType=Attack}, Attack{id=36, name='take-down', type=normal, damage=90, AP=20, hitProbability=85.0, attacksAlwaysFirst=false, attackType=Attack}, Attack{id=38, name='double-edge', type=normal, damage=120, AP=15, hitProbability=100.0, attacksAlwaysFirst=false, attackType=Attack}, Attack{id=63, name='hyper-beam', type=normal, damage=150, AP=5, hitProbability=90.0, attacksAlwaysFirst=false, attackType=Attack}], nature=hasty, type=[bug, poison], level=25, xp=15625, maxXP=17576, captureRate=75, block=Grass, growthRate='medium', curHP=70.0, state=State{HP=73.0, attack=41.0, defense=35.22727272727273, spAttack=51.75, spDefense=44.25, speed=55.825}, iv=[12, 14, 15, 7, 3, 4]}
+
+    /*
+    "Pokemon{" +
+                "name='" + name + '\'' +
+                ", id=" + id +
+                ", attacks=" + Arrays.toString(attacks) +
+                ", nature=" + nature +
+                ", level=" + level +
+                ", xp=" + xp +
+                ", maxXP=" + maxXP +
+                ", curHP=" + curHP +
+                ", state=" + state.toString() +
+                ", iv=" + Arrays.toString(iv) +
+                '}';
+     */
 
     /**
      * makes a String to send from the server to the client
@@ -338,11 +373,13 @@ public class Pokemon {
      * @return string to server
      */
     private String toMsg() {
-        return "Hier ist ein Pokemon namens Ditto mit den Attacken {Tackle,AP4,MAXAP17}{Platcher,AP30,MAXAP30} und dem Wesen usw.";
+        return this.toString2();
     }
+
 
     /**
      * sffd xp to a pokemon, for example after a fight
+     *
      * @param newExP the xp the pokemon gets from the fight
      */
     private void addExp(int newExP) {
@@ -364,7 +401,7 @@ public class Pokemon {
         level++;
         state.add(id, level, nature);
         xp = xpOverride;
-        if (level == evolvesAtLevel){
+        if (level == evolvesAtLevel) {
             evolve();
         }
     }
@@ -372,7 +409,7 @@ public class Pokemon {
     /**
      * lets the pokemon evolve
      */
-    private void evolve(){
+    private void evolve() {
         id = evolvesIntoId;
     }
 
@@ -383,7 +420,7 @@ public class Pokemon {
     /**
      * creates a Pokemon from the place the player is, and block the pokemon should spawn
      *
-     * @param pos the position the player is
+     * @param pos   the position the player is
      * @param block the block the pokemon should spawn
      * @return a pokemon for the given data
      */
@@ -512,7 +549,7 @@ public class Pokemon {
     /**
      * gets the attacks for the pokemon id at the level level
      *
-     * @param id the pokemon from which you need the attacks
+     * @param id    the pokemon from which you need the attacks
      * @param level the level of the pokemon you need
      * @return an attack array with the attacks of the pokemon at this level
      * @throws IOException lol
@@ -607,22 +644,40 @@ public class Pokemon {
         return "Pokemon{" +
                 "name='" + name + '\'' +
                 ", id=" + id +
-                ", evolveType=" + evolveType +
-                ", evolvesIntoId=" + evolvesIntoId +
-                ", evolvesAtLevel=" + evolvesAtLevel +
+                ", evolveType=" + evolveType +//
+                ", evolvesIntoId=" + evolvesIntoId +//
+                ", evolvesAtLevel=" + evolvesAtLevel +//
                 ", attacks=" + Arrays.toString(attacks) +
                 ", nature=" + nature +
-                ", type=" + Arrays.toString(type) +
+                ", type=" + Arrays.toString(type) +//
                 ", level=" + level +
                 ", xp=" + xp +
                 ", maxXP=" + maxXP +
-                ", captureRate=" + captureRate +
-                ", block=" + block +
-                ", growthRate='" + growthRate + '\'' +
+                ", captureRate=" + captureRate +//
+                ", block=" + block +//
+                ", growthRate='" + growthRate + '\'' +//
                 ", curHP=" + curHP +
                 ", state=" + state.toString() +
                 ", iv=" + Arrays.toString(iv) +
                 '}';
+    }
+
+    public String toString2() {
+        return name + ";" + id + ";" + Arrays.toString(attacks) + ";" + nature + ";" + level + ";" + xp + ";" + maxXP + ";" + curHP + ";" + state.toString() + ";" + Arrays.toString(iv);
+                /*"Pokemon{" +
+                "name='" + name + '\'' +
+                ", id=" + id +
+                ", attacks=" + Arrays.toString(attacks) +
+                ", nature=" + nature +
+                ", level=" + level +
+                ", xp=" + xp +
+                ", maxXP=" + maxXP +
+                ", curHP=" + curHP +
+                ", state=" + state.toString() +
+                ", iv=" + Arrays.toString(iv) +
+                '}';
+
+                 */
     }
 
 
@@ -692,5 +747,79 @@ public class Pokemon {
         }
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setEvolveType(EvolveType evolveType) {
+        this.evolveType = evolveType;
+    }
+
+    public void setEvolvesIntoId(int evolvesIntoId) {
+        this.evolvesIntoId = evolvesIntoId;
+    }
+
+    public void setEvolvesAtLevel(int evolvesAtLevel) {
+        this.evolvesAtLevel = evolvesAtLevel;
+    }
+
+    public void setAttacks(Attack[] attacks) {
+        this.attacks = attacks;
+    }
+
+    public void setNature(Nature nature) {
+        this.nature = nature;
+    }
+
+    public void setType(Type[] type) {
+        this.type = type;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
+    }
+
+    public void setXp(int xp) {
+        this.xp = xp;
+    }
+
+    public void setMaxXP(int maxXP) {
+        this.maxXP = maxXP;
+    }
+
+    public void setCaptureRate(int captureRate) {
+        this.captureRate = captureRate;
+    }
+
+    public void setBlock(World.Block block) {
+        this.block = block;
+    }
+
+    public void setGrowthRate(String growthRate) {
+        this.growthRate = growthRate;
+    }
+
+    public void setCurHP(double curHP) {
+        this.curHP = curHP;
+    }
+
+    public void setState(State state) {
+        this.state = state;
+    }
+
+    public void setIv(int[] iv) {
+        this.iv = iv;
+    }
+
+    public static void setTemplate(List<Pokemon> template) {
+        Pokemon.template = template;
+    }
+
+    public static void setAllImgs(Map<Integer, Image> allImgs) {
+        Pokemon.allImgs = allImgs;
+    }
 }

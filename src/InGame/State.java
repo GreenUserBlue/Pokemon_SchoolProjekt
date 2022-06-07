@@ -78,4 +78,28 @@ public class State {
     public double getHP() {
         return HP;
     }
+
+    public void setHP(double HP) {
+        this.HP = HP;
+    }
+
+    public void setAttack(double attack) {
+        this.attack = attack;
+    }
+
+    public void setDefense(double defense) {
+        this.defense = defense;
+    }
+
+    public void setSpAttack(double spAttack) {
+        this.spAttack = spAttack;
+    }
+
+    public void setSpDefense(double spDefense) {
+        this.spDefense = spDefense;
+    }
+
+    public void setSpeed(double speed) {
+        this.speed = speed;
+    }
 }
