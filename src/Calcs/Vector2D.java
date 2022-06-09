@@ -77,6 +77,15 @@ public class Vector2D {
     }
 
     /**
+     * multipliziert den Vektor mit einem Faktor
+     *
+     * @param v2 Der Faktor
+     */
+    public Vector2D mult(double v2) {
+        return new Vector2D(x * v2, y * v2);
+    }
+
+    /**
      * berechnet den Winkel relativ zum 0 Punkt
      *
      * @param v der Vektor zum berechnen
@@ -147,7 +156,7 @@ public class Vector2D {
      *
      * @return double entfernung zum Spawn
      */
-    public double magnitude(){
+    public double magnitude() {
         return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
     }
 

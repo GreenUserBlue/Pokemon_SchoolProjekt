@@ -4,6 +4,7 @@ import Calcs.Vector2D;
 import Envir.City;
 import Envir.House;
 import Envir.World;
+import InGame.Pokemon;
 import ServerStuff.MessageType;
 import ServerStuff.Server;
 
@@ -26,6 +27,11 @@ public class Player {
      * the id of the player in relation of the user
      */
     private int idFromPlayer;
+
+    /**
+     * all pokemon the player has
+     */
+    private final List<Pokemon> pokemon = new ArrayList<>();
 
     /**
      * the id of the player in the database
@@ -376,13 +382,15 @@ public class Player {
                                 .filter(a -> a.getPlayer().getActivity() == Activity.standing)
                                 .filter(a -> a.getTimeTillNextTextField() <= System.currentTimeMillis()).findFirst();
                         if (op.isPresent()) {
-                            System.out.println("Player found: " + op.get().getPlayer().getName());
+//                            System.out.println("Player found: " + op.get().getPlayer().getName());
                             String sToQues = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsTranslator.PlayersMeetQues.getId() + ",name:" + op.get().getPlayer().getName();
-                            System.out.println(sToQues);
+//                            System.out.println(sToQues);
                             client.send(sToQues);
+                            client.setOtherClient(op.get());
                             activity = Activity.textEvent;
                             String sToAns = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsTranslator.PlayersMeetAns.getId() + ",name:" + client.getPlayer().getName();
                             op.get().send(sToAns);
+                            op.get().setOtherClient(client);
                             op.get().getPlayer().activity = Activity.textEvent;
                         }
                     }
@@ -398,6 +406,10 @@ public class Player {
         StringBuilder str = new StringBuilder(MessageType.toStr(MessageType.itemData) + ";" + money);
         items.forEach((key, value) -> str.append(";").append(key).append(",").append(value));
         client.send(str.toString());
+    }
+
+    public List<Pokemon> getPoke() {
+        return pokemon;
     }
 
     /**

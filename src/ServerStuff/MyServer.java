@@ -3,8 +3,12 @@ package ServerStuff;
 import Calcs.Vector2D;
 import ClientStuff.Keys;
 import ClientStuff.Player;
+import ClientStuff.TextEvent;
 import Envir.World;
+import InGame.Attack;
 import InGame.Item;
+import InGame.Pokemon;
+import InGame.Type;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -32,8 +36,10 @@ public class MyServer {
     public static void main(String[] args) throws IOException, SQLException {
         Database.init();
         Item.init(Path.of("./res/DataSets/Items.csv"));
+        Attack.init();
+        Pokemon.init();
+        Type.init();
         initServer();
-
     }
 
     /**
@@ -108,8 +114,17 @@ public class MyServer {
                     c.getPlayer().setActivity(Player.Activity.standing);
                 }
             }
-        } else if (s.startsWith("1")) {//TODO something here
+            //
+        } else if (s.startsWith("1")) {
             s = s.substring(1);
+            if (s.charAt(0) == '1') {
+                System.out.println("MyServer.doTextEvents: " + c.getOtherClient().getUsername());
+                c.getOtherClient().send(MessageType.toStr(MessageType.textEvent) + 1 + TextEvent.TextEventIDsTranslator.PlayersMeetDeclineFight.getId() + ",name:" + c.getUsername() + " has");
+                System.out.println("now sending");
+            } else {
+                System.out.println("Der Kampf wurde accepted");
+                //TODO something here, also alle Daten senden an beide (Pokemon und so)
+            }
         }
     }
 
@@ -212,8 +227,13 @@ public class MyServer {
                 Vector2D tar = Vector2D.add(client.getPlayer().getPos(), Player.Dir.getDirFromKeys(client.getKeysPressed()));
                 client.getPlayer().setTargetPos(tar);
                 Optional<World> w = server.getWorlds().stream().filter(e -> e.getName().equals(c.getPlayer().getWorld())).findFirst();
-                w.ifPresent(world -> client.getPlayer().updatePos(client, client.getKeysPressed().contains(Keys.decline), world));
-                w.ifPresent(world -> client.getPlayer().updateTextEvents(client, client.getKeysPressed(), world, server.getClients()));
+                w.ifPresent(world -> {
+                    client.getPlayer().updatePos(client, client.getKeysPressed().contains(Keys.decline), world);
+                    client.getPlayer().updateTextEvents(client, client.getKeysPressed(), world, server.getClients());
+                    if (client.getPlayer().getActivity() == Player.Activity.textEvent) {
+                        client.getKeysPressed().clear();
+                    }
+                });
             }
             sendPosUpdate(client);
 //            System.out.println("MyServer.update: " + client.getPlayer().getActivity());
@@ -288,6 +308,7 @@ public class MyServer {
 
     /**
      * when a user tries to delete its account
+     *
      * @param c the client where the player is from
      * @param s the message from the client
      */
@@ -304,6 +325,7 @@ public class MyServer {
 
     /**
      * when a User tries to Login
+     *
      * @param c the client where the player is from
      * @param s the message from the client
      */
@@ -324,7 +346,8 @@ public class MyServer {
 
     /**
      * sending the client all data about the playerProfiles
-     * @param c the client where the player is from
+     *
+     * @param c    the client where the player is from
      * @param name the name of the player
      */
     private static void sendPlayerProfiles(Server.ClientHandler c, String name) {
@@ -351,6 +374,7 @@ public class MyServer {
 
     /**
      * when a user tries to register
+     *
      * @param c the client where the player is from
      * @param s the message from the client
      */
@@ -381,6 +405,7 @@ public class MyServer {
 
     /**
      * for the encryption for the password
+     *
      * @param c the client where the player is from
      * @param s the message from the client
      */

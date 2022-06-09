@@ -13,7 +13,6 @@ import java.util.List;
 /**
  * @author Zwickelstorfer Felix
  * @version 1.0
- *
  */
 public class MarketGUI {
 
@@ -28,7 +27,7 @@ public class MarketGUI {
     private Client client;
 
     /**
-     * the textevent to show everything
+     * the textEvent to show everything
      */
     private final TextEvent txtEvent;
 
@@ -57,7 +56,8 @@ public class MarketGUI {
 
     /**
      * starts a new market
-     * @param p the player
+     *
+     * @param p     the player
      * @param money the money the player possesses
      */
     public void startNewMarket(Player p, long money) {
@@ -109,6 +109,7 @@ public class MarketGUI {
 
     /**
      * displays the opportunity to buy an item
+     *
      * @param itemNbr the id of the item which will be bought
      */
     private void showItemBuyer(int itemNbr) {

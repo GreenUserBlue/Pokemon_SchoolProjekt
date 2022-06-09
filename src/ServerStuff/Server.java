@@ -325,15 +325,18 @@ public class Server {
          */
         private final int id;
 
+        /**
+         * saves all Consumer which will accepted if the Clients gets Updated
+         */
         private final ArrayList<Consumer<ClientHandler>> allOnUpdate = new ArrayList<>();
 
         /**
-         * saves all Consumer which will be accepted if the OldMain connects to the Server
+         * saves all Consumer which will be accepted if the Client connects to the Server
          */
         private final ArrayList<Consumer<ClientHandler>> allOnConnects = new ArrayList<>();
 
         /**
-         * saves all Consumer which will be accepted if the OldMain receives a message
+         * saves all Consumer which will be accepted if the CLient receives a message
          */
         private final ArrayList<BiConsumer<ClientHandler, Object>> allOnMessage = new ArrayList<>();
 
@@ -343,22 +346,14 @@ public class Server {
         private final Crypto crypto;
 
         /**
-         * counts the number of updates which where send
-         */
-        private long updateCount = 0;
-
-        public List<Keys> getKeysPressed() {
-            return keysPressed;
-        }
-
-        /**
          * which keys the client currently presses
          */
         private final List<Keys> keysPressed = new ArrayList<>();
 
-        public long getUpdateCount() {
-            return updateCount;
-        }
+        /**
+         * counts the number of updates which where send
+         */
+        private long updateCount = 0;
 
         /**
          * the socket with whom the server is connected to the client
@@ -385,13 +380,17 @@ public class Server {
          */
         private String username = null;
 
-
         private long timeTillNextTextField;
 
         /**
          * The playerdata for the current clientHandler
          */
         private Player player;
+
+        /**
+         * other Handler for connection between two (when fighting)
+         */
+        private ClientHandler otherClient;
 
         public ClientHandler(int id, boolean waitTillConnected) throws IOException {
             this.id = id;
@@ -404,6 +403,22 @@ public class Server {
             }
             crypto = new Crypto();
             start();
+        }
+
+        public List<Keys> getKeysPressed() {
+            return keysPressed;
+        }
+
+        public long getUpdateCount() {
+            return updateCount;
+        }
+
+        public ClientHandler getOtherClient() {
+            return otherClient;
+        }
+
+        public void setOtherClient(ClientHandler otherClient) {
+            this.otherClient = otherClient;
         }
 
         /**

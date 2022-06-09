@@ -1,9 +1,11 @@
 package InGame;
+
 /**
  * @author Clemens Hodina
  */
 
 public class State {
+
     double HP;
 
     double attack;
@@ -34,7 +36,7 @@ public class State {
 
     public void add(int id, int level, Pokemon.Nature nat) {
         double[] nature = nat.getEffect();
-        HP = ((getaDouble(id, level, 0, 0)) )+ level + 10;
+        HP = ((getaDouble(id, level, 0, 0))) + level + 10;
         attack = (getaDouble(id, level, 1, 1) + 5) * nature[0];
         defense = (getaDouble(id, level, 2, 2) + 5) * nature[1];
         spAttack = (getaDouble(id, level, 3, 3) + 5) * nature[2];
