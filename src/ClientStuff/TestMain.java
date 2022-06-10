@@ -2,6 +2,7 @@ package ClientStuff;
 
 import Calcs.Vector2D;
 import Envir.House;
+import InGame.Attack;
 import InGame.Pokemon;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -45,7 +46,7 @@ public class TestMain extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        Pokemon.init();
+        Pokemon.init(true);
         TextEvent.initTexts();
         initImgs();
         Pane p = new Pane();
@@ -54,7 +55,7 @@ public class TestMain extends Application {
         int height = 400;
         Scene s = new Scene(p, height * 16D / 9, height);
         stage.setScene(s);
-        stage.show();
+//        stage.show();
         AnimationTimer t = new AnimationTimer() {
             long timeTillNextUse = 0;
 
@@ -67,9 +68,33 @@ public class TestMain extends Application {
                 }
             }
         };
-        txt.startNewText(5, null);
-        t.start();
-        fightGUI.startTests();
+//        fightGUI.startTests();
+//        t.start();
+//        txt.startNewText(1, null);
+
+        Attack[] iv = new Attack[]{
+                Attack.getFromTemp(1),
+                Attack.getFromTemp(2),
+                Attack.getFromTemp(3),
+                Attack.getFromTemp(4),
+        };
+        Attack[] iv2 = iv.clone();
+        Attack[] iv3 = deepClone(iv);
+        iv[2] = Attack.getFromTemp(7);
+        iv[3].use();
+        Arrays.stream(iv).forEach(System.out::println);
+        System.out.println();
+        Arrays.stream(iv2).forEach(System.out::println);
+        System.out.println();
+        Arrays.stream(iv3).forEach(System.out::println);
+    }
+
+    private <K extends Attack, State> K[] deepClone(K[] iv) {
+        K[] res = iv.clone();
+        for (int i = 0; i < iv.length; i++) {
+            res[i] = (K) iv[i].clone();
+        }
+        return res;
     }
 
     private void initImgs() {

@@ -39,6 +39,11 @@ public class Player {
     private int idForDB;
 
     /**
+     * random Value for appearing Pokemon for players
+     */
+    private static final Random rndForPokeEncounter = new Random("Baum".hashCode());
+
+    /**
      * the database of the player
      */
     private final HashMap<Integer, Integer> items = new HashMap<>();
@@ -97,6 +102,8 @@ public class Player {
      * what the player is currently doing
      */
     private Activity activity = Activity.standing;
+
+    private boolean hasWalkedBefore = false;
 
     public Player(String raw) {
         System.out.println(raw);
@@ -264,6 +271,7 @@ public class Player {
                 client.getKeysPressed().remove(Keys.valueOf(dir.toString()));
             }
             if (activity == Activity.moving) {
+                hasWalkedBefore = true;
                 Vector2D add = new Vector2D(dir.getVecDir().getX() * walkingSpeed * (isDoubleSpeed ? 2 : 1), dir.getVecDir().getY() * walkingSpeed * (isDoubleSpeed ? 2 : 1));
                 curWalked.add(add);
                 curWalked.round(4);
@@ -332,7 +340,6 @@ public class Player {
     public void setIdFromPlayer(int idFromPlayer) {
         this.idFromPlayer = idFromPlayer;
     }
-
 
     /**
      * updates the text events for the player (server)
@@ -410,6 +417,31 @@ public class Player {
 
     public List<Pokemon> getPoke() {
         return pokemon;
+    }
+
+    public void sendPokeData(Server.ClientHandler cl, Pokemon pokeOther) {
+        String betweenPoke = "N";
+        StringBuilder sToSend = new StringBuilder(MessageType.toStr(MessageType.fightData));
+        sToSend.append(betweenPoke).append(pokeOther.toMsg());
+        pokemon.forEach(a -> sToSend.append("N").append(a.toMsg()));
+        //TODO daten senden, plus daten in datenbank zum testen geben
+//        System.out.println("Player.sendPokeData: " + sToSend);
+        cl.send(sToSend + betweenPoke);
+    }
+
+    public void checkToStartFightInGrass(Server.ClientHandler client, World w) {
+        if (hasWalkedBefore && curWalked.getX() == 0 && curWalked.getY() == 0 && (w.getCities().stream().noneMatch(a -> a.isInCity(pos)) && w.getBlockEnvir((int) pos.getX(), (int) pos.getY(), false) == World.Block.Grass)) {
+            if (rndForPokeEncounter.nextDouble() < 0.1) {
+                Pokemon poke = Pokemon.createPokemon(pos, World.Block.Grass);
+                synchronized (this) {
+                    sendItemData(client);
+                    sendPokeData(client, poke);
+                    activity = Activity.fight;
+                }
+                System.out.println("now something appears");
+            }
+        }
+        hasWalkedBefore = false;
     }
 
     /**

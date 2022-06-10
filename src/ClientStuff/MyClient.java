@@ -4,10 +4,8 @@ import Calcs.Crypto;
 import Calcs.Vector2D;
 import Envir.House;
 import Envir.World;
-import InGame.Attack;
 import InGame.Item;
 import InGame.Pokemon;
-import InGame.Type;
 import ServerStuff.MessageType;
 import ServerStuff.User;
 import javafx.animation.AnimationTimer;
@@ -79,6 +77,7 @@ public class MyClient extends Application {
     private final TextEvent txt = new TextEvent();
 
     private final MarketGUI marketGUI = new MarketGUI(txt);
+
     private final FightGUI fightGUI = new FightGUI(txt);
 
     /**
@@ -113,16 +112,15 @@ public class MyClient extends Application {
         public void handle(long l) {
             if (System.currentTimeMillis() > timeTillNextUse) {
                 timeTillNextUse = System.currentTimeMillis() + 20;
-
                 txt.updateSize(stage.getScene());
                 Canvas c = (Canvas) (stage.getScene().getRoot().getChildrenUnmodifiable().get(0));
-
-                //client.getPlayers().getItem(0) = der Player dem dieser Client gehört
                 synchronized (client.getPlayers()) {
-
                     if (client.getPlayers().get(0).getActivity() == Player.Activity.fight) {
-                        //if client.getPlayers().getItem(0).getActivity()==fighting, dann dein Bulllshit, else mein Bullshit
-                        fightGUI.draw(c,new Vector2D(stage.getScene().getWidth(), stage.getScene().getHeight()), allImgs);
+                        fightGUI.draw(c, new Vector2D(stage.getScene().getWidth(), stage.getScene().getHeight()), allImgs);
+                        List<Keys> keys = (Keys.getSmartKeys(client.getKeysPressed()));
+                        if (keys.contains(Keys.confirm)) {
+                            txt.nextLine();
+                        }
                     } else {
                         doRunning(c);
                     }
@@ -365,14 +363,14 @@ public class MyClient extends Application {
     @Override
     public void start(Stage primaryStage) throws IOException {
         stage = primaryStage;
-        stage.setX(1000);
+        stage.setX(950);
         stage.setY(80);
         initImgs();
         TextEvent.initTexts();
-        Attack.init();
-        Pokemon.init();
-        Type.init();
+        Pokemon.init(true);
         Item.init(Path.of("./res/DataSets/Items.csv"));
+
+        //noinspection unchecked
         client = new Client(33333, "127.0.0.1", false, (a, b) -> {
             if (b instanceof String s && !s.startsWith(MessageType.toStr(MessageType.updatePos)) && !s.startsWith(MessageType.toStr(MessageType.textEvent)) && !s.startsWith(MessageType.toStr(MessageType.itemData)))
                 System.out.println("From Server: '" + b + '\'');
@@ -415,10 +413,26 @@ public class MyClient extends Application {
                     case updatePos -> updatePos(s);
                     case textEvent -> doTextEvent(s.substring(3));
                     case itemData -> updateItemData(s.substring(MessageType.toStr(MessageType.itemData).length()));
+                    case fightData -> startFight(s);
+                    case error -> System.out.println("something went wrong");
                     //TODO Clemenzzzzzz on Msg From Server
                 }
             }
         };
+    }
+
+    /**
+     * starts a fight
+     *
+     * @param s the msg from the server
+     */
+    private void startFight(String s) {
+//        System.out.println("now starting fight maybe");
+        synchronized (client.getPlayers().get(0)) {
+            fightGUI.setPlayer(client.getPlayers().get(0));
+            client.getPlayers().get(0).setActivity(Player.Activity.fight);
+            fightGUI.startNewFight(s.split("N", 2)[1]);
+        }
     }
 
     /**
@@ -429,7 +443,6 @@ public class MyClient extends Application {
     private void updateItemData(String str) {
         synchronized (client.getPlayers().get(0)) {
             client.getPlayers().get(0).setMoney(Long.parseLong(str.split(";")[1].trim()));
-
             Arrays.stream(str.split(";")).skip(2).forEach(a -> {
                 String[] s = a.split(",");
                 client.getPlayers().get(0).getItems().put(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
@@ -438,7 +451,7 @@ public class MyClient extends Application {
     }
 
     /**
-     * starts textevents
+     * starts textEvents
      *
      * @param s the message from the server
      */
@@ -469,7 +482,7 @@ public class MyClient extends Application {
     /**
      * starts a textEvent with multiple texts
      *
-     * @param s
+     * @param s the message from the server
      */
     private void doTextEventsWithData(String s) {
         int id = Integer.parseInt(s.substring(1).split(",")[0]);
@@ -486,12 +499,12 @@ public class MyClient extends Application {
                 txt.startNewText(id, data);
                 if (id == TextEvent.TextEventIDsTranslator.PlayersMeetAns.getId()) {
                     ObservableList<Node> children = txt.getOptionsNode().getChildren();
-                    ((Button) children.get(0)).setOnAction(e -> client.send(MessageType.toStr(MessageType.textEvent) + 1 + 0));
+                    ((Button) children.get(0)).setOnAction(e -> client.send(MessageType.toStr(MessageType.textEvent) + "1" + 0));
                     ((Button) children.get(1)).setOnAction(e -> {
                         HashMap<String, String> keys = new HashMap<>();
                         keys.put("name", "You have");
                         txt.startNewText(TextEvent.TextEventIDsTranslator.PlayersMeetDeclineFight.getId(), keys);
-                        client.send(MessageType.toStr(MessageType.textEvent) + 1 + 1);
+                        client.send(MessageType.toStr(MessageType.textEvent) + "1" + 1);
                     });
                 }
             });
@@ -518,7 +531,7 @@ public class MyClient extends Application {
     }
 
     /**
-     * updates everything for the profileselect
+     * updates everything for the profileSelect
      *
      * @param str the message from the server
      */

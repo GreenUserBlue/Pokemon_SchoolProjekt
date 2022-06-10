@@ -14,15 +14,17 @@ public enum MessageType {
     keysPres,            //Client
     updatePos,           //Server
     textEvent,           //Server
-    houseRequest,        //Client
-    pokAppear,           //Server
-    playerInteraction,   //Client + Server
+    //    houseRequest,        //Client
+//    pokAppear,           //Server
+//    playerInteraction,   //Client + Server
     itemBuy,             //Client
     itemData,            //Server
-    itemRequest,         //Client
-    inFight,             //Client + Server
-    pokRequest,          //Client
-    levelUp,             //Server
+    //    itemRequest,         //Client
+    fightData,           //Server
+    inFight,             //Server
+    inFightChoice,       //Client
+    //    pokRequest,          //Client
+//    levelUp,             //Server
     badgeRequest,        //Client
     error,               //Client + Server
     ;

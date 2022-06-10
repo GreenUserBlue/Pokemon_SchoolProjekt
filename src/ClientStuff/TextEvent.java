@@ -227,6 +227,7 @@ public class TextEvent {
         this.isInstantFin = isInstantFin;
         isCurFin = true;
         this.curTextNbr = jsonValue;
+        field.setVisible(true);
         List<JSONValue> h = eventTexts.get(jsonValue).getList();
         AtomicReference<String> s = new AtomicReference<>(h.get(0).getStr());
         if (keys != null) {
@@ -244,6 +245,9 @@ public class TextEvent {
                 optionsAfterText.add(a.getStr());
             }
             Button t = new Button(optionsAfterText.get(optionsAfterText.size() - 1));
+            /* a t.focusedProperty().addListener((val, old, newVal) -> {
+                if (newVal) t.toFront();
+            });*/
             optionsNode.getChildren().add(t);
         });
         optionsNode.setAlignment(Pos.BOTTOM_RIGHT);
@@ -262,9 +266,11 @@ public class TextEvent {
         grid.getColumnConstraints().clear();
         grid.getRowConstraints().clear();
 
-        ColumnConstraints c3 = new ColumnConstraints();
-        c3.setPercentWidth(100);
-        grid.getColumnConstraints().add(c3);
+        ColumnConstraints c = new ColumnConstraints();
+        ColumnConstraints c2 = new ColumnConstraints();
+        c.setPercentWidth(99);
+        c2.setPercentWidth(1);
+        grid.getColumnConstraints().addAll(c, c2);
 
         RowConstraints r = new RowConstraints();
         RowConstraints r2 = new RowConstraints();
@@ -272,7 +278,7 @@ public class TextEvent {
         r2.setPercentHeight(15);
         grid.getRowConstraints().addAll(r, r2);
 
-        grid.add(field, 0, 1);
+        grid.add(field, 0, 1, 2, 1);
         grid.add(getOptionsNode(), 0, 0);
         getOptionsNode().setVisible(false);
     }
@@ -351,10 +357,8 @@ public class TextEvent {
                 if (text.length <= 1) {
                     field.setText(text[0]);
                 }
-                onFin.forEach(a -> {
-                    System.out.print("");
-                    a.run();
-                });
+
+                onFin.forEach(Runnable::run);
                 onFin.clear();
                 return true;
             }
@@ -387,7 +391,7 @@ public class TextEvent {
                     curBtn.setMaxWidth(-1);
                     curBtn.setStyle("-fx-background-insets: -2 -2 -2 -2, 0, 3, 3;");
                 });
-                optionsNode.setPrefWidth(grid.getWidth() * 0.2);
+                optionsNode.setPrefWidth(grid.getWidth() * 0.19);
             } else {
                 Optional<Button> b = optionsNode.getChildren().stream().map(Button.class::cast).max(Comparator.comparingDouble(Region::getWidth));
                 b.ifPresent(button -> optionsNode.getChildren().forEach(a -> ((Button) a).setMaxWidth(button.getWidth())));
@@ -456,6 +460,13 @@ public class TextEvent {
         MarketShopMeet(101, false),
         MarketShopNoMoney(1004, false),
         MarketShopEnoughMoney(1005, false),
+        FightFirstTextStart(1006, false),
+        FightWhatDo(1102, false),
+        FightAttackSel(1103, false),
+        FightItemTypeSel(1104, false),
+        FightItemSingleSel(1105, false),
+        FightRunQues(1106, false),
+        FightPokeSwitchInfo(1107, false),
         MarketShopGoodBye(7, true);
 
         /**

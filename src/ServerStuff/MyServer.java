@@ -5,10 +5,8 @@ import ClientStuff.Keys;
 import ClientStuff.Player;
 import ClientStuff.TextEvent;
 import Envir.World;
-import InGame.Attack;
 import InGame.Item;
 import InGame.Pokemon;
-import InGame.Type;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -36,9 +34,7 @@ public class MyServer {
     public static void main(String[] args) throws IOException, SQLException {
         Database.init();
         Item.init(Path.of("./res/DataSets/Items.csv"));
-        Attack.init();
-        Pokemon.init();
-        Type.init();
+        Pokemon.init(false);
         initServer();
     }
 
@@ -123,7 +119,32 @@ public class MyServer {
                 System.out.println("now sending");
             } else {
                 System.out.println("Der Kampf wurde accepted");
+//                StringBuilder sToSendThis = new StringBuilder(MessageType.toStr(MessageType.fightData));
+//                StringBuilder sToSendOther = new StringBuilder(MessageType.toStr(MessageType.fightData));
+                synchronized (c.getPlayer()) {
+                    synchronized (c.getOtherClient().getPlayer()) {
+                        Player otherP = c.getOtherClient().getPlayer();
+
+                        c.getPlayer().sendItemData(c);
+                        otherP.sendItemData(c.getOtherClient());
+
+                        c.getPlayer().setActivity(Player.Activity.fight);
+                        otherP.setActivity(Player.Activity.fight);
+
+                        otherP.sendPokeData(c.getOtherClient(), c.getPlayer().getPoke().get(0));
+//                        sToSendThis.append(otherP.getPoke().get(0).toMsg());
+//                        sToSendOther.append(c.getPlayer().getPoke().get(0).toMsg());
+
+//                        otherP.getPoke().forEach(a -> sToSendOther.append("$").append(a.toMsg()));
+//                        c.getPlayer().getPoke().forEach(a -> sToSendThis.append("$").append(a.toMsg()));
+
+                    }
+                }
                 //TODO something here, also alle Daten senden an beide (Pokemon und so)
+
+
+//                System.out.println(sToSendThis);
+//                System.out.println(sToSendOther);
             }
         }
     }
@@ -136,21 +157,19 @@ public class MyServer {
      */
     private static void doProfile(Server.ClientHandler c, String s) {
         try {
+            System.out.println("MyServer.doProfile: " + s.charAt(1));
             ResultSet exists = Database.get("select count(*) as nbr from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "';");
             if (exists != null && exists.next() && !(exists.getInt("nbr") > 0)) {
                 Database.execute("insert into player (skinID, startPokID, FK_User_ID, language) VALUE (0," + s.charAt(1) + ",(select PK_User_ID from User where name='" + c.getUsername() + "'),'eng');");
                 System.out.println("add Pokemon to this new Player");
             }
-            ResultSet data = Database.get("select * from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "';");
+            String statement = "select * from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "';";
+            System.out.println(statement);
+            ResultSet data = Database.get(statement);
             if (data != null && data.next()) {
                 c.setPlayer(initPlayer(c.getUsername(), data.getInt("PK_Player_ID")));
-                System.out.println("Player initialized");
-                /* TODO so shit
-                 * insert into MyPosition(FK_PK_Player_ID, FK_PK_World_ID, posX, posY)
-                 * VALUES (1, 1, 10, 15),
-                 *        (2, 1, 10, 10),
-                 *        (3, 1, 10, 15);
-                 */
+//                System.out.println("Player initialized: " + data.getInt("PK_Player_ID"));
+                //TODO pokemon machen und so
             }
         } catch (SQLException ignored) {
         }
@@ -228,11 +247,13 @@ public class MyServer {
                 client.getPlayer().setTargetPos(tar);
                 Optional<World> w = server.getWorlds().stream().filter(e -> e.getName().equals(c.getPlayer().getWorld())).findFirst();
                 w.ifPresent(world -> {
-                    client.getPlayer().updatePos(client, client.getKeysPressed().contains(Keys.decline), world);
-                    client.getPlayer().updateTextEvents(client, client.getKeysPressed(), world, server.getClients());
-                    if (client.getPlayer().getActivity() == Player.Activity.textEvent) {
-                        client.getKeysPressed().clear();
+                    if (client.getPlayer().getActivity() != Player.Activity.fight) {
+                        client.getPlayer().updatePos(client, client.getKeysPressed().contains(Keys.decline), world);
+                        client.getPlayer().updateTextEvents(client, client.getKeysPressed(), world, server.getClients());
+                        client.getPlayer().checkToStartFightInGrass(client, w.get());
                     }
+                    if (client.getPlayer().getActivity() == Player.Activity.textEvent)
+                        client.getKeysPressed().clear();
                 });
             }
             sendPosUpdate(client);
@@ -243,33 +264,33 @@ public class MyServer {
     /**
      * inits a new player
      *
-     * @param name         the name of the player/email
-     * @param idFromPlayer the id for the user from the player (0-2)
-     * @return the playerobject with all the information
+     * @param name    the name of the player/email
+     * @param idForDB the id from the database
+     * @return the player object with all the information
      */
-    private static Player initPlayer(String name, int idFromPlayer) {
-        ResultSet curPlayer = Database.get("select * from User inner join Player P on User.PK_User_ID = P.FK_User_ID where name='" + name + "' OR email='" + name + "';");
+    private static Player initPlayer(String name, int idForDB) {
+        String statement = "select * from Player where PK_Player_ID=" + idForDB;
+        ResultSet curPlayer = Database.get(statement);
+
         Vector2D pos = new Vector2D();
         int skinID = 0;
-        int idForDB = 0;
         long money = 0;
-
-        System.out.println("MyServer.initPlayer: " + idFromPlayer);
+        int idFromPlayer = 0;
         try {
             if (curPlayer == null) throw new SQLException();
             if (curPlayer.first()) {
 //                ResultSet curPos = Database.getItem("select MP.* from Player join MyPosition MP on Player.PK_Player_ID = MP.FK_PK_Player_ID join World W on W.PK_World_ID = MP.FK_PK_World_ID ");
                 skinID = (int) curPlayer.getObject("skinID");
                 money = (int) curPlayer.getObject("money");
-                System.out.println("MyServer.initPlayer: " + money);
+                idFromPlayer = (int) curPlayer.getObject("startPokID");
                 pos.setX((Integer) curPlayer.getObject("posX"));
                 pos.setY((Integer) curPlayer.getObject("posY"));
-//                System.out.println(money);
             } else throw new SQLException();
         } catch (SQLException ignored) {
         }
-
         Player p = new Player(name, pos, skinID, idFromPlayer, idForDB, money);
+
+
         try {
             assert curPlayer != null;
             ResultSet itemsInDB = Database.get("select user.name, Item_ID, quantity from user inner join Player P on User.PK_User_ID = P.FK_User_ID inner join ItemToPlayer ITP on P.PK_Player_ID = ITP.FK_Player where PK_Player_ID =" + curPlayer.getObject("PK_Player_ID") + ";");
@@ -281,7 +302,13 @@ public class MyServer {
         } catch (SQLException ignored) {
         }
 
-
+        if (p.getPoke().size() == 0) {
+            System.out.println("MyServer.initPlayer: " + "starter created");
+            System.out.println("MyServer.initPlayer: " + idFromPlayer);
+            p.getPoke().add(Pokemon.createStarter(idFromPlayer));
+            p.getPoke().add(Pokemon.createPokemon(new Vector2D(100, 7666), World.Block.Water));
+            p.getPoke().add(Pokemon.createPokemon(new Vector2D(100, 420), World.Block.Grass));
+        } else System.out.println("MyServer.initPlayer: " + p.getPoke());
         return p;
     }
 

@@ -138,7 +138,7 @@ VALUES (1, 1, 10, 15),
 insert into ItemToPlayer (Item_ID, FK_Player, quantity)
 VALUES (1, 1, 10),
        (2, 1, 16),
-       (3, 1, 12),
+       (5, 1, 12),
        (2, 2, 230),
        (4, 2, 134),
        (5, 3, 15),
@@ -147,6 +147,7 @@ VALUES (1, 1, 10),
 
 select user.name, Item_ID, quantity from user inner join Player P on User.PK_User_ID = P.FK_User_ID inner join ItemToPlayer ITP on P.PK_Player_ID = ITP.FK_Player where PK_Player_ID =1;
 
+select * from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = 1 && User.name = 'Name2';
 
 
 # select count(PK_Badge_ID) as nbr from Badge inner join Player P on Badge.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID = 4;
