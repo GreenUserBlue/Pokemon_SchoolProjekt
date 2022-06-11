@@ -159,14 +159,15 @@ public class Pokemon {
 
     public static void main(String[] args) throws IOException {
         Attack.init();
-        Pokemon.init(true);
+        Pokemon.init(false);
         Type.init();
+        Item.init();
         /*for (Pokemon pokemon : template) {
             System.out.println(pokemon);
         }
          */
 
-        Pokemon a = createPokemon(new Vector2D(200, 600), World.Block.Grass);
+        Pokemon a = createPokemon(new Vector2D(200, 610), World.Block.Grass);
         System.out.println(a);
         /*
             getAttacks(0,40);
@@ -175,9 +176,9 @@ public class Pokemon {
         }
          */
         Pokemon b = createPokemon(new Vector2D(4000, 7000), World.Block.Grass);
-        a.getsAttacked(b, 4, false);
+//        a.getsAttacked(b, 4, false);
 
-        System.out.println(a.toMsg());
+        System.out.println(a.getsCaptured((Ball) Item.getItem(2)));
 
     }
 
@@ -720,17 +721,30 @@ public class Pokemon {
 
         if (erg[0] == null) {
             erg[0] = Attack.getFromTemp(33);
-            System.out.println("Pokemon.getAttacks: " + erg[0]);
         }
         return erg;
     }
 
-    public double getMaxHP() {
+    public int getMaxHP() {
         return (int) state.getHP();
     }
 
     public int getId() {
         return id;
+    }
+
+    public void heal(double healQuantity) {
+        curHP = Math.min(curHP + healQuantity, getMaxHP());
+    }
+
+
+    public boolean getsCaptured(Ball b) {//captuerRateMuell //TODO Formel einfuegen usw.
+//        f = \left\lfloor \dfrac {HP_{max} \times 255 \times 4}{HP_{current} \times Ball} \right\rfloor}
+       /*a int n = rnd.nextInt(b.getNCatch());
+        int f = (int) ((getMaxHP() * 255 * 4) / (getCurHP() * b.getCatchRate()));
+        double d = (((3 * getMaxHP() - 2 * curHP) * captureRate * b.getCatchRate()) / (3 * getMaxHP())) * 1;
+        System.out.println(d);*/
+        return true;
     }
 
     enum EvolveType {
@@ -946,10 +960,10 @@ public class Pokemon {
     }
 
     public void setCurHP(double curHP) {
-        this.curHP = curHP;
+        this.curHP = Math.min(getMaxHP(), curHP);
     }
 
-    public double getCurHP() {
+    public int getCurHP() {
         return (int) curHP;
     }
 

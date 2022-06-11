@@ -4,6 +4,7 @@ import Calcs.Crypto;
 import ClientStuff.Keys;
 import ClientStuff.Player;
 import Envir.World;
+import InGame.Pokemon;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -236,7 +237,7 @@ public class Server {
      * @param msg the message that will be send
      * @param ids the id of the clients that will receive it
      */
-    public void send(Object msg, int... ids) {
+    public void send(String msg, int... ids) {
         clients.entrySet().stream().filter(e -> Arrays.stream(ids).filter(val -> val == e.getKey() && e.getValue() != null).findFirst().isPresent()).forEach(e -> e.getValue().send(msg));
     }
 
@@ -245,7 +246,7 @@ public class Server {
      *
      * @param msg the message that will be send
      */
-    public void sendAll(Object msg) {
+    public void sendAll(String msg) {
         clients.entrySet().stream().filter(e -> e.getValue() != null).forEach(e -> e.getValue().send(msg));
     }
 
@@ -392,6 +393,11 @@ public class Server {
          */
         private ClientHandler otherClient;
 
+        /**
+         * enemy Pokemon (when fighting against wild pokemon)
+         */
+        private Pokemon otherPoke;
+
         public ClientHandler(int id, boolean waitTillConnected) throws IOException {
             this.id = id;
             if (waitTillConnected) {
@@ -403,6 +409,14 @@ public class Server {
             }
             crypto = new Crypto();
             start();
+        }
+
+        public Pokemon getOtherPoke() {
+            return otherPoke;
+        }
+
+        public void setOtherPoke(Pokemon otherPoke) {
+            this.otherPoke = otherPoke;
         }
 
         public List<Keys> getKeysPressed() {
@@ -486,7 +500,7 @@ public class Server {
          *
          * @param msg the message that will be send
          */
-        public void send(Object msg) {
+        public void send(String msg) {
             try {
                 out.writeObject(msg);
                 out.flush();
@@ -494,6 +508,7 @@ public class Server {
                 if (!isDisconnected) System.out.println("Connection lost: " + id);
                 clients.put(id, null);
             } catch (NullPointerException ignored) {
+                System.out.println("ClientHandler.send: " + "Exception");
             }
         }
 

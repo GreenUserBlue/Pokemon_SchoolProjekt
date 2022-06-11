@@ -2,6 +2,8 @@ package Calcs;
 
 import InGame.Attack;
 
+import java.util.List;
+
 public class Utils {
 
     public static <K extends Attack> K[] deepClone(K[] iv) {
@@ -19,6 +21,15 @@ public class Utils {
     }
 
 
+    public static <K> void switchObjects(List<K> items, int id) {
+        K old = items.get(0);
+        items.remove(old);
+        K newZero = items.get(id);
+        items.remove(newZero);
+        items.add(id, old);
+        items.add(0, newZero);
+    }
+
     /**
      * rounds a single value to a single number of points
      *
@@ -29,5 +40,9 @@ public class Utils {
     public static double round(double value, int decimalPoints) {
         double d = Math.pow(10, decimalPoints);
         return Math.round(value * d) / d;
+    }
+
+    public static int toInt(String s) {
+        return Integer.parseInt(s);
     }
 }

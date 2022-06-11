@@ -120,6 +120,8 @@ public class MyClient extends Application {
                         List<Keys> keys = (Keys.getSmartKeys(client.getKeysPressed()));
                         if (keys.contains(Keys.confirm)) {
                             txt.nextLine();
+                        } else if (keys.contains(Keys.decline)) {
+                            txt.decline(client.getPlayers().get(0));
                         }
                     } else {
                         doRunning(c);
@@ -154,8 +156,9 @@ public class MyClient extends Application {
                     }
                 }
             } else if (client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
-                txt.getField().setVisible(true);
-//                        System.out.println("now in text");
+                if (keys.contains(Keys.decline)) {
+                    txt.decline(client.getPlayers().get(0));
+                }
             }
             if (((count++) & 0b11) == 0) {
                 client.getPlayers().forEach(Player::updateHands);
@@ -377,6 +380,7 @@ public class MyClient extends Application {
         }, getOnMsgClient());
         txt.setClient(client);
         marketGUI.setClient(client);
+        fightGUI.setClient(client);
         int height = 300;
         stage.setScene(new Scene(LoginScreens.getLoadingScreen(), height / 9D * 16, height));
         addListener();
@@ -414,6 +418,7 @@ public class MyClient extends Application {
                     case textEvent -> doTextEvent(s.substring(3));
                     case itemData -> updateItemData(s.substring(MessageType.toStr(MessageType.itemData).length()));
                     case fightData -> startFight(s);
+                    case inFightUpdate -> fightGUI.updateAll(s.substring(MessageType.toStr(MessageType.inFightUpdate).length()));
                     case error -> System.out.println("something went wrong");
                     //TODO Clemenzzzzzz on Msg From Server
                 }

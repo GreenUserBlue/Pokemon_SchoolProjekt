@@ -1,8 +1,8 @@
 package ClientStuff;
 
+import Calcs.Utils;
 import Calcs.Vector2D;
 import Envir.House;
-import InGame.Attack;
 import InGame.Pokemon;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -15,6 +15,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -42,7 +43,6 @@ public class TestMain extends Application {
     TextEvent txt = new TextEvent();
 
     private final FightGUI fightGUI = new FightGUI(txt);
-
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -72,30 +72,34 @@ public class TestMain extends Application {
 //        t.start();
 //        txt.startNewText(1, null);
 
-        Attack[] iv = new Attack[]{
+       /* Attack[] iv = new Attack[]{
                 Attack.getFromTemp(1),
                 Attack.getFromTemp(2),
                 Attack.getFromTemp(3),
                 Attack.getFromTemp(4),
         };
         Attack[] iv2 = iv.clone();
-        Attack[] iv3 = deepClone(iv);
+        Attack[] iv3 = Utils.deepClone(iv);
         iv[2] = Attack.getFromTemp(7);
         iv[3].use();
         Arrays.stream(iv).forEach(System.out::println);
         System.out.println();
         Arrays.stream(iv2).forEach(System.out::println);
         System.out.println();
-        Arrays.stream(iv3).forEach(System.out::println);
+        Arrays.stream(iv3).forEach(System.out::println);*/
+
+        List<String> items = new ArrayList<>();
+        items.add("1");
+        items.add("2");
+        items.add("3");
+        items.add("4");
+        items.add("5");
+        int id = 2;
+        Utils.switchObjects(items, id);
+        System.out.println(items);
     }
 
-    private <K extends Attack, State> K[] deepClone(K[] iv) {
-        K[] res = iv.clone();
-        for (int i = 0; i < iv.length; i++) {
-            res[i] = (K) iv[i].clone();
-        }
-        return res;
-    }
+
 
     private void initImgs() {
         try {

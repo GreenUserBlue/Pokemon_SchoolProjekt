@@ -13,7 +13,7 @@
       "We will heal your Pokemon, please wait.   ...   ...   We have healed your Pokemon, thanks for waiting."
     ],
     "4": [
-      "You have %$%situation%$% this fight and have %$%situation%$% %$%amount%$% €"
+      "You have %$%situation%$% this fight and have %$%situation%$% %$%amount%$%¥"
     ],
     "5": [
       "As Davids mom says in bed: You have to choose wisely which product you use at these times."
@@ -26,6 +26,9 @@
     ],
     "8": [
       "%$%name%$% declined the fight request."
+    ],
+    "9": [
+      "You have caught the %$%poke%$%."
     ]
   },
   "100": {
@@ -61,6 +64,21 @@
     ],
     "6": [
       "A wild %$%nameEn%$% appears!"
+    ],
+    "7": [
+      "%$%start%$% switched the %$%pokeOld%$% to a %$%pokeNew%$%."
+    ],
+    "8": [
+      "Waiting for opponent..."
+    ],
+    "9": [
+      "%$%start%$% healed the %$%poke%$% from %$%oldHP%$%HP to %$%newHP%$%HP."
+    ],
+    "10": [
+      "Waiting for opponent..."
+    ],
+    "11": [
+      "Waiting for opponent..."
     ]
   },
   "1100": {
@@ -111,7 +129,7 @@
       "Back"
     ],
     "6": [
-      "Are you sure you want to flee from Battle",
+      "Are you sure you want to flee from Battle?",
       "Yes",
       "No"
     ],

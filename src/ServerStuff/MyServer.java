@@ -1,16 +1,19 @@
 package ServerStuff;
 
+import Calcs.Utils;
 import Calcs.Vector2D;
+import ClientStuff.FightGUI;
 import ClientStuff.Keys;
 import ClientStuff.Player;
 import ClientStuff.TextEvent;
 import Envir.World;
+import InGame.Ball;
 import InGame.Item;
 import InGame.Pokemon;
+import InGame.Potion;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -33,7 +36,7 @@ public class MyServer {
 
     public static void main(String[] args) throws IOException, SQLException {
         Database.init();
-        Item.init(Path.of("./res/DataSets/Items.csv"));
+        Item.init();
         Pokemon.init(false);
         initServer();
     }
@@ -64,7 +67,8 @@ public class MyServer {
                     case keysPres -> doKeys(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
                     case textEvent -> doTextEvents(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
                     case itemBuy -> doItemBuy(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
-                    //TODO Clemenzzzzz zB wenn Client sagt, ich moechte angreifen, dann kommt das hier hin (on Message halt)
+                    case inFightChoice -> doInFightChoice(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
+                    //TODO Clemenzzzzzz zB wenn Client sagt, ich moechte angreifen, dann kommt das hier hin (on Message halt)
                     case error -> System.out.println("ERROR-Message: " + s);
                 }
             }
@@ -72,6 +76,80 @@ public class MyServer {
         Random r = new Random();
         for (int i = 0; i < 5; i++) server.getWorlds().add(new World((int) (69420 + r.nextDouble() * 100000), "" + i));
         server.getWorlds().add(new World(696969, "K"));
+    }
+
+    private static void doInFightChoice(Server.ClientHandler c, String msg) {
+        if (c.getOtherClient() != null) {
+            synchronized (c.getOtherClient().getPlayer()) {
+                if (c.getOtherClient().getPlayer().getMsgForFightWaiting() == null) {
+                    c.getPlayer().setMsgForFightWaiting(msg);
+                } else {
+                    System.out.println("MyServer.doInFightChoice: " + "now starting fight");
+                }
+            }
+        } else {
+            updateFightAgainstPoke(c, msg);
+        }
+    }
+
+
+    private static void updateFightAgainstPoke(Server.ClientHandler c, String msg) {
+        String[] s = msg.split(",");
+        FightGUI.FightChoice choice = FightGUI.FightChoice.valueOf(s[0]);
+        StringBuilder sToSend = new StringBuilder(MessageType.toStr(MessageType.inFightUpdate));
+        final Player player = c.getPlayer();
+        switch (choice) {
+            case Surrender -> {
+                c.setOtherPoke(null);
+                synchronized (player) {
+                    player.setActivity(Player.Activity.standing);
+                }
+                sendPosUpdate(c);
+                sToSend.append(choice).append("-|-").append(0).append("-|-").append(".|.");
+//                c.send(sToSend.toString());
+//                c.send(MessageType.toStr(MessageType.inFightUpdate) + choice + "-|-" + 0);
+//                return;
+            }
+            case Switch -> {
+                synchronized (player) {
+                    Utils.switchObjects(player.getPoke(), Utils.toInt(s[1]));
+                }
+                sToSend.append(choice).append("-|-").append(0).append("-|-").append(s[1]).append("._.");
+            }
+            case Item -> {
+                synchronized (player) {
+                    int itemID = Utils.toInt(s[1]);
+                    if (player.getItems().get(itemID) != null && player.getItems().get(itemID) > 0) {
+                        player.getItems().put(itemID, player.getItems().get(itemID) - 1);
+                        sToSend.append(choice).append("-|-").append(0).append("-|-").append(itemID).append("-|-");
+//                    append(useItemAndGetToSendString(itemID, player, c.getOtherPoke(), c))
+                        Item it = Item.getItem(itemID);
+                        if (it instanceof Potion potion) {
+                            player.getPoke().get(0).heal(potion.getHealQuantity());
+                            sToSend.append(player.getPoke().get(0).getCurHP());
+                        } else if (it instanceof Ball b) {
+                           /* if (player.getPoke().size() < 6) {
+                                sToSend.append("t");// stands for "too many pokemon already"
+                            } else */
+                            if (c.getOtherPoke().getsCaptured(b)) {
+                                player.setActivity(Player.Activity.standing);
+                                player.getPoke().add(c.getOtherPoke());
+                                c.setOtherPoke(null);
+                                sendPosUpdate(c);
+                                sToSend.append("c"); // stands for "captured"
+                            } else {
+                                sToSend.append("f"); // stands for "failed to capture"
+                            }
+                        } else {
+                            sToSend.append("ERROR");
+
+                        }
+                        sToSend.append("._.");
+                    }
+                }
+            }
+        }
+        c.send(sToSend.toString());
     }
 
     /**
@@ -95,7 +173,7 @@ public class MyServer {
     }
 
     /**
-     * handels what happens when the player gives information about the textfields
+     * handels what happens when the player gives information about the textFields
      *
      * @param c the client where the player is from
      * @param s the message from the client
@@ -116,15 +194,17 @@ public class MyServer {
             if (s.charAt(0) == '1') {
                 System.out.println("MyServer.doTextEvents: " + c.getOtherClient().getUsername());
                 c.getOtherClient().send(MessageType.toStr(MessageType.textEvent) + 1 + TextEvent.TextEventIDsTranslator.PlayersMeetDeclineFight.getId() + ",name:" + c.getUsername() + " has");
+                c.getOtherClient().setOtherClient(null);
+                c.setOtherClient(null);
                 System.out.println("now sending");
             } else {
                 System.out.println("Der Kampf wurde accepted");
-//                StringBuilder sToSendThis = new StringBuilder(MessageType.toStr(MessageType.fightData));
+//       a         StringBuilder sToSendThis = new StringBuilder(MessageType.toStr(MessageType.fightData));
 //                StringBuilder sToSendOther = new StringBuilder(MessageType.toStr(MessageType.fightData));
                 synchronized (c.getPlayer()) {
                     synchronized (c.getOtherClient().getPlayer()) {
                         Player otherP = c.getOtherClient().getPlayer();
-
+                        System.out.println(c.getOtherClient().getOtherClient());
                         c.getPlayer().sendItemData(c);
                         otherP.sendItemData(c.getOtherClient());
 
@@ -132,19 +212,17 @@ public class MyServer {
                         otherP.setActivity(Player.Activity.fight);
 
                         otherP.sendPokeData(c.getOtherClient(), c.getPlayer().getPoke().get(0));
-//                        sToSendThis.append(otherP.getPoke().get(0).toMsg());
+                        c.getPlayer().sendPokeData(c, otherP.getPoke().get(0));
+/*//              a          sToSendThis.append(otherP.getPoke().get(0).toMsg());
 //                        sToSendOther.append(c.getPlayer().getPoke().get(0).toMsg());
 
 //                        otherP.getPoke().forEach(a -> sToSendOther.append("$").append(a.toMsg()));
-//                        c.getPlayer().getPoke().forEach(a -> sToSendThis.append("$").append(a.toMsg()));
-
+//                        c.getPlayer().getPoke().forEach(a -> sToSendThis.append("$").append(a.toMsg()));*/
                     }
                 }
                 //TODO something here, also alle Daten senden an beide (Pokemon und so)
-
-
-//                System.out.println(sToSendThis);
-//                System.out.println(sToSendOther);
+/*//                System.out.println(sToSendThis);
+//                System.out.println(sToSendOther);*/
             }
         }
     }
@@ -252,7 +330,7 @@ public class MyServer {
                         client.getPlayer().updateTextEvents(client, client.getKeysPressed(), world, server.getClients());
                         client.getPlayer().checkToStartFightInGrass(client, w.get());
                     }
-                    if (client.getPlayer().getActivity() == Player.Activity.textEvent)
+                    if (client.getPlayer().getActivity() == Player.Activity.textEvent || client.getPlayer().getActivity() == Player.Activity.fight)
                         client.getKeysPressed().clear();
                 });
             }
@@ -290,7 +368,6 @@ public class MyServer {
         }
         Player p = new Player(name, pos, skinID, idFromPlayer, idForDB, money);
 
-
         try {
             assert curPlayer != null;
             ResultSet itemsInDB = Database.get("select user.name, Item_ID, quantity from user inner join Player P on User.PK_User_ID = P.FK_User_ID inner join ItemToPlayer ITP on P.PK_Player_ID = ITP.FK_Player where PK_Player_ID =" + curPlayer.getObject("PK_Player_ID") + ";");
@@ -308,12 +385,14 @@ public class MyServer {
             p.getPoke().add(Pokemon.createStarter(idFromPlayer));
             p.getPoke().add(Pokemon.createPokemon(new Vector2D(100, 7666), World.Block.Water));
             p.getPoke().add(Pokemon.createPokemon(new Vector2D(100, 420), World.Block.Grass));
+            p.getPoke().get(0).setCurHP(10);
+            p.getPoke().get(1).setCurHP(10);
         } else System.out.println("MyServer.initPlayer: " + p.getPoke());
         return p;
     }
 
     /**
-     * sends an update to the player about the positions for all the other plyers in the area
+     * sends an update to the player about the positions for all the other players in the area
      *
      * @param c the client where the player is from
      */

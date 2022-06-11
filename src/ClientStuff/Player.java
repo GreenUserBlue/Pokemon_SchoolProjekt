@@ -18,6 +18,19 @@ import java.util.*;
  */
 public class Player {
 
+    public String getMsgForFightWaiting() {
+        return msgForFightWaiting;
+    }
+
+    public void setMsgForFightWaiting(String msgForFightWaiting) {
+        this.msgForFightWaiting = msgForFightWaiting;
+    }
+
+    /**
+     * the message when you are waiting for the other player when fighting
+     */
+    private String msgForFightWaiting = null;
+
     /**
      * how fast a player walks normally (not fast)
      */
@@ -373,6 +386,11 @@ public class Player {
                             if (b.getVal() == TextEvent.TextEventIDsTranslator.MarketShopMeet.getId()) {
                                 sendItemData(client);
                             }
+                            if (b.getVal() == TextEvent.TextEventIDsTranslator.PokeHeal.getId()) {
+                                synchronized (pokemon) {
+                                    pokemon.forEach(a -> a.setCurHP(a.getMaxHP()));
+                                }
+                            }
                             synchronized (client.getPlayer()) {
                                 s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal() + (b.getVal() == TextEvent.TextEventIDsTranslator.MarketShopMeet.getId() ? "," + client.getPlayer().money : "");
                             }
@@ -425,7 +443,6 @@ public class Player {
         sToSend.append(betweenPoke).append(pokeOther.toMsg());
         pokemon.forEach(a -> sToSend.append("N").append(a.toMsg()));
         //TODO daten senden, plus daten in datenbank zum testen geben
-//        System.out.println("Player.sendPokeData: " + sToSend);
         cl.send(sToSend + betweenPoke);
     }
 
@@ -438,7 +455,10 @@ public class Player {
                     sendPokeData(client, poke);
                     activity = Activity.fight;
                 }
-                System.out.println("now something appears");
+                synchronized (client) {
+                    client.setOtherClient(null);
+                    client.setOtherPoke(poke);
+                }
             }
         }
         hasWalkedBefore = false;

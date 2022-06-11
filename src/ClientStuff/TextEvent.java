@@ -126,7 +126,7 @@ public class TextEvent {
     /**
      * what happens if a textField is finished with showing
      */
-    private final List<Runnable> onFin = new ArrayList<>();
+    private Runnable onFin;
 
     public void setClient(Client client) {
         this.client = client;
@@ -134,7 +134,7 @@ public class TextEvent {
 
 
     public void addOnFin(Runnable c) {
-        onFin.add(c);
+        onFin = (c);
     }
 
     /**
@@ -357,9 +357,13 @@ public class TextEvent {
                 if (text.length <= 1) {
                     field.setText(text[0]);
                 }
-
-                onFin.forEach(Runnable::run);
-                onFin.clear();
+                if (onFin != null) {
+                    Runnable r = onFin;
+                    onFin.run();
+                    if (r.equals(onFin)) {
+                        onFin = null;
+                    }
+                }
                 return true;
             }
         }
@@ -427,6 +431,22 @@ public class TextEvent {
         return Arrays.stream(TextEventIDsTranslator.values()).filter(a -> a.getId() == curTextNbr).findFirst().orElse(TextEventIDsTranslator.Tree).isWalkableAfterwards;
     }
 
+    public void decline(Player player) {
+//        nextLine();
+        if (nextLine()) {
+            if (isWalkableAfterwards()) {
+                player.setActivity(Player.Activity.standing);
+            }
+        }
+//        field.setVisible(state != TextEventState.nothing);
+        if (state == TextEventState.selection) {
+            ((Button) optionsNode.getChildren().get(optionsNode.getChildren().size() - 1)).fire();
+//            field.setVisible(false);
+        }
+
+
+    }
+
     /**
      * as the name says, the state of the textEvent, for example reading, selection
      */
@@ -453,6 +473,7 @@ public class TextEvent {
         FightEnd(4, true),
         WrongItem(5, false),
         PlayersMeetQues(6, false),
+        FightEndCapture(9, true),
         PlayersMeetAns(100, false),
         PlayersMeetDeclineFight(8, true),
         MarketShopItems(1100, false),
@@ -461,6 +482,9 @@ public class TextEvent {
         MarketShopNoMoney(1004, false),
         MarketShopEnoughMoney(1005, false),
         FightFirstTextStart(1006, false),
+        FightSwitchPoke(1007, false),
+        FightWaitingOpponent(1008, false),
+        FightUseItem(1009, false),
         FightWhatDo(1102, false),
         FightAttackSel(1103, false),
         FightItemTypeSel(1104, false),

@@ -21,7 +21,7 @@ public enum MessageType {
     itemData,            //Server
     //    itemRequest,         //Client
     fightData,           //Server
-    inFight,             //Server
+    inFightUpdate,             //Server
     inFightChoice,       //Client
     //    pokRequest,          //Client
 //    levelUp,             //Server

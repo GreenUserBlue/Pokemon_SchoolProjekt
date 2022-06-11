@@ -1,9 +1,11 @@
 package ClientStuff;
 
+import Calcs.Utils;
 import Calcs.Vector2D;
 import ClientStuff.TextEvent.TextEventIDsTranslator;
 import Envir.World;
 import InGame.*;
+import ServerStuff.MessageType;
 import javafx.application.Platform;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -19,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("SynchronizeOnNonFinalField")
 public class FightGUI {
 
     public FightGUI(TextEvent txt) {
@@ -31,7 +34,7 @@ public class FightGUI {
 
     private Client client;
 
-    private TextEvent textEvent;
+    private final TextEvent textEvent;
 
     private Player thisPlayer;
 
@@ -72,6 +75,7 @@ public class FightGUI {
 
     private void showAttacksSelect() {
         HashMap<String, String> keys = new HashMap<>();
+        List<Button> children;
         synchronized (thisPoke) {
             keys.put("nameTh", thisPoke.getName());
             Attack[] atts = thisPoke.getAttacks();
@@ -83,21 +87,26 @@ public class FightGUI {
                 }
             }
             textEvent.startNewText(TextEventIDsTranslator.FightAttackSel.getId(), keys, true);
-            List<Button> children = textEvent.getOptionsNode().getChildren().stream().filter(Button.class::isInstance).map(Button.class::cast).toList();
+            children = textEvent.getOptionsNode().getChildren().stream().filter(Button.class::isInstance).map(Button.class::cast).toList();
             for (int i = 0; i < Math.min(atts.length, children.size() - 1); i++) {
                 if (atts[atts.length - i - 1] == null) {
                     textEvent.getOptionsNode().getChildren().remove(atts.length - i - 1);
                 }
             }
-            children.get(children.size() - 1).setOnAction((e) -> doSingleMove());
         }
+        children = textEvent.getOptionsNode().getChildren().stream().filter(Button.class::isInstance).map(Button.class::cast).toList();
+        for (int i = 0; i < children.size() - 1; i++) {
+            int finalI = i;
+            children.get(i).setOnAction(e -> sendChoice(FightChoice.Attack, finalI + ""));
+        }
+        children.get(children.size() - 1).setOnAction((e) -> doSingleMove());
     }
 
     private void showRunSelect() {
         textEvent.startNewText(TextEventIDsTranslator.FightRunQues.getId(), null);
         List<Button> children = textEvent.getOptionsNode().getChildren().stream().filter(Button.class::isInstance).map(Button.class::cast).toList();
 
-        children.get(0).setOnAction((e) -> System.out.println("FightGUI.showRunSelect: " + "now give up"));
+        children.get(0).setOnAction((e) -> sendChoice(FightChoice.Surrender, null));
         children.get(children.size() - 1).setOnAction((e) -> doSingleMove());
     }
 
@@ -172,7 +181,7 @@ public class FightGUI {
             } else {
                 int finalI = i;
                 children.get(i).setOnAction(e -> {
-                    sendChoice(FightChoice.Item, itemsToShow.values().stream().toList().get(finalI) + "");
+                    sendChoice(FightChoice.Item, itemsToShow.keySet().stream().toList().get(finalI) + "");
                 });
             }
         }
@@ -184,16 +193,108 @@ public class FightGUI {
     }
 
     private void sendChoice(FightChoice choice, String s) {
-        System.out.println(choice + "-value: " + s);
+//        System.out.println(choice + "-value: " + s);
+        client.send(MessageType.toStr(MessageType.inFightChoice) + choice + (s == null ? "" : "," + s));
+        textEvent.startNewText(TextEventIDsTranslator.FightWaitingOpponent.getId(), null);
     }
 
 
-    public void update(String msg) {
+    public void updateAll(String msg) {
+        System.out.println("FightGUI.updateAll: " + msg);
+        String[] split = msg.split("\\._\\.");
+        updateSingle(split[0], split.length > 1 ? split[1] : split[0]);
+    }
 
+    private void updateSingle(String msg, String msgForOther) {
+        String[] s = msg.split("-\\|-");
+        FightGUI.FightChoice choice = FightGUI.FightChoice.valueOf(s[0]);
+        HashMap<String, String> keys = new HashMap<>();
+        switch (choice) {
+            case Surrender -> {
+                keys.put("situation", s[1].equals("0") ? "lost" : "won");
+                if (!isAgainstPlayer) {
+                    keys.put("amount", "0");
+                }
+                Platform.runLater(() -> {
+                    textEvent.startNewText(TextEventIDsTranslator.FightEnd.getId(), keys);
+                    synchronized (thisPlayer) {
+                        thisPlayer.setActivity(Player.Activity.textEvent);
+                    }
+                });
+                return;
+            }
+            case Switch -> {
+                if (s[1].equals("0")) {
+                    keys.put("start", "You have");
+                    synchronized (thisPoke) {
+                        keys.put("pokeOld", thisPoke.getName());
+                        Utils.switchObjects(thisPlayer.getPoke(), Utils.toInt(s[2]));
+                        thisPoke = thisPlayer.getPoke().get(0);
+                        keys.put("pokeNew", thisPoke.getName());
+                    }
+                } else {
+                    keys.put("start", "The enemy has");
+                    synchronized (thisPoke) {
+                        keys.put("pokeOld", enemy.getName());
+                        enemy = Pokemon.getFromMsg(s[2]);
+                        keys.put("pokeNew", enemy.getName());
+                    }
+                }
+                Platform.runLater(() -> {
+                    textEvent.startNewText(TextEventIDsTranslator.FightSwitchPoke.getId(), keys);
+                });
+
+            }
+
+            case Item -> {
+                Item it = Item.getItem(Utils.toInt(s[2]));
+                if (it instanceof Potion) {
+                    if (s[1].startsWith("0")) {
+                        keys.put("start", "You have");
+                        keys.put("poke", thisPoke.getName());
+                        keys.put("oldHP", thisPoke.getCurHP() + "");
+                        thisPoke.setCurHP(Utils.toInt(s[3]));
+                        keys.put("newHP", thisPoke.getCurHP() + "");
+                    } else {
+                        keys.put("start", "The enemy has");
+                        keys.put("poke", enemy.getName());
+                        keys.put("oldHP", enemy.getCurHP() + "");
+                        enemy.setCurHP(Utils.toInt(s[3]));
+                        keys.put("newHP", enemy.getCurHP() + "");
+                    }
+                    Platform.runLater(() -> {
+                        textEvent.startNewText(TextEventIDsTranslator.FightUseItem.getId(), keys);
+                    });
+                } else if (it instanceof Ball b) {
+                    // sToSend.append("t");// stands for "too many pokemon already"
+                    //                            } else if (c.getOtherPoke().getsCaptured(b)) {
+                    //                                player.setActivity(Player.Activity.standing);
+                    //                                c.setOtherPoke(null);
+                    //                                sendPosUpdate(c);
+                    //                                sToSend.append("c"); // stands for "captured"
+                    //                            } else {
+                    //                                sToSend.append("f"); // stands for "failed to capture"
+                    if (s[3].startsWith("c")) {
+                        keys.put("poke", enemy.getName());
+                        Platform.runLater(() -> {
+                            textEvent.startNewText(TextEventIDsTranslator.FightEndCapture.getId(), keys);
+                            synchronized (thisPlayer) {
+                                thisPlayer.setActivity(Player.Activity.textEvent);
+                            }
+                        });
+                        return;
+                    }
+                }
+            }
+        }
+//        if (msgForOther != null) {
+//            textEvent.addOnFin(() -> updateSingle(msgForOther, null));
+//        } else {
+        textEvent.addOnFin(this::doSingleMove);
+//        }
     }
 
 
-    @SuppressWarnings("SynchronizeOnNonFinalField")
     public void draw(Canvas canvas, Vector2D size, Map<String, Image> allImgs) {
         canvas.setLayoutX(0);
         canvas.setLayoutY(0);
