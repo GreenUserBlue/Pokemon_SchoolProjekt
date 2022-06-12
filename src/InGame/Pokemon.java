@@ -22,6 +22,7 @@ public class Pokemon {
     //TODO bei attacks muss man die AP abziehen wenn man angreift
     //Evoli is muell (einfach nur flamara und fertig)
 
+
     /**
      * name of the pokemon
      */
