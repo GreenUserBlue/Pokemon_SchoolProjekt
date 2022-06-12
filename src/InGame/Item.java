@@ -54,6 +54,10 @@ public class Item {
         }
     }
 
+    public static void init() {
+        init(Path.of("./res/DataSets/Items.csv"));
+    }
+
     private static Item getItem(String type, int id, String name, int price, boolean isBuyable, int badgesNeeded, double extraValue) {
         return switch (type) {
             case "Ball" -> new Ball(id, name, price, isBuyable, badgesNeeded, extraValue);

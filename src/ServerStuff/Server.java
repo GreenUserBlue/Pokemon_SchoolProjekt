@@ -4,6 +4,7 @@ import Calcs.Crypto;
 import ClientStuff.Keys;
 import ClientStuff.Player;
 import Envir.World;
+import InGame.Pokemon;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -236,7 +237,7 @@ public class Server {
      * @param msg the message that will be send
      * @param ids the id of the clients that will receive it
      */
-    public void send(Object msg, int... ids) {
+    public void send(String msg, int... ids) {
         clients.entrySet().stream().filter(e -> Arrays.stream(ids).filter(val -> val == e.getKey() && e.getValue() != null).findFirst().isPresent()).forEach(e -> e.getValue().send(msg));
     }
 
@@ -245,7 +246,7 @@ public class Server {
      *
      * @param msg the message that will be send
      */
-    public void sendAll(Object msg) {
+    public void sendAll(String msg) {
         clients.entrySet().stream().filter(e -> e.getValue() != null).forEach(e -> e.getValue().send(msg));
     }
 
@@ -325,15 +326,18 @@ public class Server {
          */
         private final int id;
 
+        /**
+         * saves all Consumer which will accepted if the Clients gets Updated
+         */
         private final ArrayList<Consumer<ClientHandler>> allOnUpdate = new ArrayList<>();
 
         /**
-         * saves all Consumer which will be accepted if the OldMain connects to the Server
+         * saves all Consumer which will be accepted if the Client connects to the Server
          */
         private final ArrayList<Consumer<ClientHandler>> allOnConnects = new ArrayList<>();
 
         /**
-         * saves all Consumer which will be accepted if the OldMain receives a message
+         * saves all Consumer which will be accepted if the CLient receives a message
          */
         private final ArrayList<BiConsumer<ClientHandler, Object>> allOnMessage = new ArrayList<>();
 
@@ -343,22 +347,14 @@ public class Server {
         private final Crypto crypto;
 
         /**
-         * counts the number of updates which where send
-         */
-        private long updateCount = 0;
-
-        public List<Keys> getKeysPressed() {
-            return keysPressed;
-        }
-
-        /**
          * which keys the client currently presses
          */
         private final List<Keys> keysPressed = new ArrayList<>();
 
-        public long getUpdateCount() {
-            return updateCount;
-        }
+        /**
+         * counts the number of updates which where send
+         */
+        private long updateCount = 0;
 
         /**
          * the socket with whom the server is connected to the client
@@ -385,13 +381,22 @@ public class Server {
          */
         private String username = null;
 
-
         private long timeTillNextTextField;
 
         /**
          * The playerdata for the current clientHandler
          */
         private Player player;
+
+        /**
+         * other Handler for connection between two (when fighting)
+         */
+        private ClientHandler otherClient;
+
+        /**
+         * enemy Pokemon (when fighting against wild pokemon)
+         */
+        private Pokemon otherPoke;
 
         public ClientHandler(int id, boolean waitTillConnected) throws IOException {
             this.id = id;
@@ -404,6 +409,30 @@ public class Server {
             }
             crypto = new Crypto();
             start();
+        }
+
+        public Pokemon getOtherPoke() {
+            return otherPoke;
+        }
+
+        public void setOtherPoke(Pokemon otherPoke) {
+            this.otherPoke = otherPoke;
+        }
+
+        public List<Keys> getKeysPressed() {
+            return keysPressed;
+        }
+
+        public long getUpdateCount() {
+            return updateCount;
+        }
+
+        public ClientHandler getOtherClient() {
+            return otherClient;
+        }
+
+        public void setOtherClient(ClientHandler otherClient) {
+            this.otherClient = otherClient;
         }
 
         /**
@@ -471,7 +500,7 @@ public class Server {
          *
          * @param msg the message that will be send
          */
-        public void send(Object msg) {
+        public void send(String msg) {
             try {
                 out.writeObject(msg);
                 out.flush();
@@ -479,6 +508,7 @@ public class Server {
                 if (!isDisconnected) System.out.println("Connection lost: " + id);
                 clients.put(id, null);
             } catch (NullPointerException ignored) {
+                System.out.println("ClientHandler.send: " + "Exception");
             }
         }
 

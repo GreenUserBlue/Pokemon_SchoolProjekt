@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  *
  * <ul>
  * <li>0-999 send to server result <br>
-
+ *
  *     <ul>
  *         <li> 0-99 single: afterwards close field</li>
  *         <li> 100-199 multiple: show and if last then close field</li>
@@ -51,6 +51,7 @@ import java.util.regex.Pattern;
  * </p>
  *
  * <p>
+ *
  * @author Zwickelstorfer Felix
  * @version 2.1
  * </p>
@@ -113,7 +114,7 @@ public class TextEvent {
     private TextEventState state = TextEventState.nothing;
 
     /**
-     * the id of the textevent
+     * the id of the textEvent
      */
     private int curTextNbr = -1;
 
@@ -123,9 +124,9 @@ public class TextEvent {
     private Client client;
 
     /**
-     * what happens if a textfield is finished with showing
+     * what happens if a textField is finished with showing
      */
-    private final List<Runnable> onFin = new ArrayList<>();
+    private Runnable onFin;
 
     public void setClient(Client client) {
         this.client = client;
@@ -133,7 +134,7 @@ public class TextEvent {
 
 
     public void addOnFin(Runnable c) {
-        onFin.add(c);
+        onFin = (c);
     }
 
     /**
@@ -161,6 +162,7 @@ public class TextEvent {
                 sc.setOpacity(0);
             }
         });
+        optionsNode.setFillWidth(true);
     }
 
     /**
@@ -225,6 +227,7 @@ public class TextEvent {
         this.isInstantFin = isInstantFin;
         isCurFin = true;
         this.curTextNbr = jsonValue;
+        field.setVisible(true);
         List<JSONValue> h = eventTexts.get(jsonValue).getList();
         AtomicReference<String> s = new AtomicReference<>(h.get(0).getStr());
         if (keys != null) {
@@ -242,6 +245,9 @@ public class TextEvent {
                 optionsAfterText.add(a.getStr());
             }
             Button t = new Button(optionsAfterText.get(optionsAfterText.size() - 1));
+            /* a t.focusedProperty().addListener((val, old, newVal) -> {
+                if (newVal) t.toFront();
+            });*/
             optionsNode.getChildren().add(t);
         });
         optionsNode.setAlignment(Pos.BOTTOM_RIGHT);
@@ -253,16 +259,18 @@ public class TextEvent {
     // My Guess is that this text will go on for now an that you will have some fun for waiting till you can press again and then you shall die because i have depression and i want to tell you about it.   I hope you won't delete this game now because this text-box is going on for now.
 
     /**
-     * creates the gripane for the current options/textfield
+     * creates the gridpane for the current options/textField
      */
     private void createGrid() {
         grid.getChildren().clear();
         grid.getColumnConstraints().clear();
         grid.getRowConstraints().clear();
 
-        ColumnConstraints c3 = new ColumnConstraints();
-        c3.setPercentWidth(100);
-        grid.getColumnConstraints().add(c3);
+        ColumnConstraints c = new ColumnConstraints();
+        ColumnConstraints c2 = new ColumnConstraints();
+        c.setPercentWidth(99);
+        c2.setPercentWidth(1);
+        grid.getColumnConstraints().addAll(c, c2);
 
         RowConstraints r = new RowConstraints();
         RowConstraints r2 = new RowConstraints();
@@ -270,10 +278,12 @@ public class TextEvent {
         r2.setPercentHeight(15);
         grid.getRowConstraints().addAll(r, r2);
 
-        grid.add(field, 0, 1);
+        grid.add(field, 0, 1, 2, 1);
         grid.add(getOptionsNode(), 0, 0);
         getOptionsNode().setVisible(false);
     }
+
+    private int countForResize = 0;
 
     @Override
     public String toString() {
@@ -326,12 +336,10 @@ public class TextEvent {
                     if (client != null) {
                         client.getKeysPressed().removeAll(Arrays.asList(KeyCode.SPACE, KeyCode.ENTER));
                     }
-                    updateSize();
-
+                    countForResize = 0;
                 } else {
                     state = TextEventState.nothing;
                     if (curTextNbr < 1000) {
-                        System.out.println("");//TODO something here
                         if (curTextNbr < 100) {
                             field.setVisible(false);
                         }
@@ -340,6 +348,7 @@ public class TextEvent {
                         }
                     } else {
                         if (curTextNbr < 1100) {
+                            System.out.print("");
 //                            System.out.println("TextEvent.nextLine: fieldStaysVisible");
                         }
                     }
@@ -348,13 +357,13 @@ public class TextEvent {
                 if (text.length <= 1) {
                     field.setText(text[0]);
                 }
-                onFin.forEach(a -> {
-//                    Platform.runLater(() -> {
-                    a.run();
-                    System.out.print("");
-//                    });
-                });
-                onFin.clear();
+                if (onFin != null) {
+                    Runnable r = onFin;
+                    onFin.run();
+                    if (r.equals(onFin)) {
+                        onFin = null;
+                    }
+                }
                 return true;
             }
         }
@@ -377,14 +386,25 @@ public class TextEvent {
      * updates the size of the options inside the gridpane
      */
     void updateSize() {
-        optionsNode.setPrefWidth(((GridPane) optionsNode.getParent()).getWidth() * 0.2);
-        Optional<Button> b = optionsNode.getChildren().stream().map(Button.class::cast).max(Comparator.comparingDouble(Region::getWidth));
-        if (b.isPresent()) {
-            optionsNode.getChildren().forEach(a -> ((Button) a).setMaxWidth(b.get().getWidth()));
-        } else {
-            optionsNode.getChildren().forEach(a -> ((Button) a).setMaxWidth(optionsNode.getPrefWidth()));
+        //noinspection ConstantConditions
+        if (grid != null) {
+            if (countForResize <= 1) {
+                optionsNode.getChildren().forEach(a -> {
+                    Button curBtn = (Button) a;
+                    curBtn.setFont(new Font(grid.getHeight() * 0.03));
+                    curBtn.setMaxWidth(-1);
+                    curBtn.setStyle("-fx-background-insets: -2 -2 -2 -2, 0, 3, 3;");
+                });
+                optionsNode.setPrefWidth(grid.getWidth() * 0.19);
+            } else {
+                Optional<Button> b = optionsNode.getChildren().stream().map(Button.class::cast).max(Comparator.comparingDouble(Region::getWidth));
+                b.ifPresent(button -> optionsNode.getChildren().forEach(a -> ((Button) a).setMaxWidth(button.getWidth())));
+            }
+            countForResize++;
         }
     }
+
+    private double lastScreenWidth = 0;
 
     /**
      * updates the size of the gridpane
@@ -395,6 +415,13 @@ public class TextEvent {
         grid.setMinSize(scene.getWidth(), scene.getHeight());
         grid.setMaxSize(scene.getWidth(), scene.getHeight());
         grid.setPrefSize(scene.getWidth(), scene.getHeight());
+        if (scene.getHeight() != lastScreenWidth) {
+            countForResize = 0;
+        }
+        if (countForResize < 3) {
+            updateSize();
+        }
+        lastScreenWidth = scene.getHeight();
     }
 
     /**
@@ -404,8 +431,24 @@ public class TextEvent {
         return Arrays.stream(TextEventIDsTranslator.values()).filter(a -> a.getId() == curTextNbr).findFirst().orElse(TextEventIDsTranslator.Tree).isWalkableAfterwards;
     }
 
+    public void decline(Player player) {
+//        nextLine();
+        if (nextLine()) {
+            if (isWalkableAfterwards()) {
+                player.setActivity(Player.Activity.standing);
+            }
+        }
+//        field.setVisible(state != TextEventState.nothing);
+        if (state == TextEventState.selection) {
+            ((Button) optionsNode.getChildren().get(optionsNode.getChildren().size() - 1)).fire();
+//            field.setVisible(false);
+        }
+
+
+    }
+
     /**
-     * as the name says, the state of the textevent, for example reading, selection
+     * as the name says, the state of the textEvent, for example reading, selection
      */
     public enum TextEventState {
         nothing,
@@ -430,16 +473,28 @@ public class TextEvent {
         FightEnd(4, true),
         WrongItem(5, false),
         PlayersMeetQues(6, false),
+        FightEndCapture(9, true),
         PlayersMeetAns(100, false),
+        PlayersMeetDeclineFight(8, true),
         MarketShopItems(1100, false),
         MarketShopItemsBuy(1101, false),
         MarketShopMeet(101, false),
         MarketShopNoMoney(1004, false),
         MarketShopEnoughMoney(1005, false),
+        FightFirstTextStart(1006, false),
+        FightSwitchPoke(1007, false),
+        FightWaitingOpponent(1008, false),
+        FightUseItem(1009, false),
+        FightWhatDo(1102, false),
+        FightAttackSel(1103, false),
+        FightItemTypeSel(1104, false),
+        FightItemSingleSel(1105, false),
+        FightRunQues(1106, false),
+        FightPokeSwitchInfo(1107, false),
         MarketShopGoodBye(7, true);
 
         /**
-         * the id which it is inside of the textfield
+         * the id which it is inside of the textField
          */
         private final int id;
 

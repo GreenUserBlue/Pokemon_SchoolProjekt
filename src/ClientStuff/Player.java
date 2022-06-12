@@ -4,6 +4,7 @@ import Calcs.Vector2D;
 import Envir.City;
 import Envir.House;
 import Envir.World;
+import InGame.Pokemon;
 import ServerStuff.MessageType;
 import ServerStuff.Server;
 
@@ -17,6 +18,19 @@ import java.util.*;
  */
 public class Player {
 
+    public String getMsgForFightWaiting() {
+        return msgForFightWaiting;
+    }
+
+    public void setMsgForFightWaiting(String msgForFightWaiting) {
+        this.msgForFightWaiting = msgForFightWaiting;
+    }
+
+    /**
+     * the message when you are waiting for the other player when fighting
+     */
+    private String msgForFightWaiting = null;
+
     /**
      * how fast a player walks normally (not fast)
      */
@@ -28,9 +42,19 @@ public class Player {
     private int idFromPlayer;
 
     /**
+     * all pokemon the player has
+     */
+    private final List<Pokemon> pokemon = new ArrayList<>();
+
+    /**
      * the id of the player in the database
      */
     private int idForDB;
+
+    /**
+     * random Value for appearing Pokemon for players
+     */
+    private static final Random rndForPokeEncounter = new Random("Baum".hashCode());
 
     /**
      * the database of the player
@@ -91,6 +115,8 @@ public class Player {
      * what the player is currently doing
      */
     private Activity activity = Activity.standing;
+
+    private boolean hasWalkedBefore = false;
 
     public Player(String raw) {
         System.out.println(raw);
@@ -258,6 +284,7 @@ public class Player {
                 client.getKeysPressed().remove(Keys.valueOf(dir.toString()));
             }
             if (activity == Activity.moving) {
+                hasWalkedBefore = true;
                 Vector2D add = new Vector2D(dir.getVecDir().getX() * walkingSpeed * (isDoubleSpeed ? 2 : 1), dir.getVecDir().getY() * walkingSpeed * (isDoubleSpeed ? 2 : 1));
                 curWalked.add(add);
                 curWalked.round(4);
@@ -327,7 +354,6 @@ public class Player {
         this.idFromPlayer = idFromPlayer;
     }
 
-
     /**
      * updates the text events for the player (server)
      *
@@ -360,6 +386,11 @@ public class Player {
                             if (b.getVal() == TextEvent.TextEventIDsTranslator.MarketShopMeet.getId()) {
                                 sendItemData(client);
                             }
+                            if (b.getVal() == TextEvent.TextEventIDsTranslator.PokeHeal.getId()) {
+                                synchronized (pokemon) {
+                                    pokemon.forEach(a -> a.setCurHP(a.getMaxHP()));
+                                }
+                            }
                             synchronized (client.getPlayer()) {
                                 s = MessageType.toStr(MessageType.textEvent) + 0 + b.getVal() + (b.getVal() == TextEvent.TextEventIDsTranslator.MarketShopMeet.getId() ? "," + client.getPlayer().money : "");
                             }
@@ -376,13 +407,15 @@ public class Player {
                                 .filter(a -> a.getPlayer().getActivity() == Activity.standing)
                                 .filter(a -> a.getTimeTillNextTextField() <= System.currentTimeMillis()).findFirst();
                         if (op.isPresent()) {
-                            System.out.println("Player found: " + op.get().getPlayer().getName());
+//                            System.out.println("Player found: " + op.get().getPlayer().getName());
                             String sToQues = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsTranslator.PlayersMeetQues.getId() + ",name:" + op.get().getPlayer().getName();
-                            System.out.println(sToQues);
+//                            System.out.println(sToQues);
                             client.send(sToQues);
+                            client.setOtherClient(op.get());
                             activity = Activity.textEvent;
                             String sToAns = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsTranslator.PlayersMeetAns.getId() + ",name:" + client.getPlayer().getName();
                             op.get().send(sToAns);
+                            op.get().setOtherClient(client);
                             op.get().getPlayer().activity = Activity.textEvent;
                         }
                     }
@@ -398,6 +431,37 @@ public class Player {
         StringBuilder str = new StringBuilder(MessageType.toStr(MessageType.itemData) + ";" + money);
         items.forEach((key, value) -> str.append(";").append(key).append(",").append(value));
         client.send(str.toString());
+    }
+
+    public List<Pokemon> getPoke() {
+        return pokemon;
+    }
+
+    public void sendPokeData(Server.ClientHandler cl, Pokemon pokeOther) {
+        String betweenPoke = "N";
+        StringBuilder sToSend = new StringBuilder(MessageType.toStr(MessageType.fightData));
+        sToSend.append(betweenPoke).append(pokeOther.toMsg());
+        pokemon.forEach(a -> sToSend.append("N").append(a.toMsg()));
+        //TODO daten senden, plus daten in datenbank zum testen geben
+        cl.send(sToSend + betweenPoke);
+    }
+
+    public void checkToStartFightInGrass(Server.ClientHandler client, World w) {
+        if (hasWalkedBefore && curWalked.getX() == 0 && curWalked.getY() == 0 && (w.getCities().stream().noneMatch(a -> a.isInCity(pos)) && w.getBlockEnvir((int) pos.getX(), (int) pos.getY(), false) == World.Block.Grass)) {
+            if (rndForPokeEncounter.nextDouble() < 0.1) {
+                Pokemon poke = Pokemon.createPokemon(pos, World.Block.Grass);
+                synchronized (this) {
+                    sendItemData(client);
+                    sendPokeData(client, poke);
+                    activity = Activity.fight;
+                }
+                synchronized (client) {
+                    client.setOtherClient(null);
+                    client.setOtherPoke(poke);
+                }
+            }
+        }
+        hasWalkedBefore = false;
     }
 
     /**

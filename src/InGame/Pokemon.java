@@ -1,10 +1,14 @@
 package InGame;
 
+import Calcs.Utils;
 import Calcs.Vector2D;
 import Envir.World;
 import javafx.scene.image.Image;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -18,10 +22,27 @@ import java.util.regex.Pattern;
  * @author Clemens Hodina
  */
 public class Pokemon {
+
+
     //TODO Entwicklungen mit Steinen oder trades
     //TODO bei attacks muss man die AP abziehen wenn man angreift
     //Evoli is muell (einfach nur flamara und fertig)
 
+    public String getName() {
+        return name;
+    }
+
+    public Attack[] getAttacks() {
+        return attacks;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public int getXp() {
+        return xp;
+    }
 
     /**
      * name of the pokemon
@@ -51,7 +72,7 @@ public class Pokemon {
     /**
      * the attacks of the pokemon
      */
-    private Attack[] attacks;
+    private Attack[] attacks = new Attack[4];
 
     /**
      * the nature of the pokemon, which adds or subs stats
@@ -69,16 +90,22 @@ public class Pokemon {
     private int level;
 
     //wie viele xp hat man grade
+
     /**
      * how many xp the pokemon holds at this moment
      */
     private int xp;
 
     //wie viele xp kann man auf dem Level erreichen maximal
+
+    public int getMaxXPNeeded() {
+        return maxXPNeeded;
+    }
+
     /**
      * the xp the pokemon needs to go to the next level
      */
-    private int maxXP;
+    private int maxXPNeeded;
 
     /**
      * how hard it is to find and capture the pokemon
@@ -86,6 +113,7 @@ public class Pokemon {
     private int captureRate;
 
     //block auf dem das Pokemon spawnen kann
+
     /**
      * type of block on which the pokemon is abled to spawn
      */
@@ -107,6 +135,7 @@ public class Pokemon {
     private State state;
 
     //individual values für stats
+
     /**
      * individual values for the stats for a single pokemon
      */
@@ -122,34 +151,34 @@ public class Pokemon {
     public static List<Pokemon> template = new ArrayList<>();
 
     private static final Random rnd = new Random(696969);
+
     private static final Random attackRnd = new Random(420420);
+
     private static final Random hitProbRnd = new Random(9824756);
 
 
     public static void main(String[] args) throws IOException {
         Attack.init();
-        Pokemon.init();
+        Pokemon.init(false);
         Type.init();
+        Item.init();
         /*for (Pokemon pokemon : template) {
             System.out.println(pokemon);
         }
-
          */
 
-        Pokemon a = createPokemon(new Vector2D(200, 600), World.Block.Grass);
+        Pokemon a = createPokemon(new Vector2D(200, 610), World.Block.Grass);
         System.out.println(a);
-
         /*
             getAttacks(0,40);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
          */
         Pokemon b = createPokemon(new Vector2D(4000, 7000), World.Block.Grass);
-        a.getsAttacked(b, 4, false);
+//        a.getsAttacked(b, 4, false);
 
-        System.out.println(a.toMsg());
+        System.out.println(a.getsCaptured((Ball) Item.getItem(2)));
 
     }
 
@@ -160,8 +189,16 @@ public class Pokemon {
     /**
      * creates the template for every pokemon with the necessary data
      */
-    public static void init() {
+    public static void init(boolean withImgs) {
         //File file = new File(String.valueOf(Path.of("res/DataSets/pokeFile.txt")));
+        Type.init();
+        try {
+            Attack.init();
+        } catch (IOException ignored) {
+        }
+        if (withImgs) {
+            initPokeImgs();
+        }
         BufferedReader in;
         BufferedReader in2;
         BufferedReader in3;
@@ -226,7 +263,7 @@ public class Pokemon {
                 evolvesIntoID = Integer.parseInt(oneRow3[5]);
                 try {
                     evolvesAtLevel = Integer.parseInt(oneRow3[3]);
-                } catch (NumberFormatException e) {
+                } catch (NumberFormatException ignored) {
                 }
 
             } else {
@@ -234,8 +271,6 @@ public class Pokemon {
             }
             template.add(new Pokemon(oneRow[1], Integer.parseInt(oneRow[0]), null, evolvesIntoID, evolvesAtLevel, null, null, types, 1, 0, maxXp, Integer.parseInt(oneRow[2]), block, oneRow[5], s.getHP(), s, new int[6]));
         }
-
-
     }
 
     /**
@@ -256,7 +291,7 @@ public class Pokemon {
         return maxXp;
     }
 
-    public Pokemon(String name, int id, EvolveType evolveType, int evolvesIntoId, int evolvesAtLevel, Attack[] attacks, Nature nature, Type[] type, int level, int xp, int maxXP, int captureRate, World.Block block, String growthRate, double curHP, State state, int[] iv) {
+    public Pokemon(String name, int id, EvolveType evolveType, int evolvesIntoId, int evolvesAtLevel, Attack[] attacks, Nature nature, Type[] type, int level, int xp, int maxXPNeeded, int captureRate, World.Block block, String growthRate, double curHP, State state, int[] iv) {
         this.name = name;
         this.id = id;
         this.evolveType = evolveType;
@@ -267,7 +302,7 @@ public class Pokemon {
         this.type = type;
         this.level = level;
         this.xp = xp;
-        this.maxXP = maxXP;
+        this.maxXPNeeded = maxXPNeeded;
         this.captureRate = captureRate;
         this.block = block;
         this.growthRate = growthRate;
@@ -295,34 +330,92 @@ public class Pokemon {
         //da id mit 1 beginnt
         id--;
         Pokemon a = new Pokemon();
-        try {
-            a = template.get(id).clone();
-        } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-        }
+        a = template.get(id).clone();
         a.level = level;
-        a.xp = getXpNeeded(a.growthRate, level - 1);//is die xp wenn man gerade auf das level gekommen ist
-        a.maxXP = getXpNeeded(a.growthRate, level);
+        a.xp = 0;//getXpNeeded(a.growthRate, level - 1);//is die xp wenn man gerade auf das level gekommen ist
+        a.maxXPNeeded = getXpNeeded(a.growthRate, level);
         a.nature = Nature.values()[(int) ((Math.random()) * Nature.values().length)];
         for (int i = 0; i < 6; i++) {
             a.iv[i] = rnd.nextInt(16);
         }
-        a.state.add(id, level, a.nature);
+        a.state.updateVals(a, level, a.nature);
         try {
             a.attacks = getAttacks(id, level);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        a.curHP = a.state.getHP();
         return a;
     }
 
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
-    protected Pokemon clone() throws CloneNotSupportedException {
+    public Pokemon clone() {
         //Pokemon clone = (Pokemon) super.clone();
-        return new Pokemon(name, id, evolveType, evolvesIntoId, evolvesAtLevel, attacks, nature, type, level, xp, maxXP, captureRate, block, growthRate, curHP, state, iv);
+        return new Pokemon(name, id, evolveType, evolvesIntoId, evolvesAtLevel, Utils.deepClone(attacks), nature, type.clone(), level, xp, maxXPNeeded, captureRate, block, growthRate, curHP, state.clone(), iv.clone());
     }
 
+    public static Pokemon getFromMsg(String msg) {
+        String[] s = msg.split(";");
+        Pokemon poke = new Pokemon();
+        poke.id = toInt(s[0]);
+        poke.level = toInt(s[1]);
+
+        String[] str = s[2].split("§");
+        for (int i = 0; i < str.length; i++) {
+            String[] at = str[i].split(",");
+            Attack a = Attack.getFromTemp(toInt(at[0]));
+            a.setCurAP(toInt(at[1]));
+            poke.attacks[i] = a;
+        }
+
+        poke.xp = toInt(s[3]);
+
+        str = s[4].split(",");
+        int[] ivs = new int[str.length];
+        for (int i = 0; i < str.length; i++) {
+            ivs[i] = toInt(str[i]);
+        }
+        poke.setIv(ivs);
+
+        poke.nature = Nature.values()[toInt(s[5])];
+
+        poke.curHP = toInt(s[6]);
+
+        Pokemon temp = template.get(poke.id - 1).clone();
+        poke.state = temp.getState();
+        poke.state.updateVals(poke, poke.level, poke.nature);
+        poke.growthRate = temp.growthRate;
+        poke.maxXPNeeded = getXpNeeded(poke.growthRate, poke.level);
+        poke.name = temp.name;
+        return poke;
+    }
+
+    /**
+     * for toMsg
+     */
+    private String toString3() {
+        StringBuilder b = new StringBuilder();
+        b.append(id).append(";");
+        b.append(level).append(";");
+        Arrays.stream(attacks).filter(Objects::nonNull).forEach(a -> {
+            b.append(a.getId()).append(",").append(a.getCurAP()).append("§");
+        });
+        b.append(";");
+        b.append(xp).append(";");
+
+        for (int i = 0; i < iv.length; i++) {
+            b.append(iv[i]);
+            if (i != iv.length - 1) b.append(",");
+        }
+        b.append(";").append(nature.ordinal()).append(";");
+        b.append((int) curHP);
+        return b.toString();
+    }
+
+    private static int toInt(String s) {
+        return Integer.parseInt(s);
+    }
 
     /**
      * makes a Pokemon from the String which was sent from the server
@@ -330,25 +423,29 @@ public class Pokemon {
      * @param msg the message from the server
      * @return pokemon from server
      */
-    private static Pokemon getFromMsg(String msg) throws CloneNotSupportedException {
+    private static Pokemon getFromMsg2(String msg) {
         String[] messg = msg.split(";");
         int id = Integer.parseInt(messg[1]);
-        Pokemon a = template.get(id).clone();
+        Pokemon a = null;
+        a = template.get(id).clone();
         a.setLevel(Integer.parseInt(messg[4]));//hierdurch auch iwie attacken und maxXp uns sowas
         a.setXp(Integer.parseInt(messg[5]));
-        a.setCurHP(Integer.parseInt(messg[7]));
+        a.setCurHP(Double.parseDouble(messg[7]));
         String wholeState = messg[8];
-        System.out.println(wholeState);
+//        System.out.println(wholeState);
         Pattern getStates = Pattern.compile("HP=([0-9]+.[0-9]+), attack=([0-9]+.[0-9]+), defense=([0-9]+.[0-9]+), spAttack=([0-9]+.[0-9]+), spDefense=([0-9]+.[0-9]+), speed=([0-9]+.[0-9]+)");
         Matcher m = getStates.matcher(wholeState);
         while (m.find()) {
-            a.setState(new State(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)), Integer.parseInt(m.group(3)), Integer.parseInt(m.group(4)), Integer.parseInt(m.group(5)), Integer.parseInt(m.group(6))));
+            a.setState(new State(Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)), Double.parseDouble(m.group(3)), Double.parseDouble(m.group(4)), Double.parseDouble(m.group(5)), Double.parseDouble(m.group(6))));
         }
         a.setIv(new int[]{rnd.nextInt(16)});
         //in msg steht die id mit den attacken und den ap und dem level und allem
         return a;
     }
 
+    public static Pokemon createStarter(int starterID) {
+        return getPokemon(starterID == 0 ? 1 : starterID == 1 ? 4 : 7, 5);
+    }
 
     //return  name + ";" + id + ";" + Arrays.toString(attacks) + ";" + nature + ";" + level + ";" + xp + ";" + maxXP + ";" +curHP + ";" +state.toString() + ";" + Arrays.toString(iv);
 
@@ -374,19 +471,41 @@ public class Pokemon {
      *
      * @return string to server
      */
-    private String toMsg() {
-        return this.toString2();
+    public String toMsg() {
+        return this.toString3();
     }
 
 
+    /* *//**
+     * for toMsg
+     *//*
+    private String toString3() {
+        StringBuilder b = new StringBuilder();
+        b.append(id).append(";");
+        b.append(level).append(";");
+        Arrays.stream(attacks).filter(Objects::nonNull).forEach(a -> {
+            b.append(a.getId()).append(",").append(a.getCurAP()).append("%");
+        });
+        b.append(";");
+        b.append(xp).append(";");
+
+        for (int i = 0; i < iv.length; i++) {
+            b.append(iv[i]);
+            if (i != iv.length - 1) b.append(",");
+        }
+        b.append(";").append(nature.ordinal());
+        return b.toString();
+    }*/
+
+
     /**
-     * sffd xp to a pokemon, for example after a fight
+     * adds xp to a pokemon, for example after a fight
      *
      * @param newExP the xp the pokemon gets from the fight
      */
-    private void addExp(int newExP) {
-        if (newExP + xp >= maxXP) {
-            levelUp(maxXP - xp - newExP);
+    public void addExp(int newExP) {
+        if (newExP + xp >= maxXPNeeded) {
+            levelUp(maxXPNeeded - xp - newExP);
         } else {
             xp = newExP + xp;
         }
@@ -401,7 +520,10 @@ public class Pokemon {
      */
     private void levelUp(int xpOverride) {
         level++;
-        state.add(id, level, nature);
+        double oldHP = state.getHP();
+        state.updateVals(this, level, nature);
+        curHP += (state.getHP() - oldHP);
+        curHP = Math.min(curHP, state.getHP());
         xp = xpOverride;
         if (level == evolvesAtLevel) {
             evolve();
@@ -413,8 +535,9 @@ public class Pokemon {
      */
     private void evolve() {
         id = evolvesIntoId;
+        state.updateVals(this, level, nature);
+        setType(template.get(id - 1).type);
     }
-
 
     //pos für wie weit vom spawnt entfernt
     //vl schöner machen und sachen in Methoden auslagern
@@ -426,7 +549,7 @@ public class Pokemon {
      * @param block the block the pokemon should spawn
      * @return a pokemon for the given data
      */
-    private static Pokemon createPokemon(Vector2D pos, World.Block block) {
+    public static Pokemon createPokemon(Vector2D pos, World.Block block) {
         int distance = (int) pos.magnitude();
         int level = (int) Math.sqrt(distance);
         List<Pokemon> possibilities = new ArrayList<>();
@@ -487,7 +610,7 @@ public class Pokemon {
                     }
                 }
             }
-            int number = (int) (Math.random() * (possibilities.size() - 1 + 1) + 1);
+            int number = (int) (Math.random() * (possibilities.size()) /*+ 1*/);
             return getPokemon(possibilities.get(number).id, level);
         }
         //math.sqrt(pos.magnitude) --> das is das level des pokemons pokemons
@@ -513,39 +636,44 @@ public class Pokemon {
      * @param attackId the attack with which it attacks
      */
     public void getsAttacked(Pokemon attacker, int attackId, boolean isCrit) {
-        Attack at = Attack.template.get(attackId);
-        double crit = 1.5;//mimimi leben dürfen nd negativ sein
-        double random = (attackRnd.nextInt(15) + 85) / 100D;
-        int hitRandom = hitProbRnd.nextInt(100);
-        double stab = 1;
-        if (at.getType().equals(this.type[0]) || at.getType().equals(this.type[1])) {
-            stab = 1.5;
-        }
-        boolean[] isHitting = new boolean[100];
-        double hitProb = at.getHitProbability();
-        for (int i = 0; i < 100; i++) {
-            if (i < hitProb) {
-                isHitting[i] = true;
+//        Attack at = Attack.template.get(attackId);
+        Attack at = attacker.attacks[attackId];
+        if (at.use()) {
+
+            double crit = 1.5;//mimimi leben dürfen nd negativ sein
+            double random = (attackRnd.nextInt(15) + 85) / 100D;
+            int hitRandom = hitProbRnd.nextInt(100);
+            double stab = 1;
+            if (at.getType().equals(this.type[0]) || at.getType().equals(this.type[1])) {
+                stab = 1.5;
             }
-        }
-        if (isHitting[hitRandom]) {
-            if (isCrit) {
-                if (this.type[1] == null) {
-                    curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * crit * random * stab * at.getType().getAttackMult(this.type[0]);
-                } else {
-                    curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * crit * random * stab * at.getType().getAttackMult(this.type[0]) * at.getType().getAttackMult(this.type[1]);
-                }
-            } else {
-                if (this.type[1] == null) {
-                    curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * random * stab * at.getType().getAttackMult(this.type[0]);
-                } else {
-                    curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * random * stab * at.getType().getAttackMult(this.type[0]) * at.getType().getAttackMult(this.type[1]);
+            boolean[] isHitting = new boolean[100];
+            double hitProb = at.getHitProbability();
+            for (int i = 0; i < 100; i++) {
+                if (i < hitProb) {
+                    isHitting[i] = true;
                 }
             }
-        } else {
-            System.out.println("Attacke hat nicht getroffen");
+            if (isHitting[hitRandom]) {
+                if (isCrit) {
+                    if (this.type[1] == null) {
+                        curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * crit * random * stab * at.getType().getAttackMult(this.type[0]);
+                    } else {
+                        curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * crit * random * stab * at.getType().getAttackMult(this.type[0]) * at.getType().getAttackMult(this.type[1]);
+                    }
+                } else {
+                    if (this.type[1] == null) {
+                        curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * random * stab * at.getType().getAttackMult(this.type[0]);
+                    } else {
+                        curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * random * stab * at.getType().getAttackMult(this.type[0]) * at.getType().getAttackMult(this.type[1]);
+                    }
+                }
+            }/* else {
+                System.out.println("Attacke hat nicht getroffen");
+            }*/
         }
-        System.out.println(curHP);
+
+//        System.out.println(curHP);
     }
 
     /**
@@ -582,7 +710,7 @@ public class Pokemon {
                 oneAttack = s.split("/");
                 //System.out.println(Arrays.toString(oneAttack));
                 if (Integer.parseInt(oneAttack[2]) <= level) {
-                    attackList.add(Attack.template.get(Integer.parseInt(oneAttack[0]) - 1));
+                    attackList.add(Attack.getFromTemp(Integer.parseInt(oneAttack[0])));
                 }
             } else {
                 counter++;
@@ -590,7 +718,33 @@ public class Pokemon {
             //System.out.println(Integer.parseInt(oneAttack[0]));
         }
         for (int i = 0; i < Math.min(erg.length, attackList.size()); i++) erg[i] = attackList.get(i);
+
+        if (erg[0] == null) {
+            erg[0] = Attack.getFromTemp(33);
+        }
         return erg;
+    }
+
+    public int getMaxHP() {
+        return (int) state.getHP();
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void heal(double healQuantity) {
+        curHP = Math.min(curHP + healQuantity, getMaxHP());
+    }
+
+
+    public boolean getsCaptured(Ball b) {//captuerRateMuell //TODO Formel einfuegen usw.
+//        f = \left\lfloor \dfrac {HP_{max} \times 255 \times 4}{HP_{current} \times Ball} \right\rfloor}
+       /*a int n = rnd.nextInt(b.getNCatch());
+        int f = (int) ((getMaxHP() * 255 * 4) / (getCurHP() * b.getCatchRate()));
+        double d = (((3 * getMaxHP() - 2 * curHP) * captureRate * b.getCatchRate()) / (3 * getMaxHP())) * 1;
+        System.out.println(d);*/
+        return true;
     }
 
     enum EvolveType {
@@ -654,7 +808,7 @@ public class Pokemon {
                 ", type=" + Arrays.toString(type) +//
                 ", level=" + level +
                 ", xp=" + xp +
-                ", maxXP=" + maxXP +
+                ", maxXP=" + maxXPNeeded +
                 ", captureRate=" + captureRate +//
                 ", block=" + block +//
                 ", growthRate='" + growthRate + '\'' +//
@@ -664,8 +818,8 @@ public class Pokemon {
                 '}';
     }
 
-    public String toString2() {
-        return name + ";" + id + ";" + Arrays.toString(attacks) + ";" + nature + ";" + level + ";" + xp + ";" + maxXP + ";" + curHP + ";" + state.toString() + ";" + Arrays.toString(iv);
+    private String toString2() {
+        return name + ";" + id + ";" + Arrays.toString(attacks) + ";" + nature + ";" + level + ";" + xp + ";" + maxXPNeeded + ";" + curHP + ";" + state.toString() + ";" + Arrays.toString(iv);
                 /*"Pokemon{" +
                 "name='" + name + '\'' +
                 ", id=" + id +
@@ -789,8 +943,8 @@ public class Pokemon {
         this.xp = xp;
     }
 
-    public void setMaxXP(int maxXP) {
-        this.maxXP = maxXP;
+    public void setMaxXPNeeded(int maxXPNeeded) {
+        this.maxXPNeeded = maxXPNeeded;
     }
 
     public void setCaptureRate(int captureRate) {
@@ -806,7 +960,11 @@ public class Pokemon {
     }
 
     public void setCurHP(double curHP) {
-        this.curHP = curHP;
+        this.curHP = Math.min(getMaxHP(), curHP);
+    }
+
+    public int getCurHP() {
+        return (int) curHP;
     }
 
     public void setState(State state) {

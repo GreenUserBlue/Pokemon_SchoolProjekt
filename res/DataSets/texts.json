@@ -13,7 +13,7 @@
       "We will heal your Pokemon, please wait.   ...   ...   We have healed your Pokemon, thanks for waiting."
     ],
     "4": [
-      "You have %$%situation%$% this fight and have %$%situation%$% %$%amount%$% €"
+      "You have %$%situation%$% this fight and have %$%situation%$% %$%amount%$%¥"
     ],
     "5": [
       "As Davids mom says in bed: You have to choose wisely which product you use at these times."
@@ -23,6 +23,12 @@
     ],
     "7": [
       "Thanks for stopping by, see you soon."
+    ],
+    "8": [
+      "%$%name%$% declined the fight request."
+    ],
+    "9": [
+      "You have caught the %$%poke%$%."
     ]
   },
   "100": {
@@ -55,6 +61,24 @@
     ],
     "5": [
       "You have bought %$%amount%$% %$%item%$% successfully."
+    ],
+    "6": [
+      "A wild %$%nameEn%$% appears!"
+    ],
+    "7": [
+      "%$%start%$% switched the %$%pokeOld%$% to a %$%pokeNew%$%."
+    ],
+    "8": [
+      "Waiting for opponent..."
+    ],
+    "9": [
+      "%$%start%$% healed the %$%poke%$% from %$%oldHP%$%HP to %$%newHP%$%HP."
+    ],
+    "10": [
+      "Waiting for opponent..."
+    ],
+    "11": [
+      "Waiting for opponent..."
     ]
   },
   "1100": {
@@ -72,6 +96,50 @@
       "1 (%$%cost0%$%)",
       "5 (%$%cost1%$%)",
       "10 (%$%cost2%$%)",
+      "Back"
+    ],
+    "2": [
+      "What should %$%nameTh%$% do?",
+      "Fight",
+      "Items",
+      "Pokémon",
+      "Run"
+    ],
+    "3": [
+      "What should %$%nameTh%$% do?",
+      "%$%name0%$% %$%curAP0%$%/%$%AP0%$%",
+      "%$%name1%$% %$%curAP1%$%/%$%AP1%$%",
+      "%$%name2%$% %$%curAP2%$%/%$%AP2%$%",
+      "%$%name3%$% %$%curAP3%$%/%$%AP3%$%",
+      "Back"
+    ],
+    "4": [
+      "What item do you want to use?",
+      "Balls",
+      "Potions",
+      "Back"
+    ],
+    "5": [
+      "What item do you want to use?",
+      "%$%item0%$% %$%amount0%$%x",
+      "%$%item1%$% %$%amount1%$%x",
+      "%$%item2%$% %$%amount2%$%x",
+      "%$%item3%$% %$%amount3%$%x",
+      "%$%item4%$% %$%amount4%$%x",
+      "Back"
+    ],
+    "6": [
+      "Are you sure you want to flee from Battle?",
+      "Yes",
+      "No"
+    ],
+    "7": [
+      "To witch Pokémon do you want to switch?",
+      "%$%name0%$%  %$%curHP0%$%/%$%HP0%$% HP",
+      "%$%name1%$%  %$%curHP1%$%/%$%HP1%$% HP",
+      "%$%name2%$%  %$%curHP2%$%/%$%HP2%$% HP",
+      "%$%name3%$%  %$%curHP3%$%/%$%HP3%$% HP",
+      "%$%name4%$%  %$%curHP4%$%/%$%HP4%$% HP",
       "Back"
     ]
   }

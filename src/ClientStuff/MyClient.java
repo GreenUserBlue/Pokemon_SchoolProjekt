@@ -5,16 +5,19 @@ import Calcs.Vector2D;
 import Envir.House;
 import Envir.World;
 import InGame.Item;
+import InGame.Pokemon;
 import ServerStuff.MessageType;
 import ServerStuff.User;
 import javafx.animation.AnimationTimer;
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
@@ -28,6 +31,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -74,6 +78,8 @@ public class MyClient extends Application {
 
     private final MarketGUI marketGUI = new MarketGUI(txt);
 
+    private final FightGUI fightGUI = new FightGUI(txt);
+
     /**
      * all Images which are needed for graphics
      */
@@ -106,55 +112,69 @@ public class MyClient extends Application {
         public void handle(long l) {
             if (System.currentTimeMillis() > timeTillNextUse) {
                 timeTillNextUse = System.currentTimeMillis() + 20;
-
                 txt.updateSize(stage.getScene());
                 Canvas c = (Canvas) (stage.getScene().getRoot().getChildrenUnmodifiable().get(0));
-
-                //client.getPlayers().getItem(0) = der Player dem dieser Client gehört
                 synchronized (client.getPlayers()) {
-                    //if client.getPlayers().getItem(0).getActivity()==fighting, dann dein Bulllshit, else mein Bullshit
-                    if (client.getPlayers().get(0).getHouseEntrancePos() == null) {
-                        client.getWorld().drawEnvir(c, client.getPlayers(), new Vector2D(stage.getScene().getWidth(), stage.getScene().getHeight()), allImgs);
+                    if (client.getPlayers().get(0).getActivity() == Player.Activity.fight) {
+                        fightGUI.draw(c, new Vector2D(stage.getScene().getWidth(), stage.getScene().getHeight()), allImgs);
+                        List<Keys> keys = (Keys.getSmartKeys(client.getKeysPressed()));
+                        if (keys.contains(Keys.confirm)) {
+                            txt.nextLine();
+                        } else if (keys.contains(Keys.decline)) {
+                            txt.decline(client.getPlayers().get(0));
+                        }
                     } else {
-                        client.getWorld().drawInsideHouse(c, client.getPlayers(), new Vector2D(stage.getScene().getWidth(), stage.getScene().getHeight()), allImgs);
+                        doRunning(c);
                     }
-                    List<Keys> keys = (Keys.getSmartKeys(client.getKeysPressed()));
-                    if (keys.contains(Keys.menu) && client.getPlayers().get(0).getActivity() != Player.Activity.menu) {
-                        menu = new Menu(getMyClient());
-                        menu.showMenu();
-                    } else if (keys.contains(Keys.confirm) && client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
-                        if (txt.nextLine()) {
-                            if (txt.getState() == TextEvent.TextEventState.selection) {
-                                System.out.println("MyClient.handle: now in selection");
-                            } else if (txt.isWalkableAfterwards()) {
-                                client.getPlayers().get(0).setActivity(Player.Activity.standing);
-                                System.out.println("MyClient.handle: finished");
-                            } else {
-                                System.out.println("MyClient.handle: finished");
-                            }
-
-                        }
-                    } else if (client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
-                        txt.getField().setVisible(true);
-//                        System.out.println("now in text");
-                    }
-                    if (((count++) & 0b11) == 0) {
-                        client.getPlayers().forEach(Player::updateHands);
-                        if (client.getPlayers().get(0).getActivity() == Player.Activity.moving || client.getPlayers().get(0).getActivity() == Player.Activity.standing) {
-                            StringBuilder res = new StringBuilder();
-                            keys = getUpdatedKeysToSendAndUpdatePlayerDir(lastKeysPressed, keys, client.getPlayers().get(0));
-                            keys.forEach(e -> res.append(e.ordinal()));
-                            if (keys.contains(Keys.confirm)) {
-                                res.append(",").append(client.getPlayers().get(0).getDir().ordinal());
-                            }
-                            client.send(MessageType.toStr(MessageType.keysPres) + res);
-                        } else if (client.getPlayers().get(0).getActivity() == Player.Activity.menu) {
-                            menu.updatePlayerMenuPos();
-                        }
-                    }
-                    lastKeysPressed = keys;
                 }
             }
+        }
+
+        /**
+         * what happens when the player is not Fighting
+         * @param c the canvas to draw on
+         */
+        private void doRunning(Canvas c) {
+            if (client.getPlayers().get(0).getHouseEntrancePos() == null) {
+                client.getWorld().drawEnvir(c, client.getPlayers(), new Vector2D(stage.getScene().getWidth(), stage.getScene().getHeight()), allImgs);
+            } else {
+                client.getWorld().drawInsideHouse(c, client.getPlayers(), new Vector2D(stage.getScene().getWidth(), stage.getScene().getHeight()), allImgs);
+            }
+            List<Keys> keys = (Keys.getSmartKeys(client.getKeysPressed()));
+            if (keys.contains(Keys.menu) && client.getPlayers().get(0).getActivity() != Player.Activity.menu) {
+                menu = new Menu(getMyClient());
+                menu.showMenu();
+            } else if (keys.contains(Keys.confirm) && client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
+                if (txt.nextLine()) {
+                    if (txt.getState() == TextEvent.TextEventState.selection) {
+                        System.out.println("MyClient.handle: now in selection");
+                    } else if (txt.isWalkableAfterwards()) {
+                        client.getPlayers().get(0).setActivity(Player.Activity.standing);
+                        System.out.println("MyClient.handle: finished");
+                    } else {
+                        System.out.println("MyClient.handle: finished");
+                    }
+                }
+            } else if (client.getPlayers().get(0).getActivity() == Player.Activity.textEvent) {
+                if (keys.contains(Keys.decline)) {
+                    txt.decline(client.getPlayers().get(0));
+                }
+            }
+            if (((count++) & 0b11) == 0) {
+                client.getPlayers().forEach(Player::updateHands);
+                if (client.getPlayers().get(0).getActivity() == Player.Activity.moving || client.getPlayers().get(0).getActivity() == Player.Activity.standing) {
+                    StringBuilder res = new StringBuilder();
+                    keys = getUpdatedKeysToSendAndUpdatePlayerDir(lastKeysPressed, keys, client.getPlayers().get(0));
+                    keys.forEach(e -> res.append(e.ordinal()));
+                    if (keys.contains(Keys.confirm)) {
+                        res.append(",").append(client.getPlayers().get(0).getDir().ordinal());
+                    }
+                    client.send(MessageType.toStr(MessageType.keysPres) + res);
+                } else if (client.getPlayers().get(0).getActivity() == Player.Activity.menu) {
+                    menu.updatePlayerMenuPos();
+                }
+            }
+            lastKeysPressed = keys;
         }
     };
 
@@ -314,6 +334,7 @@ public class MyClient extends Application {
             allImgs.put("Tree", new Image(String.valueOf(Paths.get("res/Envir/Tree.png").toUri().toURL())));
             allImgs.put("Water", new Image(String.valueOf(Paths.get("res/Envir/Water.png").toUri().toURL())));
             allImgs.put("WaterEdge", new Image(String.valueOf(Paths.get("res/Envir/WaterEdge.png").toUri().toURL())));
+            allImgs.put("FightBottomGrass", new Image(String.valueOf(Paths.get("res/Fight/BackGrass.png").toUri().toURL())));
             for (int i = 0; i < 1; i++) {
                 for (String dir : Arrays.stream(Player.Dir.values()).map(Enum::toString).collect(Collectors.toList())) {
                     for (String h : Arrays.stream(Player.Hands.values()).map(Enum::toString).collect(Collectors.toList())) {
@@ -343,19 +364,23 @@ public class MyClient extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) throws MalformedURLException {
+    public void start(Stage primaryStage) throws IOException {
         stage = primaryStage;
-        stage.setX(1000);
+        stage.setX(950);
         stage.setY(80);
         initImgs();
         TextEvent.initTexts();
+        Pokemon.init(true);
         Item.init(Path.of("./res/DataSets/Items.csv"));
+
+        //noinspection unchecked
         client = new Client(33333, "127.0.0.1", false, (a, b) -> {
             if (b instanceof String s && !s.startsWith(MessageType.toStr(MessageType.updatePos)) && !s.startsWith(MessageType.toStr(MessageType.textEvent)) && !s.startsWith(MessageType.toStr(MessageType.itemData)))
                 System.out.println("From Server: '" + b + '\'');
         }, getOnMsgClient());
         txt.setClient(client);
         marketGUI.setClient(client);
+        fightGUI.setClient(client);
         int height = 300;
         stage.setScene(new Scene(LoginScreens.getLoadingScreen(), height / 9D * 16, height));
         addListener();
@@ -392,6 +417,9 @@ public class MyClient extends Application {
                     case updatePos -> updatePos(s);
                     case textEvent -> doTextEvent(s.substring(3));
                     case itemData -> updateItemData(s.substring(MessageType.toStr(MessageType.itemData).length()));
+                    case fightData -> startFight(s);
+                    case inFightUpdate -> fightGUI.updateAll(s.substring(MessageType.toStr(MessageType.inFightUpdate).length()));
+                    case error -> System.out.println("something went wrong");
                     //TODO Clemenzzzzzz on Msg From Server
                 }
             }
@@ -399,13 +427,27 @@ public class MyClient extends Application {
     }
 
     /**
+     * starts a fight
+     *
+     * @param s the msg from the server
+     */
+    private void startFight(String s) {
+//        System.out.println("now starting fight maybe");
+        synchronized (client.getPlayers().get(0)) {
+            fightGUI.setPlayer(client.getPlayers().get(0));
+            client.getPlayers().get(0).setActivity(Player.Activity.fight);
+            fightGUI.startNewFight(s.split("N", 2)[1]);
+        }
+    }
+
+    /**
      * updates the items the player possesses currently
+     *
      * @param str the message from the server
      */
     private void updateItemData(String str) {
         synchronized (client.getPlayers().get(0)) {
             client.getPlayers().get(0).setMoney(Long.parseLong(str.split(";")[1].trim()));
-
             Arrays.stream(str.split(";")).skip(2).forEach(a -> {
                 String[] s = a.split(",");
                 client.getPlayers().get(0).getItems().put(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
@@ -414,7 +456,8 @@ public class MyClient extends Application {
     }
 
     /**
-     * starts textevents
+     * starts textEvents
+     *
      * @param s the message from the server
      */
     private void doTextEvent(String s) {
@@ -427,34 +470,74 @@ public class MyClient extends Application {
                         if (s.split(",").length == 1) {
                             int id = Integer.parseInt(s.substring(1));
                             Platform.runLater(() -> txt.startNewText(id, null));
-                        } else {
-                            int id = Integer.parseInt(s.substring(1).split(",")[0]);
-                            System.out.println("MyClient.doTextEvent: " + id);
-                            if (id == TextEvent.TextEventIDsTranslator.MarketShopMeet.getId()) {
-                                Platform.runLater(() -> marketGUI.startNewMarket(client.getPlayers().get(0), Integer.parseInt(s.split(",")[1])));
-                            } else {
-                                HashMap<String, String> data = new HashMap<>();
-                                Arrays.stream(s.substring(1).split(",")).skip(1).forEach(a -> data.put(a.split(":")[0], a.split(":")[1]));
-                                if (id == TextEvent.TextEventIDsTranslator.PlayersMeetAns.getId() || id == TextEvent.TextEventIDsTranslator.PlayersMeetQues.getId()) {
-                                    Optional<Player> op = client.getPlayers().stream().filter(a -> a.getName().equals(data.get("name"))).findFirst();
-                                    op.ifPresent(a -> {
-                                        client.getPlayers().get(0).setDir(Player.Dir.getDir(Vector2D.sub(a.getPos(), (client.getPlayers().get(0).getPos())), Player.Dir.none));
-                                        a.setDir(Player.Dir.getDir(Vector2D.sub((client.getPlayers().get(0).getPos()), a.getPos()), Player.Dir.none));
-                                    });
-                                    client.getPlayers().get(0).setDir(Player.Dir.getDir(Vector2D.sub(client.getPlayers().stream().filter(a -> a.getName().equals(data.get("name"))).map(Player::getPos).findFirst().orElse(new Vector2D()), (client.getPlayers().get(0).getPos())), Player.Dir.none));
-                                }
-                                Platform.runLater(() -> txt.startNewText(id, data));
-                            }
-                        }
+                        } else doTextEventsWithData(s);
                     }
                 }
             }
-            case 1 -> System.out.println("you are doing something weird");
+            case 1 -> {
+                p.setActivity(Player.Activity.textEvent);
+                if (s.split(",").length == 1) {
+                    int id = Integer.parseInt(s.substring(1));
+                    Platform.runLater(() -> txt.startNewText(id, null));
+                } else doTextEventsWithData(s);
+            }
         }
     }
 
     /**
-     * updates everything for the profileselect
+     * starts a textEvent with multiple texts
+     *
+     * @param s the message from the server
+     */
+    private void doTextEventsWithData(String s) {
+        int id = Integer.parseInt(s.substring(1).split(",")[0]);
+        System.out.println("MyClient.doTextEvent: " + id);
+        if (id == TextEvent.TextEventIDsTranslator.MarketShopMeet.getId()) {
+            Platform.runLater(() -> marketGUI.startNewMarket(client.getPlayers().get(0), Integer.parseInt(s.split(",")[1])));
+        } else {
+            HashMap<String, String> data = new HashMap<>();
+            Arrays.stream(s.substring(1).split(",")).skip(1).forEach(a -> data.put(a.split(":")[0], a.split(":")[1]));
+            if (id == TextEvent.TextEventIDsTranslator.PlayersMeetAns.getId() || id == TextEvent.TextEventIDsTranslator.PlayersMeetQues.getId()) {
+                changeLookingDirection(data);
+            }
+            Platform.runLater(() -> {
+                txt.startNewText(id, data);
+                if (id == TextEvent.TextEventIDsTranslator.PlayersMeetAns.getId()) {
+                    ObservableList<Node> children = txt.getOptionsNode().getChildren();
+                    ((Button) children.get(0)).setOnAction(e -> client.send(MessageType.toStr(MessageType.textEvent) + "1" + 0));
+                    ((Button) children.get(1)).setOnAction(e -> {
+                        HashMap<String, String> keys = new HashMap<>();
+                        keys.put("name", "You have");
+                        txt.startNewText(TextEvent.TextEventIDsTranslator.PlayersMeetDeclineFight.getId(), keys);
+                        client.send(MessageType.toStr(MessageType.textEvent) + "1" + 1);
+                    });
+                }
+            });
+        }
+    }
+
+    /**
+     * change the directions where the player is looking when talking to another player
+     *
+     * @param data the name of the other player
+     */
+    private void changeLookingDirection(HashMap<String, String> data) {
+        Optional<Player> op = client.getPlayers().stream().filter(a -> a.getName().equals(data.get("name"))).findFirst();
+        op.ifPresent(a -> {
+            client.getPlayers().get(0).setDir(Player.Dir.getDir(Vector2D.sub(a.getPos(), (client.getPlayers().get(0).getPos())), Player.Dir.none));
+            a.setDir(Player.Dir.getDir(Vector2D.sub((client.getPlayers().get(0).getPos()), a.getPos()), Player.Dir.none));
+        });
+        client.getPlayers().get(0).setDir(Player.Dir.getDir(
+                Vector2D.sub(client.getPlayers().stream()
+                                .filter(a -> a.getName().equals(data.get("name")))
+                                .map(Player::getPos)
+                                .findFirst().orElse(new Vector2D()),
+                        (client.getPlayers().get(0).getPos())), Player.Dir.none));
+    }
+
+    /**
+     * updates everything for the profileSelect
+     *
      * @param str the message from the server
      */
     private void doProfiles(String str) {
@@ -486,6 +569,7 @@ public class MyClient extends Application {
 
     /**
      * puts the player in the world
+     *
      * @param s the message from the server
      */
     private void doWorldSelect(String s) {

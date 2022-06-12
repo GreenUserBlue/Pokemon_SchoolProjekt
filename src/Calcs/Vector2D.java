@@ -77,6 +77,15 @@ public class Vector2D {
     }
 
     /**
+     * multipliziert den Vektor mit einem Faktor
+     *
+     * @param v2 Der Faktor
+     */
+    public Vector2D mult(double v2) {
+        return new Vector2D(x * v2, y * v2);
+    }
+
+    /**
      * berechnet den Winkel relativ zum 0 Punkt
      *
      * @param v der Vektor zum berechnen
@@ -147,7 +156,7 @@ public class Vector2D {
      *
      * @return double entfernung zum Spawn
      */
-    public double magnitude(){
+    public double magnitude() {
         return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
     }
 
@@ -189,8 +198,7 @@ public class Vector2D {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Vector2D vector2D = (Vector2D) o;
-        return Math.abs(x - vector2D.x) < e &&
-                Math.abs(y - vector2D.y) < e;
+        return Math.abs(x - vector2D.x) < e && Math.abs(y - vector2D.y) < e;
     }
 
     /**
@@ -208,19 +216,7 @@ public class Vector2D {
      * @param decimalPoints the number of decimal-points
      */
     public void round(int decimalPoints) {
-        x = round(x, decimalPoints);
-        y = round(y, decimalPoints);
-    }
-
-    /**
-     * rounds a single value to a single number of points
-     *
-     * @param value         the value which needs to be rounded
-     * @param decimalPoints the number of decimal-points
-     * @return tthe new rounded value
-     */
-    private static double round(double value, int decimalPoints) {
-        double d = Math.pow(10, decimalPoints);
-        return Math.round(value * d) / d;
+        x = Utils.round(x, decimalPoints);
+        y = Utils.round(y, decimalPoints);
     }
 }

@@ -1,28 +1,34 @@
 package InGame;
 
-import jdk.jshell.Snippet;
-
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author Clemens Hodina
  */
 public class Attack {
+
+    /**
+     * list of all attacks
+     */
+    private static List<Attack> template = new ArrayList<>();
+
     /**
      * id of the attack
      */
     private int id;
 
+    public String getName() {
+        return name;
+    }
+
     /**
      * name of the attack
      */
-    private String name;
+    private final String name;
 
     /**
      * type of the attack
@@ -39,7 +45,11 @@ public class Attack {
      */
     private int AP;
 
-    //z. 0.85 is 85% oder 1 = 100%
+    /**
+     * how often you can use an attack
+     */
+    private int curAP;
+
     /**
      * how probable it is that the attack hits
      */
@@ -50,18 +60,12 @@ public class Attack {
      */
     private boolean attacksAlwaysFirst;
 
+    //z. 0.85 is 85% oder 1 = 100%
+
     /**
      * the type of the attack
      */
     private AttackType attackType;
-
-    //maybe effects (paralysieren und brennen)
-
-
-    /**
-     * list of all attacks
-     */
-    public static List<Attack> template = new ArrayList<>();
 
     public Attack(String name) {
         this.name = name;
@@ -76,7 +80,15 @@ public class Attack {
         this.hitProbability = hitProbability;
         this.attacksAlwaysFirst = attacksAlwaysFirst;
         this.attackType = attackType;
+        this.curAP = AP;
     }
+
+    public Attack(int id, String name, Type type, int damage, int ap, double hitProbability, boolean attacksAlwaysFirst, AttackType attackType, int curAP) {
+        this(id, name, type, damage, ap, hitProbability, attacksAlwaysFirst, attackType);
+        this.curAP = curAP;
+    }
+
+    //maybe effects (paralysieren und brennen)
 
     public static void main(String[] args) throws IOException {
         Attack.init();
@@ -102,11 +114,11 @@ public class Attack {
             oneRow = lines[i].split(";");
             int a = 0;
             double b;
-            if (oneRow[4].equals("null")){
+            if (oneRow[4].equals("null")) {
                 b = -1;//trifft immer
-            }else{
+            } else {
                 a = Integer.parseInt(oneRow[4]);
-                b = (double) (a/100);
+                b = (double) (a / 100);
             }
             if (oneRow[1].equals("null")) {
                 template.add(new Attack(Integer.parseInt(oneRow[0]), oneRow[3], Type.valueOf(oneRow[5].toLowerCase()), 0, Integer.parseInt(oneRow[2]), a, false, AttackType.Status));
@@ -116,10 +128,20 @@ public class Attack {
         }
     }
 
-    enum AttackType {
-        Attack,
-        Special,
-        Status
+    public static Attack getFromTemp(int id) {
+        return template.get(id - 1).clone();
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getAP() {
+        return AP;
+    }
+
+    public int getCurAP() {
+        return curAP;
     }
 
     @Override
@@ -130,6 +152,7 @@ public class Attack {
                 ", type=" + type +
                 ", damage=" + damage +
                 ", AP=" + AP +
+                ", curAP=" + curAP +
                 ", hitProbability=" + hitProbability +
                 ", attacksAlwaysFirst=" + attacksAlwaysFirst +
                 ", attackType=" + attackType +
@@ -146,6 +169,26 @@ public class Attack {
 
     public double getHitProbability() {
         return hitProbability;
+    }
+
+    @SuppressWarnings({"MethodDoesntCallSuperMethod", "CloneDoesntDeclareCloneNotSupportedException"})
+    @Override
+    public Attack clone() {
+        return new Attack(id, name, type, damage, AP, hitProbability, attacksAlwaysFirst, attackType, curAP);
+    }
+
+    public void setCurAP(int curAP) {
+        this.curAP = curAP;
+    }
+
+    public boolean use() {
+        return --curAP > 0;
+    }
+
+    enum AttackType {
+        Attack,
+        Special,
+        Status
     }
 }
 
