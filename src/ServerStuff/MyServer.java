@@ -253,6 +253,10 @@ public class MyServer {
         }
     }
 
+    private static void updateDatabase(Player p){
+
+    }
+
     /**
      * @param c the client where the player is from
      * @param s the message from the client

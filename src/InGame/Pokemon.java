@@ -25,7 +25,6 @@ public class Pokemon {
 
 
     //TODO Entwicklungen mit Steinen oder trades
-    //TODO bei attacks muss man die AP abziehen wenn man angreift
     //Evoli is muell (einfach nur flamara und fertig)
 
     public String getName() {
@@ -500,7 +499,7 @@ public class Pokemon {
     /**
      * adds xp to a pokemon after a fight
      */
-    public int xpAfterFight(boolean isFightWild){
+    public int xpAfterFight(boolean isFightWild){//TODO aufrufen
         if (isFightWild){
             return (200 * level)/7;
         }else{
