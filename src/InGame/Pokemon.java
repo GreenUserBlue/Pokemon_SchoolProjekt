@@ -497,6 +497,26 @@ public class Pokemon {
         return b.toString();
     }*/
 
+    /**
+     * adds xp to a pokemon after a fight
+     */
+    public int xpAfterFight(boolean isFightWild){
+        if (isFightWild){
+            return (200 * level)/7;
+        }else{
+            return (int) (1.5 * 200 * level)/7;
+        }
+    }
+
+
+    /**
+     * says how much money you can get from this pokemon from a fight
+     */
+    public int getMaxMoney(){
+        return level * 3;
+    }
+
+
 
     /**
      * adds xp to a pokemon, for example after a fight
