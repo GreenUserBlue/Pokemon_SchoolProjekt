@@ -17,10 +17,7 @@ import javafx.scene.text.Font;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -86,7 +83,7 @@ public class FightGUI {
         List<Button> children = textEvent.getOptionsNode().getChildren().stream().filter(Button.class::isInstance).map(Button.class::cast).toList();
         children.get(0).setOnAction((e) -> showAttacksSelect());
         children.get(1).setOnAction((e) -> showItemTypeSelect());
-        children.get(2).setOnAction((e) -> showPokeSelect());
+        children.get(2).setOnAction((e) -> showSwitchPokeSelect());
         children.get(3).setOnAction((e) -> showRunSelect());
     }
 
@@ -127,32 +124,35 @@ public class FightGUI {
         children.get(children.size() - 1).setOnAction((e) -> doSingleMove());
     }
 
-    private void showPokeSelect() {
+    private void showSwitchPokeSelect() {
         HashMap<String, String> keys = new HashMap<>();
         List<Pokemon> pokeToShow;
         synchronized (thisPlayer) {
-            pokeToShow = thisPlayer.getPoke().stream().skip(1).filter((a) -> a.getCurHP() > 0).toList();
+            pokeToShow = thisPlayer.getPoke().stream().skip(1).toList();
         }
         AtomicInteger atI = new AtomicInteger();
         pokeToShow.forEach(a -> {
             keys.put("name" + atI.get(), a.getName());
-            keys.put("curHP" + atI.get(), (int) a.getCurHP() + "");
-            keys.put("HP" + atI.get(), (int) a.getMaxHP() + "");
+            keys.put("curHP" + atI.get(), a.getCurHP() + "");
+            keys.put("HP" + atI.get(), a.getMaxHP() + "");
             atI.incrementAndGet();
         });
         textEvent.startNewText(TextEventIDsTranslator.FightPokeSwitchInfo.getId(), keys, true);
-        List<Button> children = textEvent.getOptionsNode().getChildren().stream().filter(Button.class::isInstance).map(Button.class::cast).toList();
-
+        List<Button> children = new ArrayList<>(textEvent.getOptionsNode().getChildren().stream().filter(Button.class::isInstance).map(Button.class::cast).toList());
+        List<Button> toRem = new ArrayList<>();
         for (int i = 0; i < children.size(); i++) {
             if (pokeToShow.size() < i) {
                 textEvent.getOptionsNode().getChildren().remove(pokeToShow.size());
             } else {
                 int finalI = i;
-                children.get(i).setOnAction(e -> {
-                    sendChoice(FightChoice.Switch, finalI + "");
-                });
+                children.get(i).setOnAction(e -> sendChoice(FightChoice.Switch, finalI + ""));
+                if (i >= thisPlayer.getPoke().size() - 1 || thisPlayer.getPoke().get(i + 1).getCurHP() == 0) {
+                    toRem.add(children.get(i));
+                }
             }
+
         }
+        textEvent.getOptionsNode().getChildren().removeIf(toRem::contains);
         children.get(children.size() - 1).setOnAction((e) -> doSingleMove());
     }
 
@@ -333,7 +333,7 @@ public class FightGUI {
         HashMap<String, String> keys = new HashMap<>();
         List<Pokemon> pokeToShow;
         synchronized (thisPlayer) {
-            pokeToShow = thisPlayer.getPoke().stream().skip(1).filter((a) -> a.getCurHP() > 0).toList();
+            pokeToShow = thisPlayer.getPoke().stream().skip(1).toList();
         }
         AtomicInteger atI = new AtomicInteger();
         pokeToShow.forEach(a -> {
@@ -343,17 +343,22 @@ public class FightGUI {
             atI.incrementAndGet();
         });
         textEvent.startNewText(TextEventIDsTranslator.FightPokeSwitchInfo.getId(), keys, true);
-        List<Button> children = textEvent.getOptionsNode().getChildren().stream().filter(Button.class::isInstance).map(Button.class::cast).toList();
+        List<Button> children = new ArrayList<>(textEvent.getOptionsNode().getChildren().stream().filter(Button.class::isInstance).map(Button.class::cast).toList());
+        List<Button> toRem = new ArrayList<>();
         for (int i = 0; i < children.size(); i++) {
             if (pokeToShow.size() < i) {
                 textEvent.getOptionsNode().getChildren().remove(pokeToShow.size());
             } else {
                 int finalI = i;
-                children.get(i).setOnAction(e -> {
-                    sendChoice(FightChoice.ChooseAfterDeath, finalI + "");
-                });
+                children.get(i).setOnAction(e -> sendChoice(FightChoice.ChooseAfterDeath, finalI + ""));
+                if (i >= thisPlayer.getPoke().size() - 1 || thisPlayer.getPoke().get(i + 1).getCurHP() == 0) {
+                    toRem.add(children.get(i));
+                }
             }
+
         }
+        textEvent.getOptionsNode().getChildren().removeIf(toRem::contains);
+
         children.get(children.size() - 1).setText("Give Up");
         children.get(children.size() - 1).setOnAction((e) -> sendChoice(FightChoice.ChooseAfterDeath, "s"));
     }

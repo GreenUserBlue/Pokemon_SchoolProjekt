@@ -26,9 +26,10 @@ import java.util.regex.Pattern;
  */
 public class Pokemon {
 
+    private Server.ClientHandler virtualClientHandler;
+
 
     //TODO Entwicklungen mit Steinen oder trades
-    //Evoli is muell (einfach nur flamara und fertig)
 
     public String getName() {
         return name;
@@ -113,8 +114,6 @@ public class Pokemon {
      * how hard it is to find and capture the pokemon
      */
     private int captureRate;
-
-    //block auf dem das Pokemon spawnen kann
 
     /**
      * type of block on which the pokemon is abled to spawn
@@ -508,7 +507,7 @@ public class Pokemon {
     /**
      * adds xp to a pokemon after a fight
      */
-    public int xpAfterFight(boolean isFightWild) {//TODO aufrufen
+    public int getXpAfterDefeat(boolean isFightWild) {
         if (isFightWild) {
             return (200 * level) / 7;
         } else {
@@ -758,7 +757,6 @@ public class Pokemon {
 
     public void heal(double healQuantity) {
         curHP = Math.min(curHP + healQuantity, getMaxHP());
-        Arrays.stream(attacks).filter(Objects::nonNull).forEach(a -> a.setCurAP(a.getAP()));
     }
 
 
@@ -780,6 +778,7 @@ public class Pokemon {
             virtualClientHandler = new Server.ClientHandler();
             Player p = new Player();
             p.getPoke().add(this);
+            p.setActivity(Player.Activity.fight);
             virtualClientHandler.setPlayer(p);
         }
         virtualClientHandler.getPlayer().setMsgForFightWaiting(getMsgForFighting());

@@ -4,6 +4,7 @@ import Calcs.Vector2D;
 import Envir.City;
 import Envir.House;
 import Envir.World;
+import InGame.Attack;
 import InGame.Pokemon;
 import ServerStuff.MessageType;
 import ServerStuff.Server;
@@ -392,7 +393,15 @@ public class Player {
                             }
                             if (b.getVal() == TextEvent.TextEventIDsTranslator.PokeHeal.getId()) {
                                 synchronized (pokemon) {
-                                    pokemon.forEach(a -> a.setCurHP(a.getMaxHP()));
+                                    pokemon.forEach(pok -> {
+                                        Attack[] attacks = pok.getAttacks();
+                                        Arrays.stream(attacks).filter(Objects::nonNull).forEach(a -> {
+                                            System.out.println(a.getName() + " " + a.getCurAP() + "/" + a.getAP());
+                                            a.setCurAP(a.getAP());
+                                            System.out.println(a.getName() + " " + a.getCurAP() + "/" + a.getAP());
+                                        });
+                                        pok.setCurHP(pok.getMaxHP());
+                                    });
                                 }
                             }
                             synchronized (client.getPlayer()) {

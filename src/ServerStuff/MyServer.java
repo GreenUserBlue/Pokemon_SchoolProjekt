@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
 public class MyServer {
 
-//    Todo setonNextMsg(Consumer) und setonNextMsgOnly(Consumer)
+//    To do setonNextMsg(Consumer) und setonNextMsgOnly(Consumer)
 
     public static Server getServer() {
         return server;
@@ -120,17 +120,17 @@ public class MyServer {
         if (s.startsWith("s")) {
             doSurrender(c, FightGUI.FightChoice.Surrender);
         } else {
-            List<Pokemon> l = c.getPlayer().getPoke().stream().filter(a -> a.getCurHP() > 0).toList();
-            if (l.size() > Utils.toInt(s)) {
-                Utils.switchObjects(c.getPlayer().getPoke(), c.getPlayer().getPoke().indexOf(l.get(Utils.toInt(s))) - 1);
-                msg += "s" + "-|-" + c.getPlayer().getPoke().get(0).toMsg();
-                if (c.getOtherClient() != null) {
-                    c.getOtherClient().send(MessageType.toStr(MessageType.inFightUpdate) + "" + choice + "-|-" + 1 + msg);
-                }
+            if (c.getPlayer().getPoke().size() > Utils.toInt(s) + 1) {
+                Utils.switchObjects(c.getPlayer().getPoke(), Utils.toInt(s));
+                msg += 0;
+                msg += "-|-" + c.getPlayer().getPoke().get(0).toMsg();
             } else {
-                msg += "n";//illegal pokemon choosen (not allowed)
+                msg += 1;//does not have that many pokemon
             }
             c.send(MessageType.toStr(MessageType.inFightUpdate) + "" + choice + "-|-" + 0 + msg);
+            if (c.getOtherClient() != null) {
+                c.getOtherClient().send(MessageType.toStr(MessageType.inFightUpdate) + "" + choice + "-|-" + 1 + msg);
+            }
         }
     }
 
@@ -163,7 +163,11 @@ public class MyServer {
         poke2 = c2.getPlayer().getPoke().get(0);
         System.out.println("MyServer.doFightInteraction: " + poke1.getName() + poke1.toMsg());
         System.out.println("MyServer.doFightInteraction: " + poke2.getName() + poke2.toMsg());
+        if (!(poke2.getCurHP() > 0 && c1.getPlayer().getActivity() == Player.Activity.fight)) {
+            System.out.println("MyServer.doFightInteraction: " + "hallo");
+        }
         if (poke2.getCurHP() > 0 && c1.getPlayer().getActivity() == Player.Activity.fight) {
+            System.out.println("MyServer.doFightInteraction: " + poke2.getCurHP());
             String sToSend2 = doSingleChoice(ch2, c2, poke2, Utils.toInt(s2[1]), c1, poke1);
             System.out.println();
             System.out.println(sToSend2);
@@ -172,7 +176,6 @@ public class MyServer {
         } else {
             c1.send(MessageType.toStr(MessageType.inFightUpdate) + ch1 + "-|-" + 0 + "-|-" + sToSend1);
             c2.send(MessageType.toStr(MessageType.inFightUpdate) + ch1 + "-|-" + 1 + "-|-" + sToSend1);
-            System.out.println("a pokemon died or got trapped in a little ball where its forced to fight its own kind, that is sad, ok?");
         }
     }
 
@@ -210,14 +213,14 @@ public class MyServer {
                 pokeEnemy.getsAttacked(pokeThis, eventIDThis, false);
                 res += pokeEnemy.getCurHP() + "-|-";
                 if (pokeEnemy.getCurHP() < 1) {
-                    int xp = 200;
+                    int xp = pokeEnemy.getXpAfterDefeat(player.getOtherClient() == null);
                     pokeThis.addExp(xp);
                     res += xp + "-|-" + pokeThis.toMsg() + "-|-";
                     if (enemy.getPlayer().getPoke().stream().noneMatch(a -> a.getCurHP() > 0)) {//TODO some stuff
                         res += "w";//won
                         sendPosUpdate(player);
                         player.setOtherPoke(null);
-                        long amount = 0;
+                        long amount = Math.min(player.getPlayer().getMoney(), pokeEnemy.getMaxMoney());
                         if (player.getOtherClient() != null) {
                             synchronized (player.getOtherClient()) {
                                 amount = Math.min(player.getPlayer().getMoney(), 200);
@@ -453,7 +456,7 @@ public class MyServer {
         }
     }
 
-    private static void updateDatabase(Player p){
+    private static void updateDatabase(Player p) {
 
         /*
         methode bekommt player object (der player hat pokemon)
@@ -576,13 +579,13 @@ public class MyServer {
                 skinID = (int) curPlayer.getObject("skinID");
                 money = (int) curPlayer.getObject("money");
                 idFromPlayer = (int) curPlayer.getObject("startPokID");
-                pos.setX((Integer) curPlayer.getObject("posX"));
-                pos.setY((Integer) curPlayer.getObject("posY"));
+//                pos.setX((Integer) curPlayer.getObject("posX"));//TODO position at world select
+//                pos.setY((Integer) curPlayer.getObject("posY"));
             } else throw new SQLException();
         } catch (SQLException ignored) {
         }
         Player p = new Player(name, pos, skinID, idFromPlayer, idForDB, money);
-
+        pos.setX(1000);
         try {
             assert curPlayer != null;
             ResultSet itemsInDB = Database.get("select user.name, Item_ID, quantity from user inner join Player P on User.PK_User_ID = P.FK_User_ID inner join ItemToPlayer ITP on P.PK_Player_ID = ITP.FK_Player where PK_Player_ID =" + curPlayer.getObject("PK_Player_ID") + ";");
@@ -600,8 +603,9 @@ public class MyServer {
             p.getPoke().add(Pokemon.createStarter(idFromPlayer));
             p.getPoke().add(Pokemon.createPokemon(new Vector2D(100, 7666), World.Block.Water));
             p.getPoke().add(Pokemon.createPokemon(new Vector2D(100, 420), World.Block.Grass));
-            p.getPoke().get(0).setCurHP(10);
-            p.getPoke().get(1).setCurHP(10);
+//            p.getPoke().get(0).setCurHP(10);
+//            p.getPoke().get(1).setCurHP(5);
+//            p.getPoke().get(2).setCurHP(10);
         } else System.out.println("MyServer.initPlayer: " + p.getPoke());
         return p;
     }
