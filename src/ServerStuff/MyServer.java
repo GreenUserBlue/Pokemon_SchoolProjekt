@@ -76,7 +76,7 @@ public class MyServer {
         server.getWorlds().add(new World(696969, "K"));
     }
 
-    private static void doInFightChoice(Server.ClientHandler c, String msg) {
+    private static void doInFightChoice(Server.ClientHandler c, String msg) {//TODO wenn verloren, dann zu 0,0 teleporten
         String[] s = msg.split(",");
         FightGUI.FightChoice choice = FightGUI.FightChoice.valueOf(s[0]);
         if (choice == FightGUI.FightChoice.Surrender) {
@@ -603,9 +603,7 @@ public class MyServer {
             p.getPoke().add(Pokemon.createStarter(idFromPlayer));
             p.getPoke().add(Pokemon.createPokemon(new Vector2D(100, 7666), World.Block.Water));
             p.getPoke().add(Pokemon.createPokemon(new Vector2D(100, 420), World.Block.Grass));
-//            p.getPoke().get(0).setCurHP(10);
-//            p.getPoke().get(1).setCurHP(5);
-//            p.getPoke().get(2).setCurHP(10);
+//            p.getPoke().get(2).setCurHP(10);//TODO pokemon auslesen
         } else System.out.println("MyServer.initPlayer: " + p.getPoke());
         return p;
     }

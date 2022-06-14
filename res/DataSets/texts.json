@@ -28,7 +28,7 @@
       "%$%name%$% declined the fight request."
     ],
     "9": [
-      "You have caught the %$%poke%$%."
+      "You have caught %$%poke%$%."
     ]
   },
   "100": {
@@ -66,19 +66,19 @@
       "A wild %$%nameEn%$% appears!"
     ],
     "7": [
-      "%$%start%$% switched the %$%pokeOld%$% to a %$%pokeNew%$%."
+      "%$%start%$% switched %$%pokeOld%$% to %$%pokeNew%$%."
     ],
     "8": [
       "Waiting for opponent..."
     ],
     "9": [
-      "%$%start%$% healed the %$%poke%$% from %$%oldHP%$%HP to %$%newHP%$%HP."
+      "%$%start%$% healed %$%poke%$% from %$%oldHP%$%HP to %$%newHP%$%HP."
     ],
     "10": [
       "%$%pokeThis%$% has attacked with %$%att%$%.   It was %$%effect%$% effective."
     ],
     "11": [
-      "%$%start%$% killed the %$%pokeEn%$% and gained %$%xp%$%XP."
+      "%$%start%$% killed %$%pokeEn%$% and gained %$%xp%$%XP."
     ],
     "12": [
       "%$%pokeThis%$% has a level up to level %$%lvl%$%."

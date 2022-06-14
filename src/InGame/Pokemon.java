@@ -188,6 +188,13 @@ public class Pokemon {
         a.getsAttacked(b, 0, false);
         System.out.println(b.getName() + " " + b.getCurHP() + "curHP, lvl:" + b.getLevel());
         System.out.println(a.getName() + " " + a.getCurHP() + "curHP, lvl:" + a.getLevel());
+        Pokemon p = new Pokemon();
+        p.type = new Type[]{Type.grass, Type.normal};
+        System.out.println(p.getEffectness(Type.fire));
+        System.out.println(p.getEffectness(Type.water));
+        System.out.println(p.getEffectness(Type.flying));
+        System.out.println(p.getEffectness(Type.ghost));
+
     }
 
 
@@ -395,6 +402,7 @@ public class Pokemon {
         poke.growthRate = temp.growthRate;
         poke.maxXPNeeded = getXpNeeded(poke.growthRate, poke.level);
         poke.name = temp.name;
+        poke.type = temp.type;
         return poke;
     }
 
@@ -789,6 +797,20 @@ public class Pokemon {
         int max = Arrays.stream(attacks).filter(Objects::nonNull).toList().size();
         final int eneAttackID = rnd.nextInt(max);
         return /*MessageType.inFightChoice +*/ FightGUI.FightChoice.Attack + "," + eneAttackID;
+    }
+
+    public String getEffectness(Type t) {
+        double mult = t.getAttackMult(type[0]);
+        if (type[1] != null) {
+            mult *= t.getAttackMult(this.type[1]);
+        }
+        System.out.println(mult);
+        if (mult == 0) return "not at all";
+        if (mult == 0.5) return "not very";
+        if (mult == 1) return "normal";
+        if (mult == 2) return "very";
+        if (mult > 2) return "very very";
+        else return "normal";
     }
 
     enum EvolveType {

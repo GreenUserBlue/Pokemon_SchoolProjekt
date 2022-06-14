@@ -357,7 +357,6 @@ public class MyClient extends Application {
         }
     }
 
-
     /**
      * Starts the program
      *

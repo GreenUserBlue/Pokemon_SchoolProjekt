@@ -367,6 +367,7 @@ public class FightGUI {
         keys.put("pokeThis", thisPoke.getName());
         Attack att = thisPoke.getAttacks()[Utils.toInt(s[2])];
         synchronized (keys) {
+            keys.put("effect", enemy.getEffectness(att.getType()));
             keys.put("att", att.getName());
         }
         att.use();
