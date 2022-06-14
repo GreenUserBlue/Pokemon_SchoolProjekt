@@ -166,19 +166,26 @@ public class Pokemon {
         }
          */
 
-        Pokemon a = createPokemon(new Vector2D(200, 610), World.Block.Grass);
-        System.out.println(a);
+        Pokemon a = createPokemon(new Vector2D(10, 10), World.Block.Grass);
+//        System.out.println(a);
         /*
             getAttacks(0,40);
         } catch (IOException e) {
             e.printStackTrace();
         }
          */
-        Pokemon b = createPokemon(new Vector2D(4000, 7000), World.Block.Grass);
+        Pokemon b = createPokemon(new Vector2D(200, 200), World.Block.Grass);
 //        a.getsAttacked(b, 4, false);
 
-        System.out.println(a.getsCaptured((Ball) Item.getItem(2)));
+//        System.out.println(a.getsCaptured((Ball) Item.getItem(2)));
 
+
+        System.out.println(b.getName() + " " + b.getCurHP() + "curHP, lvl:" + b.getLevel());
+        System.out.println(a.getName() + " " + a.getCurHP() + "curHP, lvl:" + a.getLevel());
+        b.getsAttacked(a, 0, false);
+        a.getsAttacked(b, 0, false);
+        System.out.println(b.getName() + " " + b.getCurHP() + "curHP, lvl:" + b.getLevel());
+        System.out.println(a.getName() + " " + a.getCurHP() + "curHP, lvl:" + a.getLevel());
     }
 
 
