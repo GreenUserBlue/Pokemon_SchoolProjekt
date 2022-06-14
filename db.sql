@@ -45,13 +45,10 @@ create Table Badge
 create table Pokemon
 (
     PK_Poke_ID   int auto_increment,
-    name         varchar(25),
-    pokeID       int,
-    nature       int,
+    Message VARCHAR(50),
     FK_Player_ID int,
     PRIMARY KEY (PK_Poke_ID),
-    FOREIGN KEY (FK_Player_ID) REFERENCES Player (PK_Player_ID),
-    check ( Pokemon.pokeID >= 0 )
+    FOREIGN KEY (FK_Player_ID) REFERENCES Player (PK_Player_ID)
 );
 
 CREATE TABLE World
@@ -117,12 +114,6 @@ VALUES (1, 2),
        (3, 1),
        (2, 2);
 
-insert into Pokemon (name, pokeID, nature, FK_Player_ID)
-VALUES ('Franz', 1, 3, 1),
-       ('Franz2', 2, 3, 1),
-       ('Franz2', 2, 3, 2),
-       ('Franz3', 2, 3, 1);
-
 insert into player (skinID, startPokID, FK_User_ID, language, money)
     VALUE (
            0, 2, (select PK_User_ID from User where name = 'Name'), 'eng', 200
@@ -148,6 +139,12 @@ VALUES (1, 1, 10),
 select user.name, Item_ID, quantity from user inner join Player P on User.PK_User_ID = P.FK_User_ID inner join ItemToPlayer ITP on P.PK_Player_ID = ITP.FK_Player where PK_Player_ID =1;
 
 select * from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = 1 && User.name = 'Name2';
+
+INSERT INTO Pokemon (Message, FK_Player_ID) VALUES ('hello', 1), ('hello', 2),('hello', 1),('hello', 1),('hello', 3);
+DELETE FROM Pokemon WHERE FK_Player_ID = 1;
+
+DELETE FROM myposition WHERE FK_PK_Player_ID = 1;
+INSERT INTO myposition (FK_PK_Player_ID, FK_PK_World_ID, posX, posY) VALUES (1,1,200,400);
 
 
 # select count(PK_Badge_ID) as nbr from Badge inner join Player P on Badge.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID = 4;
