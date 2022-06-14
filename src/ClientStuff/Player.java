@@ -18,6 +18,9 @@ import java.util.*;
  */
 public class Player {
 
+    public Player() {
+    }
+
     public String getMsgForFightWaiting() {
         return msgForFightWaiting;
     }
@@ -384,6 +387,7 @@ public class Player {
                             String s;
 
                             if (b.getVal() == TextEvent.TextEventIDsTranslator.MarketShopMeet.getId()) {
+                                System.out.println("now sending");
                                 sendItemData(client);
                             }
                             if (b.getVal() == TextEvent.TextEventIDsTranslator.PokeHeal.getId()) {
@@ -428,6 +432,7 @@ public class Player {
      * sends the data for the player
      */
     public void sendItemData(Server.ClientHandler client) {
+        System.out.println(money);
         StringBuilder str = new StringBuilder(MessageType.toStr(MessageType.itemData) + ";" + money);
         items.forEach((key, value) -> str.append(";").append(key).append(",").append(value));
         client.send(str.toString());
@@ -437,13 +442,13 @@ public class Player {
         return pokemon;
     }
 
-    public void sendPokeData(Server.ClientHandler cl, Pokemon pokeOther) {
+    public void sendPokeData(Server.ClientHandler cl, Pokemon pokeOther, boolean isAgainstPlayer) {
         String betweenPoke = "N";
         StringBuilder sToSend = new StringBuilder(MessageType.toStr(MessageType.fightData));
         sToSend.append(betweenPoke).append(pokeOther.toMsg());
         pokemon.forEach(a -> sToSend.append("N").append(a.toMsg()));
         //TODO daten senden, plus daten in datenbank zum testen geben
-        cl.send(sToSend + betweenPoke);
+        cl.send(sToSend + betweenPoke + "&" + isAgainstPlayer);
     }
 
     public void checkToStartFightInGrass(Server.ClientHandler client, World w) {
@@ -452,7 +457,7 @@ public class Player {
                 Pokemon poke = Pokemon.createPokemon(pos, World.Block.Grass);
                 synchronized (this) {
                     sendItemData(client);
-                    sendPokeData(client, poke);
+                    sendPokeData(client, poke, false);
                     activity = Activity.fight;
                 }
                 synchronized (client) {

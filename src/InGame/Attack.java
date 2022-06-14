@@ -55,6 +55,10 @@ public class Attack {
      */
     private double hitProbability;
 
+    public boolean attacksAlwaysFirst() {
+        return attacksAlwaysFirst;
+    }
+
     /**
      * if the attack always attacks first
      */

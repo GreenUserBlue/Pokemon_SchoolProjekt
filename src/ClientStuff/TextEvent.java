@@ -231,7 +231,9 @@ public class TextEvent {
         List<JSONValue> h = eventTexts.get(jsonValue).getList();
         AtomicReference<String> s = new AtomicReference<>(h.get(0).getStr());
         if (keys != null) {
-            keys.forEach((a, b) -> s.set(s.get().replaceAll("%[$]%" + a + "%[$]%", b)));
+            synchronized (keys) {
+                keys.forEach((a, b) -> s.set(s.get().replaceAll("%[$]%" + a + "%[$]%", b)));
+            }
         }
         text = Objects.requireNonNull(splitToLines(s.get().replaceAll(" {3}", System.lineSeparator()), 80)).toArray(new String[0]);
         optionsNode.getChildren().clear();
@@ -239,7 +241,9 @@ public class TextEvent {
         h.stream().skip(1).forEach(a -> {
             if (keys != null) {
                 AtomicReference<String> str = new AtomicReference<>(a.getStr());
-                keys.forEach((c, b) -> str.set(str.get().replaceAll("%[$]%" + c + "%[$]%", b)));
+                synchronized (keys) {
+                    keys.forEach((c, b) -> str.set(str.get().replaceAll("%[$]%" + c + "%[$]%", b)));
+                }
                 optionsAfterText.add(str.get());
             } else {
                 optionsAfterText.add(a.getStr());
@@ -485,6 +489,10 @@ public class TextEvent {
         FightSwitchPoke(1007, false),
         FightWaitingOpponent(1008, false),
         FightUseItem(1009, false),
+        FightAttacks(1010, false),
+        FightEnemyKilled(1011, false),
+        FightLevelUp(1012, false),
+        FightPokeEvolves(1013, false),
         FightWhatDo(1102, false),
         FightAttackSel(1103, false),
         FightItemTypeSel(1104, false),

@@ -43,6 +43,6 @@ public class Utils {
     }
 
     public static int toInt(String s) {
-        return Integer.parseInt(s);
+        return Integer.parseInt(s.trim());
     }
 }

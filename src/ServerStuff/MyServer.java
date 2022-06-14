@@ -7,10 +7,7 @@ import ClientStuff.Keys;
 import ClientStuff.Player;
 import ClientStuff.TextEvent;
 import Envir.World;
-import InGame.Ball;
-import InGame.Item;
-import InGame.Pokemon;
-import InGame.Potion;
+import InGame.*;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -21,6 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
 public class MyServer {
 
 //    Todo setonNextMsg(Consumer) und setonNextMsgOnly(Consumer)
@@ -79,7 +77,32 @@ public class MyServer {
     }
 
     private static void doInFightChoice(Server.ClientHandler c, String msg) {
-        if (c.getOtherClient() != null) {
+        String[] s = msg.split(",");
+        FightGUI.FightChoice choice = FightGUI.FightChoice.valueOf(s[0]);
+        if (choice == FightGUI.FightChoice.Surrender) {
+            doSurrender(c, choice);
+        } else if (choice == FightGUI.FightChoice.ChooseAfterDeath) {
+            synchronized (c) {
+                doChooseAfterDeath(c, choice, s[1]);
+            }
+        } else {
+            synchronized (c) {
+                c.getPlayer().setMsgForFightWaiting(msg);
+                if (c.getOtherClient() != null) {
+                    synchronized (c.getOtherClient()) {
+                        if (c.getOtherClient().getPlayer().getMsgForFightWaiting() != null) {
+                            doFightInteraction(c, c.getPlayer().getPoke().get(0), c.getOtherClient(), c.getOtherClient().getPlayer().getPoke().get(0));
+                            c.getPlayer().setMsgForFightWaiting(null);
+                            c.getOtherClient().getPlayer().setMsgForFightWaiting(null);
+                        }
+                    }
+                } else {
+                    doFightInteraction(c, c.getPlayer().getPoke().get(0), c.getOtherPoke().getClientForServerAttack(), c.getOtherPoke());
+                    c.getPlayer().setMsgForFightWaiting(null);
+                }
+            }
+        }
+       /*a if (c.getOtherClient() != null) {
             synchronized (c.getOtherClient().getPlayer()) {
                 if (c.getOtherClient().getPlayer().getMsgForFightWaiting() == null) {
                     c.getPlayer().setMsgForFightWaiting(msg);
@@ -89,14 +112,168 @@ public class MyServer {
             }
         } else {
             updateFightAgainstPoke(c, msg);
+        }*/
+    }
+
+    private static void doChooseAfterDeath(Server.ClientHandler c, FightGUI.FightChoice choice, String s) {
+        String msg = /*MessageType.inFightUpdate + "" + choice + "-|-a +*/ "-|-" + s + "-|-";
+        if (s.startsWith("s")) {
+            doSurrender(c, FightGUI.FightChoice.Surrender);
+        } else {
+            List<Pokemon> l = c.getPlayer().getPoke().stream().filter(a -> a.getCurHP() > 0).toList();
+            if (l.size() > Utils.toInt(s)) {
+                Utils.switchObjects(c.getPlayer().getPoke(), c.getPlayer().getPoke().indexOf(l.get(Utils.toInt(s))) - 1);
+                msg += "s" + "-|-" + c.getPlayer().getPoke().get(0).toMsg();
+                if (c.getOtherClient() != null) {
+                    c.getOtherClient().send(MessageType.toStr(MessageType.inFightUpdate) + "" + choice + "-|-" + 1 + msg);
+                }
+            } else {
+                msg += "n";//illegal pokemon choosen (not allowed)
+            }
+            c.send(MessageType.toStr(MessageType.inFightUpdate) + "" + choice + "-|-" + 0 + msg);
         }
     }
 
 
-    private static void updateFightAgainstPoke(Server.ClientHandler c, String msg) {
+    private static void doFightInteraction(Server.ClientHandler c1, Pokemon poke1, Server.ClientHandler c2, Pokemon poke2) {
+        String[] s1 = c1.getPlayer().getMsgForFightWaiting().split(",");
+        String[] s2 = c2.getPlayer().getMsgForFightWaiting().split(",");
+        FightGUI.FightChoice ch1 = FightGUI.FightChoice.valueOf(s1[0]);
+        FightGUI.FightChoice ch2 = FightGUI.FightChoice.valueOf(s2[0]);
+        boolean isCorrectOrderOfAction = isCorrectOrderOfAction(ch1, poke1, Utils.toInt(s1[1]), ch2, poke2, Utils.toInt(s2[1]));
+        if (!isCorrectOrderOfAction) {
+            String[] sTemp = s1;
+            FightGUI.FightChoice chTemp = ch1;
+            Server.ClientHandler cTemp = c1;
+            Pokemon pTemp = poke1;
+
+            s1 = s2;
+            ch1 = ch2;
+            c1 = c2;
+            poke1 = poke2;
+
+            s2 = sTemp;
+            ch2 = chTemp;
+            c2 = cTemp;
+            poke2 = pTemp;
+        }
+        // choice + "-|-" + 0 + "-|-" am Anfang hingeben
+        String sToSend1 = doSingleChoice(ch1, c1, poke1, Utils.toInt(s1[1]), c2, poke2);
+        poke1 = c1.getPlayer().getPoke().get(0);
+        poke2 = c2.getPlayer().getPoke().get(0);
+        System.out.println("MyServer.doFightInteraction: " + poke1.getName() + poke1.toMsg());
+        System.out.println("MyServer.doFightInteraction: " + poke2.getName() + poke2.toMsg());
+        if (poke2.getCurHP() > 0 && c1.getPlayer().getActivity() == Player.Activity.fight) {
+            String sToSend2 = doSingleChoice(ch2, c2, poke2, Utils.toInt(s2[1]), c1, poke1);
+            System.out.println();
+            System.out.println(sToSend2);
+            c1.send(MessageType.toStr(MessageType.inFightUpdate) + ch1 + "-|-" + 0 + "-|-" + sToSend1 + "._." + ch2 + "-|-" + 1 + "-|-" + sToSend2);
+            c2.send(MessageType.toStr(MessageType.inFightUpdate) + ch1 + "-|-" + 1 + "-|-" + sToSend1 + "._." + ch2 + "-|-" + 0 + "-|-" + sToSend2);
+        } else {
+            c1.send(MessageType.toStr(MessageType.inFightUpdate) + ch1 + "-|-" + 0 + "-|-" + sToSend1);
+            c2.send(MessageType.toStr(MessageType.inFightUpdate) + ch1 + "-|-" + 1 + "-|-" + sToSend1);
+            System.out.println("a pokemon died or got trapped in a little ball where its forced to fight its own kind, that is sad, ok?");
+        }
+    }
+
+    private static String doSingleChoice(FightGUI.FightChoice choice, Server.ClientHandler player, Pokemon pokeThis, int eventIDThis, Server.ClientHandler enemy, Pokemon pokeEnemy) {
+        String res = "";
+        res += eventIDThis + "-|-";
+        switch (choice) {
+            case Item -> {
+                if (player.getPlayer().getItems().get(eventIDThis) != null && player.getPlayer().getItems().get(eventIDThis) > 0) { //check if it is available
+                    player.getPlayer().getItems().put(eventIDThis, player.getPlayer().getItems().get(eventIDThis) - 1);
+                    Item it = Item.getItem(eventIDThis);
+                    if (it instanceof Potion potion) {
+                        pokeThis.heal(potion.getHealQuantity());
+                        res += pokeThis.getCurHP();
+                    } else if (it instanceof Ball b) {
+                        boolean getCaptured = player.getOtherClient() == null && pokeEnemy.getsCaptured(b);
+                        if (getCaptured) {
+                            player.getPlayer().getPoke().add(pokeEnemy);
+                            player.getPlayer().setActivity(Player.Activity.standing);
+                        }
+                        res += getCaptured ? "c" : "f";// captured/failed
+                    }
+                }
+            }
+            case Switch -> {
+                if (player.getPlayer().getPoke().size() > eventIDThis + 1) {
+                    Utils.switchObjects(player.getPlayer().getPoke(), eventIDThis);
+                    res += 0;
+                    res += "-|-" + player.getPlayer().getPoke().get(0).toMsg();
+                } else {
+                    res += 1;//does not have that many pokemon
+                }
+            }
+            case Attack -> {
+                pokeEnemy.getsAttacked(pokeThis, eventIDThis, false);
+                res += pokeEnemy.getCurHP() + "-|-";
+                if (pokeEnemy.getCurHP() < 1) {
+                    int xp = 200;
+                    pokeThis.addExp(xp);
+                    res += xp + "-|-" + pokeThis.toMsg() + "-|-";
+                    if (enemy.getPlayer().getPoke().stream().noneMatch(a -> a.getCurHP() > 0)) {//TODO some stuff
+                        res += "w";//won
+                        sendPosUpdate(player);
+                        player.setOtherPoke(null);
+                        long amount = 0;
+                        if (player.getOtherClient() != null) {
+                            synchronized (player.getOtherClient()) {
+                                amount = Math.min(player.getPlayer().getMoney(), 200);
+                                player.getPlayer().setMoney(player.getPlayer().getMoney() - amount);
+                                player.getOtherClient().getPlayer().setMoney(player.getOtherClient().getPlayer().getMoney() + amount);
+                                player.getOtherClient().getPlayer().setActivity(Player.Activity.textEvent);
+                            }
+                        }
+                        res += "-|-" + amount;
+                    } else {
+                        res += "c";//continue fight
+                    }
+                }
+            }
+        }
+        return res;
+    }
+
+    private static boolean isCorrectOrderOfAction(FightGUI.FightChoice ch1, Pokemon poke1, int id1, FightGUI.FightChoice ch2, Pokemon poke2, int id2) {
+        if (ch1.getPriority() != ch2.getPriority()) {
+            return ch1.getPriority() > ch2.getPriority();
+        }
+        if (ch1 == FightGUI.FightChoice.Attack) {
+            Attack a1 = poke1.getAttacks()[id1];
+            Attack a2 = poke2.getAttacks()[id2];
+            if (a1.attacksAlwaysFirst() != a2.attacksAlwaysFirst()) {
+                return a1.attacksAlwaysFirst();
+            }
+        }
+        return poke1.getSpeed() >= poke2.getSpeed();
+    }
+
+
+    private static void doSurrender(Server.ClientHandler c, FightGUI.FightChoice choice) {
+        synchronized (c.getPlayer()) {
+            c.getPlayer().setActivity(Player.Activity.textEvent);
+        }
+        sendPosUpdate(c);
+        c.setOtherPoke(null);
+        long amount = 0;
+        if (c.getOtherClient() != null) {
+            synchronized (c.getOtherClient()) {
+                amount = Math.min(c.getPlayer().getMoney(), 200);
+                c.getPlayer().setMoney(c.getPlayer().getMoney() - amount);
+                c.getOtherClient().getPlayer().setMoney(c.getOtherClient().getPlayer().getMoney() + amount);
+                c.getOtherClient().getPlayer().setActivity(Player.Activity.textEvent);
+                c.getOtherClient().send(MessageType.toStr(MessageType.inFightUpdate) + choice + "-|-" + 1 + "-|-" + amount);
+            }
+        }
+        c.send(MessageType.toStr(MessageType.inFightUpdate) + choice + "-|-" + 0 + "-|-" + amount);
+    }
+
+    /*s private static void updateFightAgainstPoke(Server.ClientHandler c, String msg) {
         String[] s = msg.split(",");
         FightGUI.FightChoice choice = FightGUI.FightChoice.valueOf(s[0]);
-        StringBuilder sToSend = new StringBuilder(MessageType.toStr(MessageType.inFightUpdate));
+        StringBuilder bToSend = new StringBuilder(MessageType.toStr(MessageType.inFightUpdate));
         final Player player = c.getPlayer();
         switch (choice) {
             case Surrender -> {
@@ -105,8 +282,8 @@ public class MyServer {
                     player.setActivity(Player.Activity.standing);
                 }
                 sendPosUpdate(c);
-                sToSend.append(choice).append("-|-").append(0).append("-|-").append(".|.");
-//                c.send(sToSend.toString());
+                bToSend.append(choice).append("-|-").append(0).append("-|-").append(".|.");
+//                c.send(bToSend.toString());
 //                c.send(MessageType.toStr(MessageType.inFightUpdate) + choice + "-|-" + 0);
 //                return;
             }
@@ -114,43 +291,72 @@ public class MyServer {
                 synchronized (player) {
                     Utils.switchObjects(player.getPoke(), Utils.toInt(s[1]));
                 }
-                sToSend.append(choice).append("-|-").append(0).append("-|-").append(s[1]).append("._.");
+                bToSend.append(choice).append("-|-").append(0).append("-|-").append(s[1]).append("._.");
             }
             case Item -> {
                 synchronized (player) {
                     int itemID = Utils.toInt(s[1]);
                     if (player.getItems().get(itemID) != null && player.getItems().get(itemID) > 0) {
                         player.getItems().put(itemID, player.getItems().get(itemID) - 1);
-                        sToSend.append(choice).append("-|-").append(0).append("-|-").append(itemID).append("-|-");
+                        bToSend.append(choice).append("-|-").append(0).append("-|-").append(itemID).append("-|-");
 //                    append(useItemAndGetToSendString(itemID, player, c.getOtherPoke(), c))
                         Item it = Item.getItem(itemID);
                         if (it instanceof Potion potion) {
                             player.getPoke().get(0).heal(potion.getHealQuantity());
-                            sToSend.append(player.getPoke().get(0).getCurHP());
+                            bToSend.append(player.getPoke().get(0).getCurHP());
                         } else if (it instanceof Ball b) {
-                           /* if (player.getPoke().size() < 6) {
-                                sToSend.append("t");// stands for "too many pokemon already"
-                            } else */
                             if (c.getOtherPoke().getsCaptured(b)) {
-                                player.setActivity(Player.Activity.standing);
                                 player.getPoke().add(c.getOtherPoke());
+                                player.setActivity(Player.Activity.standing);
                                 c.setOtherPoke(null);
                                 sendPosUpdate(c);
-                                sToSend.append("c"); // stands for "captured"
+                                bToSend.append("c"); // stands for "captured"
                             } else {
-                                sToSend.append("f"); // stands for "failed to capture"
+                                bToSend.append("f"); // stands for "failed to capture"
                             }
                         } else {
-                            sToSend.append("ERROR");
-
+                            bToSend.append("ERROR");
                         }
-                        sToSend.append("._.");
+                        bToSend.append("._.");
+                    }
+                }
+            }
+            case Attack -> {
+                synchronized (player) {
+                    Pokemon p = player.getPoke().get(0);
+                    Pokemon pEne = c.getOtherPoke();
+                    bToSend.append(choice).append("-|-");
+                    int attackID = Utils.toInt(s[1]);
+                    if (p.getSpeed() >= pEne.getSpeed()) {
+                        pEne.getsAttacked(p, attackID, false);
+                        bToSend.append(0).append("-|-");
+                        if (pEne.getCurHP() > 0) {
+                            bToSend.append(0).append("-|-").append(attackID).append("-|-").append(pEne.getCurHP()).append("._.");
+                        } else {
+                            bToSend.append(1).append("-|-").append(attackID).append("-|-").append(pEne.getCurHP()).append("-|-");
+                            int xp = 200;
+                            p.addExp(xp);
+                            bToSend.append(xp).append("-|-");
+                            bToSend.append(p.toMsg());
+                        }
+                    } else {
+                        bToSend.append(1).append("-|-");
+                        int max = Arrays.stream(pEne.getAttacks()).filter(Objects::nonNull).toList().size();
+                        final int eneAttackID = (int) (Math.random() * max);
+                        p.getsAttacked(pEne, eneAttackID, false);
+                        if (p.getCurHP() > 0) {
+                            bToSend.append(0).append("-|-").append(eneAttackID).append("-|-").append(p.getCurHP()).append("._.");
+                        } else {
+                            bToSend.append(1).append("-|-");
+                            System.out.println("Pokemon defeated");
+                        }
                     }
                 }
             }
         }
-        c.send(sToSend.toString());
+        c.send(bToSend.toString());
     }
+*/
 
     /**
      * what happens when a player tries to buy an item
@@ -169,6 +375,7 @@ public class MyServer {
                 c.getPlayer().getItems().putIfAbsent(it.getId(), 0);
                 c.getPlayer().getItems().put(it.getId(), c.getPlayer().getItems().get(it.getId()) + amount);
             }
+            c.getPlayer().sendItemData(c);
         }
     }
 
@@ -195,8 +402,10 @@ public class MyServer {
                 System.out.println("MyServer.doTextEvents: " + c.getOtherClient().getUsername());
                 c.getOtherClient().send(MessageType.toStr(MessageType.textEvent) + 1 + TextEvent.TextEventIDsTranslator.PlayersMeetDeclineFight.getId() + ",name:" + c.getUsername() + " has");
                 c.getOtherClient().setOtherClient(null);
+//                c.getOtherClient().getPlayer().setActivity(Player.Activity.textEvent);
                 c.setOtherClient(null);
-                System.out.println("now sending");
+//                c.getPlayer().setActivity(Player.Activity.textEvent);
+                System.out.println("now sending");//TODO machen dass der bug, wenn man spricht und declined und dann wieder spricht weg ist
             } else {
                 System.out.println("Der Kampf wurde accepted");
 //       a         StringBuilder sToSendThis = new StringBuilder(MessageType.toStr(MessageType.fightData));
@@ -204,25 +413,16 @@ public class MyServer {
                 synchronized (c.getPlayer()) {
                     synchronized (c.getOtherClient().getPlayer()) {
                         Player otherP = c.getOtherClient().getPlayer();
-                        System.out.println(c.getOtherClient().getOtherClient());
                         c.getPlayer().sendItemData(c);
                         otherP.sendItemData(c.getOtherClient());
 
                         c.getPlayer().setActivity(Player.Activity.fight);
                         otherP.setActivity(Player.Activity.fight);
 
-                        otherP.sendPokeData(c.getOtherClient(), c.getPlayer().getPoke().get(0));
-                        c.getPlayer().sendPokeData(c, otherP.getPoke().get(0));
-/*//              a          sToSendThis.append(otherP.getPoke().get(0).toMsg());
-//                        sToSendOther.append(c.getPlayer().getPoke().get(0).toMsg());
-
-//                        otherP.getPoke().forEach(a -> sToSendOther.append("$").append(a.toMsg()));
-//                        c.getPlayer().getPoke().forEach(a -> sToSendThis.append("$").append(a.toMsg()));*/
+                        otherP.sendPokeData(c.getOtherClient(), c.getPlayer().getPoke().get(0), true);
+                        c.getPlayer().sendPokeData(c, otherP.getPoke().get(0), true);
                     }
                 }
-                //TODO something here, also alle Daten senden an beide (Pokemon und so)
-/*//                System.out.println(sToSendThis);
-//                System.out.println(sToSendOther);*/
             }
         }
     }
@@ -398,18 +598,20 @@ public class MyServer {
      */
     private static void sendPosUpdate(Server.ClientHandler c) {
         int loadingAreaWidth = 28;
-        List<Player> all = new ArrayList<>(server.getClients().values())
-                .parallelStream()
-                .filter(Objects::nonNull)
-                .map(Server.ClientHandler::getPlayer)
-                .filter(e -> e != null && c.getPlayer().getWorld().equals(e.getWorld()))
-                .filter(e -> Math.abs(e.getPos().getX() - c.getPlayer().getPos().getX()) < loadingAreaWidth)
-                .filter(e -> Math.abs(e.getPos().getY() - c.getPlayer().getPos().getY()) < loadingAreaWidth)
-                .filter(e -> (c.getPlayer().getHouseEntrancePos() == null ? e.getHouseEntrancePos() == null : c.getPlayer().getHouseEntrancePos().equals(e.getHouseEntrancePos())))
-                .collect(Collectors.toList());
-        StringBuilder str = new StringBuilder();
-        all.forEach(e -> str.append('{').append(e.getName()).append(',').append(e.getPos().getX() + e.getCurWalked().getX()).append(',').append(e.getPos().getY() + e.getCurWalked().getY()).append(',').append(e.getSkin()).append('}'));
-        c.send(MessageType.toStr(MessageType.updatePos) + str);
+        if (c.getPlayer().getWorld() != null) {
+            List<Player> all = new ArrayList<>(server.getClients().values())
+                    .parallelStream()
+                    .filter(Objects::nonNull)
+                    .map(Server.ClientHandler::getPlayer)
+                    .filter(e -> e != null && c.getPlayer().getWorld().equals(e.getWorld()))
+                    .filter(e -> Math.abs(e.getPos().getX() - c.getPlayer().getPos().getX()) < loadingAreaWidth)
+                    .filter(e -> Math.abs(e.getPos().getY() - c.getPlayer().getPos().getY()) < loadingAreaWidth)
+                    .filter(e -> (c.getPlayer().getHouseEntrancePos() == null ? e.getHouseEntrancePos() == null : c.getPlayer().getHouseEntrancePos().equals(e.getHouseEntrancePos())))
+                    .collect(Collectors.toList());
+            StringBuilder str = new StringBuilder();
+            all.forEach(e -> str.append('{').append(e.getName()).append(',').append(e.getPos().getX() + e.getCurWalked().getX()).append(',').append(e.getPos().getY() + e.getCurWalked().getY()).append(',').append(e.getSkin()).append('}'));
+            c.send(MessageType.toStr(MessageType.updatePos) + str);
+        }
     }
 
     /**

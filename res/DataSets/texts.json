@@ -75,10 +75,16 @@
       "%$%start%$% healed the %$%poke%$% from %$%oldHP%$%HP to %$%newHP%$%HP."
     ],
     "10": [
-      "Waiting for opponent..."
+      "%$%pokeThis%$% has attacked with %$%att%$%.   It was %$%effect%$% effective."
     ],
     "11": [
-      "Waiting for opponent..."
+      "%$%start%$% killed the %$%pokeEn%$% and gained %$%xp%$%XP."
+    ],
+    "12": [
+      "%$%pokeThis%$% has a level up to level %$%lvl%$%."
+    ],
+    "13": [
+      "%$%pokeThis%$% has evolved into %$%pokeNew%$%."
     ]
   },
   "1100": {

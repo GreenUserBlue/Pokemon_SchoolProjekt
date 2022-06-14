@@ -12,8 +12,11 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.text.Font;
 
+import java.net.MalformedURLException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -44,8 +47,22 @@ public class FightGUI {
 
     private boolean isAgainstPlayer = false;
 
+    private Ball caughtWithBall = null;
+
+    private static ImagePattern background;
+
+    static {
+        try {
+            background = new ImagePattern(new Image(String.valueOf(Path.of("./res/Fight/Background.png").toUri().toURL())));
+        } catch (MalformedURLException ignored) {
+        }
+    }
+
     public void startNewFight(String s) {
-        String[] str = s.split("N");
+        String[] st = s.split("&");
+        isAgainstPlayer = Boolean.parseBoolean(st[1]);
+        String[] str = st[0].split("N");
+        caughtWithBall = null;
         synchronized (thisPlayer) {
             thisPlayer.getPoke().clear();
             Arrays.stream(str).skip(1).filter(a -> !a.isBlank()).forEach(a -> thisPlayer.getPoke().add(Pokemon.getFromMsg(a.trim())));
@@ -173,7 +190,6 @@ public class FightGUI {
             });
             textEvent.startNewText(TextEventIDsTranslator.FightItemSingleSel.getId(), keys, true);
         }
-        //        itemsToShow.keySet().stream().map(Item::getItem);
         List<Button> children = textEvent.getOptionsNode().getChildren().stream().filter(Button.class::isInstance).map(Button.class::cast).toList();
         for (int i = 0; i < children.size(); i++) {
             if (itemsToShow.size() < i) {
@@ -200,98 +216,234 @@ public class FightGUI {
 
 
     public void updateAll(String msg) {
-        System.out.println("FightGUI.updateAll: " + msg);
         String[] split = msg.split("\\._\\.");
-        updateSingle(split[0], split.length > 1 ? split[1] : split[0]);
+        updateSingle(split[0], split.length > 1 ? split[1] : /*split[0]*/null);
     }
 
     private void updateSingle(String msg, String msgForOther) {
         String[] s = msg.split("-\\|-");
         FightGUI.FightChoice choice = FightGUI.FightChoice.valueOf(s[0]);
         HashMap<String, String> keys = new HashMap<>();
+        keys.put("start", s[1].startsWith("0") ? "You have" : "The enemy has");
         switch (choice) {
             case Surrender -> {
-                keys.put("situation", s[1].equals("0") ? "lost" : "won");
-                if (!isAgainstPlayer) {
-                    keys.put("amount", "0");
-                }
-                Platform.runLater(() -> {
-                    textEvent.startNewText(TextEventIDsTranslator.FightEnd.getId(), keys);
-                    synchronized (thisPlayer) {
-                        thisPlayer.setActivity(Player.Activity.textEvent);
-                    }
-                });
+                doSurrender(s, keys);
                 return;
             }
-            case Switch -> {
-                if (s[1].equals("0")) {
-                    keys.put("start", "You have");
-                    synchronized (thisPoke) {
-                        keys.put("pokeOld", thisPoke.getName());
-                        Utils.switchObjects(thisPlayer.getPoke(), Utils.toInt(s[2]));
-                        thisPoke = thisPlayer.getPoke().get(0);
-                        keys.put("pokeNew", thisPoke.getName());
-                    }
-                } else {
-                    keys.put("start", "The enemy has");
-                    synchronized (thisPoke) {
-                        keys.put("pokeOld", enemy.getName());
-                        enemy = Pokemon.getFromMsg(s[2]);
-                        keys.put("pokeNew", enemy.getName());
-                    }
-                }
-                Platform.runLater(() -> {
-                    textEvent.startNewText(TextEventIDsTranslator.FightSwitchPoke.getId(), keys);
-                });
-
-            }
+            case Switch -> doSwitchPokemon(s, keys);
 
             case Item -> {
-                Item it = Item.getItem(Utils.toInt(s[2]));
-                if (it instanceof Potion) {
-                    if (s[1].startsWith("0")) {
-                        keys.put("start", "You have");
-                        keys.put("poke", thisPoke.getName());
-                        keys.put("oldHP", thisPoke.getCurHP() + "");
-                        thisPoke.setCurHP(Utils.toInt(s[3]));
-                        keys.put("newHP", thisPoke.getCurHP() + "");
-                    } else {
-                        keys.put("start", "The enemy has");
-                        keys.put("poke", enemy.getName());
-                        keys.put("oldHP", enemy.getCurHP() + "");
-                        enemy.setCurHP(Utils.toInt(s[3]));
-                        keys.put("newHP", enemy.getCurHP() + "");
-                    }
-                    Platform.runLater(() -> {
-                        textEvent.startNewText(TextEventIDsTranslator.FightUseItem.getId(), keys);
-                    });
-                } else if (it instanceof Ball b) {
-                    // sToSend.append("t");// stands for "too many pokemon already"
-                    //                            } else if (c.getOtherPoke().getsCaptured(b)) {
-                    //                                player.setActivity(Player.Activity.standing);
-                    //                                c.setOtherPoke(null);
-                    //                                sendPosUpdate(c);
-                    //                                sToSend.append("c"); // stands for "captured"
-                    //                            } else {
-                    //                                sToSend.append("f"); // stands for "failed to capture"
-                    if (s[3].startsWith("c")) {
-                        keys.put("poke", enemy.getName());
-                        Platform.runLater(() -> {
-                            textEvent.startNewText(TextEventIDsTranslator.FightEndCapture.getId(), keys);
-                            synchronized (thisPlayer) {
-                                thisPlayer.setActivity(Player.Activity.textEvent);
-                            }
-                        });
-                        return;
-                    }
+                if (doItemsAndIsFightEnd(s, keys)) return;
+            }
+
+            case Attack -> {
+                if (doAttackAndIsFightEnd(s, keys)) return;
+            }
+            case ChooseAfterDeath -> {
+                doSwitchPokemon(s, keys);
+            }
+        }
+
+        if (msgForOther != null) {
+            textEvent.addOnFin(() -> updateSingle(msgForOther, null));
+        } else {
+            if (thisPlayer.getPoke().get(0).getCurHP() > 0 && enemy.getCurHP() > 0) {
+                textEvent.addOnFin(this::doSingleMove);
+            }
+        }
+    }
+
+    private boolean doAttackAndIsFightEnd(String[] s, HashMap<String, String> keys) {
+        if (s[1].startsWith("0")) showAttackLog(s, keys, thisPoke, enemy);
+        else showAttackLog(s, keys, enemy, thisPoke);
+        if (Utils.toInt(s[3]) < 1) {
+            if (s[1].startsWith("0")) showPokeDefeated(s, keys, thisPoke, enemy, true);
+            else showPokeDefeated(s, keys, enemy, thisPoke, false);
+            return true;
+        }
+        return false;
+    }
+
+    private void showPokeDefeated(String[] s, HashMap<String, String> keys, Pokemon thisPoke, Pokemon enemy, boolean isMyThis) {
+        Pokemon pokeNew = Pokemon.getFromMsg(s[5]);
+        int xp = Utils.toInt(s[4]);
+        synchronized (keys) {
+            keys.put("xp", xp + "");
+            keys.put("pokeEn", enemy.getName());
+        }
+        int oldLvl = thisPoke.getLevel();
+        int oldId = thisPoke.getId();
+        synchronized (keys) {
+            keys.put("pokeThis", thisPoke.getName());
+            thisPoke.addExp(xp);
+            if (pokeNew.getLevel() != oldLvl) {
+                keys.put("lvl", pokeNew.getLevel() + "");
+                if (pokeNew.getId() != oldId) {
+                    keys.put("pokeNew", pokeNew.getName());
                 }
             }
         }
-//        if (msgForOther != null) {
-//            textEvent.addOnFin(() -> updateSingle(msgForOther, null));
-//        } else {
-        textEvent.addOnFin(this::doSingleMove);
-//        }
+        System.out.println("FightGUI.showPokeDefeated: " + thisPoke.getXp());
+        System.out.println("FightGUI.showPokeDefeated: " + thisPoke.getMaxXPNeeded());
+        textEvent.addOnFin(() -> {
+            textEvent.startNewText(TextEventIDsTranslator.FightEnemyKilled.getId(), keys);
+            textEvent.addOnFin(() -> {
+                if (keys.get("lvl") != null) {
+                    textEvent.startNewText(TextEventIDsTranslator.FightLevelUp.getId(), keys);
+                    textEvent.addOnFin(() -> {
+                        if (keys.get("pokeNew") != null) {
+                            textEvent.startNewText(TextEventIDsTranslator.FightPokeEvolves.getId(), keys);
+                            textEvent.addOnFin(() -> {
+                                showTextAfterPokeDeafeated(s, keys, isMyThis, pokeNew);
+                            });
+                        } else {
+                            showTextAfterPokeDeafeated(s, keys, isMyThis, pokeNew);
+                        }
+                    });
+                } else {
+                    showTextAfterPokeDeafeated(s, keys, isMyThis, pokeNew);
+                }
+            });
+        });
+    }
+
+    private void showTextAfterPokeDeafeated(String[] s, HashMap<String, String> keys, boolean isMyThis, Pokemon pokeNew) {
+        if (isMyThis) {
+            this.thisPoke = pokeNew;
+            if (s[6].startsWith("c")) {
+                textEvent.startNewText(TextEventIDsTranslator.FightWaitingOpponent.getId(), null);
+            } else {
+                keys.put("situation", "won");
+                keys.put("amount", Utils.toInt(s[7]) + "");
+                endFight(keys);
+            }
+        } else {
+            this.enemy = pokeNew;
+            if (s[6].startsWith("c")) {
+                showSelectionAfterDefeat();
+            } else {
+                keys.put("situation", "lost");
+                keys.put("amount", Utils.toInt(s[7]) + "");
+                endFight(keys);
+            }
+        }
+    }
+
+    private void showSelectionAfterDefeat() {
+        HashMap<String, String> keys = new HashMap<>();
+        List<Pokemon> pokeToShow;
+        synchronized (thisPlayer) {
+            pokeToShow = thisPlayer.getPoke().stream().skip(1).filter((a) -> a.getCurHP() > 0).toList();
+        }
+        AtomicInteger atI = new AtomicInteger();
+        pokeToShow.forEach(a -> {
+            keys.put("name" + atI.get(), a.getName());
+            keys.put("curHP" + atI.get(), a.getCurHP() + "");
+            keys.put("HP" + atI.get(), a.getMaxHP() + "");
+            atI.incrementAndGet();
+        });
+        textEvent.startNewText(TextEventIDsTranslator.FightPokeSwitchInfo.getId(), keys, true);
+        List<Button> children = textEvent.getOptionsNode().getChildren().stream().filter(Button.class::isInstance).map(Button.class::cast).toList();
+        for (int i = 0; i < children.size(); i++) {
+            if (pokeToShow.size() < i) {
+                textEvent.getOptionsNode().getChildren().remove(pokeToShow.size());
+            } else {
+                int finalI = i;
+                children.get(i).setOnAction(e -> {
+                    sendChoice(FightChoice.ChooseAfterDeath, finalI + "");
+                });
+            }
+        }
+        children.get(children.size() - 1).setText("Give Up");
+        children.get(children.size() - 1).setOnAction((e) -> sendChoice(FightChoice.ChooseAfterDeath, "s"));
+    }
+
+    private void showAttackLog(String[] s, HashMap<String, String> keys, Pokemon thisPoke, Pokemon enemy) {
+        keys.put("pokeThis", thisPoke.getName());
+        Attack att = thisPoke.getAttacks()[Utils.toInt(s[2])];
+        synchronized (keys) {
+            keys.put("att", att.getName());
+        }
+        att.use();
+        Platform.runLater(() -> textEvent.startNewText(TextEventIDsTranslator.FightAttacks.getId(), keys));
+        enemy.setCurHP(Utils.toInt(s[3]));
+    }
+
+    private boolean doItemsAndIsFightEnd(String[] s, HashMap<String, String> keys) {
+        Item it = Item.getItem(Utils.toInt(s[2]));
+        if (it instanceof Potion) {
+            if (s[1].startsWith("0")) {
+                keys.put("start", "You have");
+                keys.put("poke", thisPoke.getName());
+                keys.put("oldHP", thisPoke.getCurHP() + "");
+                thisPoke.setCurHP(Utils.toInt(s[3]));
+                keys.put("newHP", thisPoke.getCurHP() + "");
+            } else {
+                keys.put("start", "The enemy has");
+                keys.put("poke", enemy.getName());
+                keys.put("oldHP", enemy.getCurHP() + "");
+                enemy.setCurHP(Utils.toInt(s[3]));
+                keys.put("newHP", enemy.getCurHP() + "");
+            }
+            Platform.runLater(() -> {
+                textEvent.startNewText(TextEventIDsTranslator.FightUseItem.getId(), keys);
+            });
+        } else if (it instanceof Ball b) {
+            if (s[3].startsWith("c")) {
+                caughtWithBall = b;
+                keys.put("poke", enemy.getName());
+                Platform.runLater(() -> {
+                    textEvent.startNewText(TextEventIDsTranslator.FightEndCapture.getId(), keys);
+                    textEvent.addOnFin(() -> {
+                        synchronized (thisPlayer) {
+                            thisPlayer.setActivity(Player.Activity.standing);
+                        }
+                    });
+                });
+                return true;
+            } else if (s[3].startsWith("f")) {
+                System.out.println("kein Pokemon gefangen (noch kein TextEvent)");
+            }
+        }
+        return false;
+    }
+
+    private void doSwitchPokemon(String[] s, HashMap<String, String> keys) {
+        if (s[1].equals("0")) {
+            keys.put("start", "You have");
+            synchronized (thisPoke) {
+                keys.put("pokeOld", thisPoke.getName());
+                Utils.switchObjects(thisPlayer.getPoke(), Utils.toInt(s[2]));
+                thisPoke = thisPlayer.getPoke().get(0);
+                keys.put("pokeNew", thisPoke.getName());
+            }
+        } else {
+            keys.put("start", "The enemy has");
+            synchronized (thisPoke) {
+                keys.put("pokeOld", enemy.getName());
+                enemy = Pokemon.getFromMsg(s[4]);
+                keys.put("pokeNew", enemy.getName());
+            }
+        }
+        Platform.runLater(() -> {
+            textEvent.startNewText(TextEventIDsTranslator.FightSwitchPoke.getId(), keys);
+        });
+    }
+
+    private void doSurrender(String[] s, HashMap<String, String> keys) {
+        keys.put("situation", s[1].equals("0") ? "lost" : "won");
+        keys.put("amount", Utils.toInt(s[2]) + "");
+        endFight(keys);
+    }
+
+    private void endFight(HashMap<String, String> keys) {
+        Platform.runLater(() -> {
+            textEvent.startNewText(TextEventIDsTranslator.FightEnd.getId(), keys);
+            textEvent.addOnFin(null);
+            synchronized (thisPlayer) {
+                thisPlayer.setActivity(Player.Activity.textEvent);
+            }
+        });
     }
 
 
@@ -302,11 +454,13 @@ public class FightGUI {
         canvas.setHeight(size.getY());
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.clearRect(0, 0, size.getX(), size.getY());
-        if (thisPlayer == null || enemy == null/* || client == null*/) {//TODO später wieder reinhauen, aber daweil hab ich nix
+        if (thisPlayer == null || enemy == null || client == null) {
             gc.setFill(Color.BLACK);
             gc.fillRect(0, 0, size.getX(), size.getY());
         } else {
-            gc.setFill(Color.DARKMAGENTA);
+            gc.setFill(background != null ? background : Color.GREEN);
+//                gc.setFill(Color.GREEN);
+//        }
             gc.fillRect(0, 0, size.getX(), size.getY());
             Pokemon pokePlayer;
             synchronized (thisPlayer) {
@@ -319,7 +473,11 @@ public class FightGUI {
                 sizeForFightBottomGrass.setY(sizeForFightBottomGrass.getX() * imgForFightBottomGrass.getHeight() / imgForFightBottomGrass.getWidth());
 
                 drawOnCenterWithPercentage(gc, imgForFightBottomGrass, new Vector2D(70, 20), sizeForFightBottomGrass, oneP);
-                drawOnCenterWithPercentage(gc, enemy.getImage(), new Vector2D(70, 16.5), new Vector2D(20, 20), oneP);
+                if (caughtWithBall == null) {
+                    drawOnCenterWithPercentage(gc, enemy.getImage(), new Vector2D(70, 16.5), new Vector2D(20, 20), oneP);
+                } else {
+                    drawOnCenterWithPercentage(gc, allImgs.get("Ball" + caughtWithBall.getId()), new Vector2D(70, 20), new Vector2D(4, 4), oneP);//TODO img of pokeball do here
+                }
 
                 drawOnCenterWithPercentage(gc, imgForFightBottomGrass, new Vector2D(25, 43), sizeForFightBottomGrass.mult(1.2), oneP);
                 drawOnCenterWithPercentage(gc, pokePlayer.getBackImage(), new Vector2D(25, 37), new Vector2D(30, 30), oneP);
@@ -328,8 +486,6 @@ public class FightGUI {
 
                 drawPokemonInfo(gc, oneP, enemy, 5, 2);
                 drawPokemonInfo(gc, oneP, pokePlayer, 50, 38);
-
-//                gc.fillText("HalloWelt", 100, 100);
             }
         }
     }
@@ -394,7 +550,8 @@ public class FightGUI {
         Attack(0),
         Switch(1),
         Item(1),
-        Surrender(2);
+        Surrender(2),
+        ChooseAfterDeath(3);
 
         public int getPriority() {
             return priority;
