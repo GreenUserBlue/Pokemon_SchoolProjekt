@@ -453,6 +453,21 @@ public class MyServer {
         }
     }
 
+    private static void updateDatabase(Player p){
+
+        /*
+        methode bekommt player object (der player hat pokemon)
+
+        alle werte in der db für pokemon raushauen und neu reinschreiben mit neuen werten
+
+        für pokemon und attacken der pokemon
+
+        (maybe to und from msg)
+
+        Database.execute ist mein freund
+         */
+    }
+
     /**
      * @param c the client where the player is from
      * @param s the message from the client
