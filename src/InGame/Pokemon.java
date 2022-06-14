@@ -499,11 +499,11 @@ public class Pokemon {
     /**
      * adds xp to a pokemon after a fight
      */
-    public int xpAfterFight(boolean isFightWild){//TODO aufrufen
-        if (isFightWild){
-            return (200 * level)/7;
-        }else{
-            return (int) (1.5 * 200 * level)/7;
+    public int xpAfterFight(boolean isFightWild) {//TODO aufrufen
+        if (isFightWild) {
+            return (200 * level) / 7;
+        } else {
+            return (int) (1.5 * 200 * level) / 7;
         }
     }
 
@@ -511,10 +511,9 @@ public class Pokemon {
     /**
      * says how much money you can get from this pokemon from a fight
      */
-    public int getMaxMoney(){
+    public int getMaxMoney() {
         return level * 3;
     }
-
 
 
     /**
@@ -658,13 +657,15 @@ public class Pokemon {
 //        Attack at = Attack.template.get(attackId);
         Attack at = attacker.attacks[attackId];
         if (at.use()) {
-
-            double crit = 1.5;//mimimi leben dürfen nd negativ sein
+            double crit = 1;//mimimi leben dürfen nd negativ sein
             double random = (attackRnd.nextInt(15) + 85) / 100D;
             int hitRandom = hitProbRnd.nextInt(100);
             double stab = 1;
             if (at.getType().equals(this.type[0]) || at.getType().equals(this.type[1])) {
                 stab = 1.5;
+            }
+            if (isCrit) {
+                crit = 1.5;
             }
             boolean[] isHitting = new boolean[100];
             double hitProb = at.getHitProbability();
@@ -674,26 +675,15 @@ public class Pokemon {
                 }
             }
             if (isHitting[hitRandom]) {
-                if (isCrit) {
-                    if (this.type[1] == null) {
-                        curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * crit * random * stab * at.getType().getAttackMult(this.type[0]);
-                    } else {
-                        curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * crit * random * stab * at.getType().getAttackMult(this.type[0]) * at.getType().getAttackMult(this.type[1]);
-                    }
+                if (this.type[1] == null) {
+                    curHP = (curHP - (((((2 * attacker.level / 5d) + 2) * at.getDamage() * (attacker.state.attack / this.state.defense) / 50) + 2) * random * stab * at.getType().getAttackMult(this.type[0]) * crit));
                 } else {
-                    if (this.type[1] == null) {
-                        curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * random * stab * at.getType().getAttackMult(this.type[0]);
-                    } else {
-                        curHP = curHP - ((((2 * this.level / 5d) + 2) * at.getDamage() * (this.state.attack / attacker.state.defense) / 50) + 2) * random * stab * at.getType().getAttackMult(this.type[0]) * at.getType().getAttackMult(this.type[1]);
-                    }
+                    curHP = (curHP - (((((2 * attacker.level / 5d) + 2) * at.getDamage() * (attacker.state.attack / this.state.defense) / 50) + 2) * random * stab * at.getType().getAttackMult(this.type[0]) * at.getType().getAttackMult(this.type[1]) * crit));
                 }
-            }/* else {
-                System.out.println("Attacke hat nicht getroffen");
-            }*/
+            }
         }
-
-//        System.out.println(curHP);
     }
+
 
     /**
      * gets the attacks for the pokemon id at the level level
