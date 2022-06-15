@@ -457,19 +457,16 @@ public class MyServer {
     }
 
     private static void updateDatabase(Player p) {
+        Database.execute("delete from Pokemon WHERE FK_Player_ID = " + p.getIdForDB() + ";");
+        for (int i = 0; i < p.getPoke().size(); i++) {
+            Database.execute("insert into Pokemon (Message, FK_Player_ID) VALUES ('" + p.getPoke().get(i).toMsg() + "'," + p.getIdForDB() + ");");
+        }
 
-        /*
-        methode bekommt player object (der player hat pokemon)
-
-        alle werte in der db für pokemon raushauen und neu reinschreiben mit neuen werten
-
-        für pokemon und attacken der pokemon
-
-        (maybe to und from msg)
-
-        Database.execute ist mein freund
-         */
+        Database.execute("delete from myposition WHERE FK_PK_Player_ID = " + p.getIdForDB() + ";");
+        Database.execute("insert into myposition (FK_PK_Player_ID, FK_PK_World_ID, posX, posY) VALUES ("
+                + p.getIdForDB() + "," + p.getWorld() + "," + p.getPos().getX() + "," + p.getPos().getY() + ");");
     }
+
 
     /**
      * @param c the client where the player is from
