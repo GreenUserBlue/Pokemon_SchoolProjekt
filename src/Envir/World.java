@@ -110,12 +110,12 @@ public class World {
         Random cities = new Random(135);
         int last = 0;
         int houseIDs = 1;//because the database starts counting with one
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 13; i++) {
             int rad = cities.nextInt();
             Vector2D start = new Vector2D((int) (Math.sin(rad) * last) - 5, (int) (Math.cos(rad) * last) - 5);
-            this.cities.add(new City(start, rnd, new Vector2D(30, 15), true, true, id, houseIDs));
+            this.cities.add(new City(start, rnd, new Vector2D(30, 15), cities.nextBoolean(), true, id, houseIDs));
             houseIDs += this.cities.get(this.cities.size() - 1).getHouses().size();
-            last += cities.nextInt(15) + 10;
+            last += cities.nextInt(150) + 100;
         }
     }
 

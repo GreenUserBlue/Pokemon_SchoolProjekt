@@ -482,7 +482,7 @@ public class FightGUI {
                 if (caughtWithBall == null) {
                     drawOnCenterWithPercentage(gc, enemy.getImage(), new Vector2D(70, 16.5), new Vector2D(20, 20), oneP);
                 } else {
-                    drawOnCenterWithPercentage(gc, allImgs.get("Ball" + caughtWithBall.getId()), new Vector2D(70, 20), new Vector2D(4, 4), oneP);//TODO img of pokeball do here
+                    drawOnCenterWithPercentage(gc, allImgs.get("Ball" + caughtWithBall.getId()), new Vector2D(70, 20), new Vector2D(4, 4), oneP);
                 }
 
                 drawOnCenterWithPercentage(gc, imgForFightBottomGrass, new Vector2D(25, 43), sizeForFightBottomGrass.mult(1.2), oneP);

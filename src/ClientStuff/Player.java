@@ -456,12 +456,11 @@ public class Player {
         StringBuilder sToSend = new StringBuilder(MessageType.toStr(MessageType.fightData));
         sToSend.append(betweenPoke).append(pokeOther.toMsg());
         pokemon.forEach(a -> sToSend.append("N").append(a.toMsg()));
-        //TODO daten senden, plus daten in datenbank zum testen geben
         cl.send(sToSend + betweenPoke + "&" + isAgainstPlayer);
     }
 
     public void checkToStartFightInGrass(Server.ClientHandler client, World w) {
-        if (hasWalkedBefore && curWalked.getX() == 0 && curWalked.getY() == 0 && (w.getCities().stream().noneMatch(a -> a.isInCity(pos)) && w.getBlockEnvir((int) pos.getX(), (int) pos.getY(), false) == World.Block.Grass)) {
+        if (hasWalkedBefore && houseEntrancePos == null && curWalked.getX() == 0 && curWalked.getY() == 0 && (w.getCities().stream().noneMatch(a -> a.isInCity(pos)) && w.getBlockEnvir((int) pos.getX(), (int) pos.getY(), false) == World.Block.Grass)) {
             if (rndForPokeEncounter.nextDouble() < 0.1) {
                 Pokemon poke = Pokemon.createPokemon(pos, World.Block.Grass);
                 synchronized (this) {

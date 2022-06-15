@@ -66,7 +66,6 @@ public class MyServer {
                     case textEvent -> doTextEvents(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
                     case itemBuy -> doItemBuy(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
                     case inFightChoice -> doInFightChoice(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
-                    //TODO Clemenzzzzzz zB wenn Client sagt, ich moechte angreifen, dann kommt das hier hin (on Message halt)
                     case error -> System.out.println("ERROR-Message: " + s);
                 }
             }
@@ -216,7 +215,7 @@ public class MyServer {
                     int xp = pokeEnemy.getXpAfterDefeat(player.getOtherClient() == null);
                     pokeThis.addExp(xp);
                     res += xp + "-|-" + pokeThis.toMsg() + "-|-";
-                    if (enemy.getPlayer().getPoke().stream().noneMatch(a -> a.getCurHP() > 0)) {//TODO some stuff
+                    if (enemy.getPlayer().getPoke().stream().noneMatch(a -> a.getCurHP() > 0)) {
                         res += "w";//won
                         sendPosUpdate(player);
                         player.setOtherPoke(null);
@@ -585,13 +584,15 @@ public class MyServer {
         } catch (SQLException ignored) {
         }
         Player p = new Player(name, pos, skinID, idFromPlayer, idForDB, money);
-        pos.setX(1000);
         try {
-            assert curPlayer != null;
-            ResultSet itemsInDB = Database.get("select user.name, Item_ID, quantity from user inner join Player P on User.PK_User_ID = P.FK_User_ID inner join ItemToPlayer ITP on P.PK_Player_ID = ITP.FK_Player where PK_Player_ID =" + curPlayer.getObject("PK_Player_ID") + ";");
-            assert itemsInDB != null;
-            while (itemsInDB.next()) {
-                p.getItems().put(itemsInDB.getInt("Item_ID"), itemsInDB.getInt("quantity"));
+            ResultSet itemsInDB = null;
+            if (curPlayer != null) {
+                itemsInDB = Database.get("select user.name, Item_ID, quantity from user inner join Player P on User.PK_User_ID = P.FK_User_ID inner join ItemToPlayer ITP on P.PK_Player_ID = ITP.FK_Player where PK_Player_ID =" + curPlayer.getObject("PK_Player_ID") + ";");
+            }
+            if (itemsInDB != null) {
+                while (itemsInDB.next()) {
+                    p.getItems().put(itemsInDB.getInt("Item_ID"), itemsInDB.getInt("quantity"));
+                }
             }
             System.out.println(p.getItems());
         } catch (SQLException ignored) {
@@ -601,8 +602,8 @@ public class MyServer {
             System.out.println("MyServer.initPlayer: " + "starter created");
             System.out.println("MyServer.initPlayer: " + idFromPlayer);
             p.getPoke().add(Pokemon.createStarter(idFromPlayer));
-            p.getPoke().add(Pokemon.createPokemon(new Vector2D(100, 7666), World.Block.Water));
-            p.getPoke().add(Pokemon.createPokemon(new Vector2D(100, 420), World.Block.Grass));
+//            p.getPoke().add(Pokemon.createPokemon(new Vector2D(100, 7666), World.Block.Water));
+//            p.getPoke().add(Pokemon.createPokemon(new Vector2D(100, 420), World.Block.Grass));
 //            p.getPoke().get(2).setCurHP(10);//TODO pokemon auslesen
         } else System.out.println("MyServer.initPlayer: " + p.getPoke());
         return p;

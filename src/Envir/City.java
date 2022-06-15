@@ -69,7 +69,8 @@ public class City {
 
     /**
      * creates a new house
-     * @param rnd the rnd value
+     *
+     * @param rnd  the rnd value
      * @param type which type of house
      */
     private House createNewHouse(Random rnd, House.Type type) {
@@ -78,6 +79,7 @@ public class City {
 
     /**
      * to check if a block is inside the city
+     *
      * @param v the block to check
      */
     public boolean isInCity(Vector2D v) {
