@@ -28,7 +28,7 @@ public class Server {
     /**
      * the Server
      */
-    protected final ServerSocket server;
+    protected static ServerSocket server;
 
     /**
      * on which port the server runs
@@ -65,7 +65,7 @@ public class Server {
     /**
      * all the Clients that are currently Connected
      */
-    protected HashMap<Integer, ClientHandler> clients = new HashMap<>();
+    protected static HashMap<Integer, ClientHandler> clients = new HashMap<>();
 
     /**
      * counts how many clients had ever been connected
@@ -319,7 +319,7 @@ public class Server {
      * to handle a single OldMain
      * @see Thread
      */
-    public class ClientHandler extends Thread {
+    public static class ClientHandler extends Thread {
 
         /**
          * the id of the client
@@ -409,6 +409,11 @@ public class Server {
             }
             crypto = new Crypto();
             start();
+        }
+
+        public ClientHandler() {
+            id = -1;
+            crypto = null;
         }
 
         public Pokemon getOtherPoke() {
@@ -508,7 +513,6 @@ public class Server {
                 if (!isDisconnected) System.out.println("Connection lost: " + id);
                 clients.put(id, null);
             } catch (NullPointerException ignored) {
-                System.out.println("ClientHandler.send: " + "Exception");
             }
         }
 

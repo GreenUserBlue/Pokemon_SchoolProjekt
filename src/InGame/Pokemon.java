@@ -2,7 +2,10 @@ package InGame;
 
 import Calcs.Utils;
 import Calcs.Vector2D;
+import ClientStuff.FightGUI;
+import ClientStuff.Player;
 import Envir.World;
+import ServerStuff.Server;
 import javafx.scene.image.Image;
 
 import java.io.BufferedReader;
@@ -23,9 +26,10 @@ import java.util.regex.Pattern;
  */
 public class Pokemon {
 
+    private Server.ClientHandler virtualClientHandler;
+
 
     //TODO Entwicklungen mit Steinen oder trades
-    //Evoli is muell (einfach nur flamara und fertig)
 
     public String getName() {
         return name;
@@ -110,8 +114,6 @@ public class Pokemon {
      * how hard it is to find and capture the pokemon
      */
     private int captureRate;
-
-    //block auf dem das Pokemon spawnen kann
 
     /**
      * type of block on which the pokemon is abled to spawn
@@ -280,18 +282,18 @@ public class Pokemon {
     }
 
     /**
-     * @param levelType how fast a pokemons gains xp
-     * @param curLevel  the current level
+     * @param growthRate how fast a pokemons gains xp
+     * @param curLevel   the current level
      * @return how much exp needed for next level
      */
-    private static int getXpNeeded(String levelType, int curLevel) {
+    private static int getXpNeeded(String growthRate, int curLevel) {
         int maxXp;
         curLevel++;
-        maxXp = switch (levelType) {// wenn hier was nd geht is der switch schuld
+        maxXp = switch (growthRate) {// wenn hier was nd geht is der switch schuld
             case "fast" -> (int) ((4 * Math.pow(curLevel, 3)) / 5);
             case "medium" -> (int) Math.pow(curLevel, 3);
             case "medium-slow" -> (int) (((6 * Math.pow(curLevel, 3)) / 5) - (15 * Math.pow(curLevel, 2)) + (100 * curLevel) - 140);
-            default -> //if (levelType.equals("slow"))
+            default -> //if (growthRate.equals("slow"))
                     (int) ((5 * Math.pow(curLevel, 3)) / 4);
         };
         return maxXp;
@@ -376,7 +378,6 @@ public class Pokemon {
         }
 
         poke.xp = toInt(s[3]);
-
         str = s[4].split(",");
         int[] ivs = new int[str.length];
         for (int i = 0; i < str.length; i++) {
@@ -482,7 +483,7 @@ public class Pokemon {
     }
 
 
-    /* *//**
+    /* *//*
      * for toMsg
      *//*
     private String toString3() {
@@ -506,7 +507,7 @@ public class Pokemon {
     /**
      * adds xp to a pokemon after a fight
      */
-    public int xpAfterFight(boolean isFightWild) {//TODO aufrufen
+    public int getXpAfterDefeat(boolean isFightWild) {
         if (isFightWild) {
             return (200 * level) / 7;
         } else {
@@ -529,11 +530,15 @@ public class Pokemon {
      * @param newExP the xp the pokemon gets from the fight
      */
     public void addExp(int newExP) {
-        if (newExP + xp >= maxXPNeeded) {
-            levelUp(maxXPNeeded - xp - newExP);
-        } else {
-            xp = newExP + xp;
+        xp += newExP;
+        while (xp > maxXPNeeded) {
+            levelUp(xp - maxXPNeeded);
         }
+//  s      if (newExP + xp >= maxXPNeeded) {
+//        levelUp(xp + newExP - maxXPNeeded);
+//        } else {
+//            xp = newExP + xp;
+//    }
     }
 
     //xpoverride is wie viele xp man ins nächste level mitnimmt
@@ -550,6 +555,7 @@ public class Pokemon {
         curHP += (state.getHP() - oldHP);
         curHP = Math.min(curHP, state.getHP());
         xp = xpOverride;
+        maxXPNeeded = getXpNeeded(growthRate, level);
         if (level == evolvesAtLevel) {
             evolve();
         }
@@ -761,6 +767,28 @@ public class Pokemon {
         double d = (((3 * getMaxHP() - 2 * curHP) * captureRate * b.getCatchRate()) / (3 * getMaxHP())) * 1;
         System.out.println(d);*/
         return true;
+    }
+
+    public int getSpeed() {
+        return (int) state.speed;
+    }
+
+    public Server.ClientHandler getClientForServerAttack() {
+        if (virtualClientHandler == null) {
+            virtualClientHandler = new Server.ClientHandler();
+            Player p = new Player();
+            p.getPoke().add(this);
+            p.setActivity(Player.Activity.fight);
+            virtualClientHandler.setPlayer(p);
+        }
+        virtualClientHandler.getPlayer().setMsgForFightWaiting(getMsgForFighting());
+        return virtualClientHandler;
+    }
+
+    private String getMsgForFighting() {
+        int max = Arrays.stream(attacks).filter(Objects::nonNull).toList().size();
+        final int eneAttackID = rnd.nextInt(max);
+        return /*MessageType.inFightChoice +*/ FightGUI.FightChoice.Attack + "," + eneAttackID;
     }
 
     enum EvolveType {
@@ -980,7 +1008,7 @@ public class Pokemon {
     }
 
     public int getCurHP() {
-        return (int) curHP;
+        return (int) (curHP = Math.max((int) curHP, 0));
     }
 
     public void setState(State state) {

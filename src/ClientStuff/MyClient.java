@@ -13,6 +13,7 @@ import javafx.animation.FadeTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -28,6 +29,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -349,6 +351,8 @@ public class MyClient extends Application {
             }
             allImgs.put("HouseBigShelf", new Image(String.valueOf(Paths.get("res/Buildings/Market/BigShelf.png").toUri().toURL())));
             allImgs.put("HouseSmallShelf", new Image(String.valueOf(Paths.get("res/Buildings/Market/SmallShelf.png").toUri().toURL())));
+            for (int i = 0; i < 3; i++)
+                allImgs.put("Ball" + (i + 1), new Image(String.valueOf(Paths.get("./res/Balls/" + (i + 1) + ".png").toUri().toURL())));
         } catch (MalformedURLException ignored) {
         }
     }
@@ -366,8 +370,13 @@ public class MyClient extends Application {
     @Override
     public void start(Stage primaryStage) throws IOException {
         stage = primaryStage;
-        stage.setX(950);
-        stage.setY(80);
+        Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+        int height = 300;
+        stage.setScene(new Scene(LoginScreens.getLoadingScreen(), height / 9D * 16, height));
+        //set Stage boundaries to the top right corner of the visible bounds of the main screen
+        int rnd = (int) (Math.random() * 80);
+        stage.setX(primaryScreenBounds.getMinX() + primaryScreenBounds.getWidth() - stage.getScene().getWidth() - 80 + rnd);
+        stage.setY(80 - rnd);
         initImgs();
         TextEvent.initTexts();
         Pokemon.init(true);
@@ -378,11 +387,10 @@ public class MyClient extends Application {
             if (b instanceof String s && !s.startsWith(MessageType.toStr(MessageType.updatePos)) && !s.startsWith(MessageType.toStr(MessageType.textEvent)) && !s.startsWith(MessageType.toStr(MessageType.itemData)))
                 System.out.println("From Server: '" + b + '\'');
         }, getOnMsgClient());
-        txt.setClient(client);
+        txt.setClient(client);//33,85
         marketGUI.setClient(client);
         fightGUI.setClient(client);
-        int height = 300;
-        stage.setScene(new Scene(LoginScreens.getLoadingScreen(), height / 9D * 16, height));
+
         addListener();
         stage.setTitle("Pokemon OW");
         stage.getIcons().add(new Image(String.valueOf(Paths.get("res/icon.png").toUri().toURL())));
@@ -420,7 +428,6 @@ public class MyClient extends Application {
                     case fightData -> startFight(s);
                     case inFightUpdate -> fightGUI.updateAll(s.substring(MessageType.toStr(MessageType.inFightUpdate).length()));
                     case error -> System.out.println("something went wrong");
-                    //TODO Clemenzzzzzz on Msg From Server
                 }
             }
         };
@@ -432,7 +439,6 @@ public class MyClient extends Application {
      * @param s the msg from the server
      */
     private void startFight(String s) {
-//        System.out.println("now starting fight maybe");
         synchronized (client.getPlayers().get(0)) {
             fightGUI.setPlayer(client.getPlayers().get(0));
             client.getPlayers().get(0).setActivity(Player.Activity.fight);
@@ -479,6 +485,7 @@ public class MyClient extends Application {
                 if (s.split(",").length == 1) {
                     int id = Integer.parseInt(s.substring(1));
                     Platform.runLater(() -> txt.startNewText(id, null));
+                    txt.addOnFin(null);
                 } else doTextEventsWithData(s);
             }
         }
