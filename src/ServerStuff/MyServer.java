@@ -247,7 +247,6 @@ public class MyServer {
             if (data != null && data.next()) {
                 c.setPlayer(initPlayer(c.getUsername(), data.getInt("PK_Player_ID")));
 //                System.out.println("Player initialized: " + data.getInt("PK_Player_ID"));
-                //TODO pokemon machen und so
             }
         } catch (SQLException ignored) {
         }
@@ -259,9 +258,13 @@ public class MyServer {
             Database.execute("insert into Pokemon (Message, FK_Player_ID) VALUES ('" + p.getPoke().get(i).toMsg() + "'," + p.getIdForDB() + ");");
         }
 
-        Database.execute("delete from myposition WHERE FK_PK_Player_ID = " + p.getIdForDB() + ";");
-        Database.execute("insert into myposition (FK_PK_Player_ID, FK_PK_World_ID, posX, posY) VALUES ("
+        Database.execute("delete from MyPosition WHERE FK_PK_Player_ID = " + p.getIdForDB() + ";");
+        Database.execute("insert into MyPosition (FK_PK_Player_ID, FK_PK_World_ID, posX, posY) VALUES ("
                 + p.getIdForDB() + "," + p.getWorld() + "," + p.getPos().getX() + "," + p.getPos().getY() + ");");
+    }
+
+    private static void getFromDatabase(Player p){
+        //für postion beim world select, pokemon sind schon bei doProfile
     }
 
     /**
