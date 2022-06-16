@@ -447,6 +447,10 @@ public class World {
         return false;
     }
 
+    public int getId() {
+        return id;
+    }
+
     /**
      * allPossible Blocks
      */

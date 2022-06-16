@@ -425,7 +425,7 @@ public class MyClient extends Application {
                     case textEvent -> doTextEvent(s.substring(3));
                     case itemData -> updateItemData(s.substring(MessageType.toStr(MessageType.itemData).length()));
                     case fightData -> startFight(s);
-                    case inFightUpdate -> fightGUI.updateAll(s.substring(MessageType.toStr(MessageType.inFightUpdate).length()));
+                    case inFightUpdate -> fightGUI.updateFight(s.substring(MessageType.toStr(MessageType.inFightUpdate).length()));
                     case error -> System.out.println("something went wrong");
                 }
             }

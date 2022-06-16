@@ -45,7 +45,7 @@ create Table Badge
 create table Pokemon
 (
     PK_Poke_ID   int auto_increment,
-    Message VARCHAR(50),
+    Message      VARCHAR(50),
     FK_Player_ID int,
     PRIMARY KEY (PK_Poke_ID),
     FOREIGN KEY (FK_Player_ID) REFERENCES Player (PK_Player_ID)
@@ -136,17 +136,44 @@ VALUES (1, 1, 10),
        (9, 3, 198),
        (6, 4, 156);
 
-select user.name, Item_ID, quantity from user inner join Player P on User.PK_User_ID = P.FK_User_ID inner join ItemToPlayer ITP on P.PK_Player_ID = ITP.FK_Player where PK_Player_ID =1;
+select user.name, Item_ID, quantity
+from user
+         inner join Player P on User.PK_User_ID = P.FK_User_ID
+         inner join ItemToPlayer ITP on P.PK_Player_ID = ITP.FK_Player
+where PK_Player_ID = 1;
 
-select * from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = 1 && User.name = 'Name2';
+select *
+from User
+         inner join Player P on User.PK_User_ID = P.FK_User_ID
+where P.startPokID = 1 && User.name = 'Name2';
 
-INSERT INTO Pokemon (Message, FK_Player_ID) VALUES ('hello', 1), ('hello', 2),('hello', 1),('hello', 1),('hello', 3);
-DELETE FROM Pokemon WHERE FK_Player_ID = 1;
+INSERT INTO Pokemon (Message, FK_Player_ID)
+VALUES ('10;3;81,40§;0;1,2,7,15,15,8;15;7', 1),
+       ('1;5;13,10§14,20§;142;5,15,11,11,15,3;5;19', 3);
 
-DELETE FROM myposition WHERE FK_PK_Player_ID = 1;
-INSERT INTO myposition (FK_PK_Player_ID, FK_PK_World_ID, posX, posY) VALUES (1,1,200,400);
+select *
+from MyPosition;
 
+select *
+from Pokemon;
+insert into Pokemon (Message, FK_Player_ID)
+VALUES ('10;6;81,40§20,6§153,4§;200;1,2,7,15,15,8;15;15', 1);
 
+insert into ItemToPlayer (Item_ID, FK_Player, quantity)
+VALUES (1, 1, 10),
+       (2, 1, 16),
+       (5, 1, 12),
+       (2, 2, 230),
+       (4, 2, 134),
+       (5, 3, 15),
+       (9, 3, 198),
+       (6, 4, 156);
+
+select * from Player;
+
+select * from ItemToPlayer;
+
+# update Player set money =100 where PK_Player_ID = 2;
 # select count(PK_Badge_ID) as nbr from Badge inner join Player P on Badge.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID = 4;
 
 # select count(*) as nbr from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = 1 && User.name = 'Name';

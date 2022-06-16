@@ -29,17 +29,17 @@ public class Item {
 
     private final int prize;
 
-    private final boolean isBuyable;
+    private final boolean isBuyAble;
 
     protected final int badgesNeeded;
 
     private final static List<Item> allItems = new ArrayList<>();
 
-    public Item(int id, String name, int prize, boolean isBuyable, int badgesNeeded) {
+    public Item(int id, String name, int prize, boolean isBuyAble, int badgesNeeded) {
         this.id = id;
         this.name = name;
         this.prize = prize;
-        this.isBuyable = isBuyable;
+        this.isBuyAble = isBuyAble;
         this.badgesNeeded = badgesNeeded;
     }
 
@@ -58,16 +58,16 @@ public class Item {
         init(Path.of("./res/DataSets/Items.csv"));
     }
 
-    private static Item getItem(String type, int id, String name, int price, boolean isBuyable, int badgesNeeded, double extraValue) {
+    private static Item getItem(String type, int id, String name, int price, boolean isBuyAble, int badgesNeeded, double extraValue) {
         return switch (type) {
-            case "Ball" -> new Ball(id, name, price, isBuyable, badgesNeeded, extraValue);
-            case "Potion" -> new Potion(id, name, price, isBuyable, badgesNeeded, extraValue);
-            default -> new WaterItem(id, name, price, isBuyable, badgesNeeded);
+            case "Ball" -> new Ball(id, name, price, isBuyAble, badgesNeeded, extraValue);
+            case "Potion" -> new Potion(id, name, price, isBuyAble, badgesNeeded, extraValue);
+            default -> new WaterItem(id, name, price, isBuyAble, badgesNeeded);
         };
     }
 
     public static List<Item> getShop(int badges) {
-        return new ArrayList<>(allItems.stream().filter(i -> i.isBuyable).filter(i -> i.badgesNeeded <= badges).toList());
+        return new ArrayList<>(allItems.stream().filter(i -> i.isBuyAble).filter(i -> i.badgesNeeded <= badges).toList());
     }
 
     @Override
@@ -76,7 +76,7 @@ public class Item {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", prize=" + prize +
-                ", isBuyable=" + isBuyable +
+                ", isBuy-able=" + isBuyAble +
                 ", badgesNeeded=" + badgesNeeded +
                 '}';
     }

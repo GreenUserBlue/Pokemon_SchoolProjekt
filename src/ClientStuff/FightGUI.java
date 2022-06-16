@@ -215,7 +215,7 @@ public class FightGUI {
     }
 
 
-    public void updateAll(String msg) {
+    public void updateFight(String msg) {
         String[] split = msg.split("\\._\\.");
         updateSingle(split[0], split.length > 1 ? split[1] : /*split[0]*/null);
     }
@@ -283,8 +283,6 @@ public class FightGUI {
                 }
             }
         }
-        System.out.println("FightGUI.showPokeDefeated: " + thisPoke.getXp());
-        System.out.println("FightGUI.showPokeDefeated: " + thisPoke.getMaxXPNeeded());
         textEvent.addOnFin(() -> {
             textEvent.startNewText(TextEventIDsTranslator.FightEnemyKilled.getId(), keys);
             textEvent.addOnFin(() -> {

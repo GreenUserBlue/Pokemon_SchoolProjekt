@@ -177,24 +177,18 @@ public class Pokemon {
         }
          */
         Pokemon b = createPokemon(new Vector2D(200, 200), World.Block.Grass);
+        System.out.println(template.get(2));
 //        a.getsAttacked(b, 4, false);
 
 //        System.out.println(a.getsCaptured((Ball) Item.getItem(2)));
 
 
-        System.out.println(b.getName() + " " + b.getCurHP() + "curHP, lvl:" + b.getLevel());
-        System.out.println(a.getName() + " " + a.getCurHP() + "curHP, lvl:" + a.getLevel());
-        b.getsAttacked(a, 0, false);
-        a.getsAttacked(b, 0, false);
-        System.out.println(b.getName() + " " + b.getCurHP() + "curHP, lvl:" + b.getLevel());
-        System.out.println(a.getName() + " " + a.getCurHP() + "curHP, lvl:" + a.getLevel());
         Pokemon p = new Pokemon();
-        p.type = new Type[]{Type.grass, Type.normal};
-        System.out.println(p.getEffectness(Type.fire));
-        System.out.println(p.getEffectness(Type.water));
-        System.out.println(p.getEffectness(Type.flying));
-        System.out.println(p.getEffectness(Type.ghost));
+        p = getPokemon(10, 6);
+        System.out.println(p);
 
+        p.addExp(p.getMaxXPNeeded() + 1);
+        System.out.println(p);
     }
 
 
@@ -403,6 +397,8 @@ public class Pokemon {
         poke.maxXPNeeded = getXpNeeded(poke.growthRate, poke.level);
         poke.name = temp.name;
         poke.type = temp.type;
+        poke.evolvesAtLevel = temp.evolvesAtLevel;
+        poke.evolvesIntoId = temp.evolvesIntoId;
         return poke;
     }
 
@@ -539,7 +535,7 @@ public class Pokemon {
      */
     public void addExp(int newExP) {
         xp += newExP;
-        while (xp > maxXPNeeded) {
+        while (xp >= maxXPNeeded) {
             levelUp(xp - maxXPNeeded);
         }
 //  s      if (newExP + xp >= maxXPNeeded) {
@@ -558,15 +554,15 @@ public class Pokemon {
      */
     private void levelUp(int xpOverride) {
         level++;
+        if (level >= evolvesAtLevel && evolvesAtLevel > 0) {
+            evolve();
+        }
         double oldHP = state.getHP();
         state.updateVals(this, level, nature);
         curHP += (state.getHP() - oldHP);
         curHP = Math.min(curHP, state.getHP());
         xp = xpOverride;
         maxXPNeeded = getXpNeeded(growthRate, level);
-        if (level == evolvesAtLevel) {
-            evolve();
-        }
     }
 
     /**
@@ -575,7 +571,11 @@ public class Pokemon {
     private void evolve() {
         id = evolvesIntoId;
         state.updateVals(this, level, nature);
-        setType(template.get(id - 1).type);
+        Pokemon temp = template.get(id - 1);
+        growthRate = temp.growthRate;
+        name = temp.name;
+        evolvesIntoId = temp.evolvesIntoId;
+        type = temp.type;
     }
 
     //pos für wie weit vom spawnt entfernt

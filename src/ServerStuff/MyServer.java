@@ -58,10 +58,16 @@ public class MyServer {
                     case hellman -> doHellman(c, s);
                     case register -> doRegister(c, s);
                     case login -> doLogin(c, s);
-                    case logout -> c.setUsername(null);
+                    case logout -> {
+                        if (c.getPlayer() != null) {
+                            updateDatabase(c.getPlayer());
+                        }
+                        c.setPlayer(null);
+                        c.setUsername(null);
+                    }
                     case delete -> doDel(c, s);
                     case profile -> doProfile(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
-                    case worldSelect -> doRegion(c, s);
+                    case worldSelect -> doWorldSelect(c, s);
                     case keysPres -> doKeys(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
                     case textEvent -> doTextEvents(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
                     case itemBuy -> doItemBuy(c, s.substring(MessageType.toStr(MessageType.badgeRequest).length()));
@@ -75,7 +81,7 @@ public class MyServer {
         server.getWorlds().add(new World(696969, "K"));
     }
 
-    private static void doInFightChoice(Server.ClientHandler c, String msg) {//TODO wenn verloren, dann zu 0,0 teleporten
+    private static void doInFightChoice(Server.ClientHandler c, String msg) {
         String[] s = msg.split(",");
         FightGUI.FightChoice choice = FightGUI.FightChoice.valueOf(s[0]);
         if (choice == FightGUI.FightChoice.Surrender) {
@@ -106,7 +112,6 @@ public class MyServer {
                 if (c.getOtherClient().getPlayer().getMsgForFightWaiting() == null) {
                     c.getPlayer().setMsgForFightWaiting(msg);
                 } else {
-                    System.out.println("MyServer.doInFightChoice: " + "now starting fight");
                 }
             }
         } else {
@@ -117,6 +122,12 @@ public class MyServer {
     private static void doChooseAfterDeath(Server.ClientHandler c, FightGUI.FightChoice choice, String s) {
         String msg = /*MessageType.inFightUpdate + "" + choice + "-|-a +*/ "-|-" + s + "-|-";
         if (s.startsWith("s")) {
+            if (c.getPlayer().getPoke().get(0).getCurHP() == 0) {
+                Optional<Pokemon> op = c.getPlayer().getPoke().stream().filter(a -> a.getCurHP() > 0).findFirst();
+                op.ifPresent(a -> {
+                    Utils.switchObjects(c.getPlayer().getPoke(), c.getPlayer().getPoke().indexOf(a) - 1);
+                });
+            }
             doSurrender(c, FightGUI.FightChoice.Surrender);
         } else {
             if (c.getPlayer().getPoke().size() > Utils.toInt(s) + 1) {
@@ -156,20 +167,11 @@ public class MyServer {
             c2 = cTemp;
             poke2 = pTemp;
         }
-        // choice + "-|-" + 0 + "-|-" am Anfang hingeben
         String sToSend1 = doSingleChoice(ch1, c1, poke1, Utils.toInt(s1[1]), c2, poke2);
         poke1 = c1.getPlayer().getPoke().get(0);
         poke2 = c2.getPlayer().getPoke().get(0);
-        System.out.println("MyServer.doFightInteraction: " + poke1.getName() + poke1.toMsg());
-        System.out.println("MyServer.doFightInteraction: " + poke2.getName() + poke2.toMsg());
-        if (!(poke2.getCurHP() > 0 && c1.getPlayer().getActivity() == Player.Activity.fight)) {
-            System.out.println("MyServer.doFightInteraction: " + "hallo");
-        }
         if (poke2.getCurHP() > 0 && c1.getPlayer().getActivity() == Player.Activity.fight) {
-            System.out.println("MyServer.doFightInteraction: " + poke2.getCurHP());
             String sToSend2 = doSingleChoice(ch2, c2, poke2, Utils.toInt(s2[1]), c1, poke1);
-            System.out.println();
-            System.out.println(sToSend2);
             c1.send(MessageType.toStr(MessageType.inFightUpdate) + ch1 + "-|-" + 0 + "-|-" + sToSend1 + "._." + ch2 + "-|-" + 1 + "-|-" + sToSend2);
             c2.send(MessageType.toStr(MessageType.inFightUpdate) + ch1 + "-|-" + 1 + "-|-" + sToSend1 + "._." + ch2 + "-|-" + 0 + "-|-" + sToSend2);
         } else {
@@ -193,7 +195,7 @@ public class MyServer {
                         boolean getCaptured = player.getOtherClient() == null && pokeEnemy.getsCaptured(b);
                         if (getCaptured) {
                             player.getPlayer().getPoke().add(pokeEnemy);
-                            player.getPlayer().setActivity(Player.Activity.standing);
+                            player.getPlayer().setActivity(Player.Activity.textEvent);
                         }
                         res += getCaptured ? "c" : "f";// captured/failed
                     }
@@ -214,20 +216,23 @@ public class MyServer {
                 if (pokeEnemy.getCurHP() < 1) {
                     int xp = pokeEnemy.getXpAfterDefeat(player.getOtherClient() == null);
                     pokeThis.addExp(xp);
+                    System.out.println("MyServer.doSingleChoice: " + pokeThis);
                     res += xp + "-|-" + pokeThis.toMsg() + "-|-";
                     if (enemy.getPlayer().getPoke().stream().noneMatch(a -> a.getCurHP() > 0)) {
                         res += "w";//won
+                        enemy.getPlayer().setPos(new Vector2D(0, 0));
+
                         sendPosUpdate(player);
                         player.setOtherPoke(null);
-                        long amount = Math.min(player.getPlayer().getMoney(), pokeEnemy.getMaxMoney());
+                        long amount = pokeEnemy.getMaxMoney();
                         if (player.getOtherClient() != null) {
                             synchronized (player.getOtherClient()) {
-                                amount = Math.min(player.getPlayer().getMoney(), 200);
-                                player.getPlayer().setMoney(player.getPlayer().getMoney() - amount);
-                                player.getOtherClient().getPlayer().setMoney(player.getOtherClient().getPlayer().getMoney() + amount);
+                                amount = Math.min(enemy.getPlayer().getMoney(), 200);
+                                player.getOtherClient().getPlayer().setMoney(player.getOtherClient().getPlayer().getMoney() - amount);
                                 player.getOtherClient().getPlayer().setActivity(Player.Activity.textEvent);
                             }
                         }
+                        player.getPlayer().setMoney(player.getPlayer().getMoney() + amount);
                         res += "-|-" + amount;
                     } else {
                         res += "c";//continue fight
@@ -251,7 +256,6 @@ public class MyServer {
         }
         return poke1.getSpeed() >= poke2.getSpeed();
     }
-
 
     private static void doSurrender(Server.ClientHandler c, FightGUI.FightChoice choice) {
         synchronized (c.getPlayer()) {
@@ -350,7 +354,6 @@ public class MyServer {
                             bToSend.append(0).append("-|-").append(eneAttackID).append("-|-").append(p.getCurHP()).append("._.");
                         } else {
                             bToSend.append(1).append("-|-");
-                            System.out.println("Pokemon defeated");
                         }
                     }
                 }
@@ -382,7 +385,7 @@ public class MyServer {
     }
 
     /**
-     * handels what happens when the player gives information about the textFields
+     * handles what happens when the player gives information about the textFields
      *
      * @param c the client where the player is from
      * @param s the message from the client
@@ -401,17 +404,10 @@ public class MyServer {
         } else if (s.startsWith("1")) {
             s = s.substring(1);
             if (s.charAt(0) == '1') {
-                System.out.println("MyServer.doTextEvents: " + c.getOtherClient().getUsername());
                 c.getOtherClient().send(MessageType.toStr(MessageType.textEvent) + 1 + TextEvent.TextEventIDsTranslator.PlayersMeetDeclineFight.getId() + ",name:" + c.getUsername() + " has");
                 c.getOtherClient().setOtherClient(null);
-//                c.getOtherClient().getPlayer().setActivity(Player.Activity.textEvent);
                 c.setOtherClient(null);
-//                c.getPlayer().setActivity(Player.Activity.textEvent);
-                System.out.println("now sending");//TODO machen dass der bug, wenn man spricht und declined und dann wieder spricht weg ist
             } else {
-                System.out.println("Der Kampf wurde accepted");
-//       a         StringBuilder sToSendThis = new StringBuilder(MessageType.toStr(MessageType.fightData));
-//                StringBuilder sToSendOther = new StringBuilder(MessageType.toStr(MessageType.fightData));
                 synchronized (c.getPlayer()) {
                     synchronized (c.getOtherClient().getPlayer()) {
                         Player otherP = c.getOtherClient().getPlayer();
@@ -437,19 +433,14 @@ public class MyServer {
      */
     private static void doProfile(Server.ClientHandler c, String s) {
         try {
-            System.out.println("MyServer.doProfile: " + s.charAt(1));
             ResultSet exists = Database.get("select count(*) as nbr from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "';");
             if (exists != null && exists.next() && !(exists.getInt("nbr") > 0)) {
                 Database.execute("insert into player (skinID, startPokID, FK_User_ID, language) VALUE (0," + s.charAt(1) + ",(select PK_User_ID from User where name='" + c.getUsername() + "'),'eng');");
-                System.out.println("add Pokemon to this new Player");
             }
             String statement = "select * from User inner join Player P on User.PK_User_ID = P.FK_User_ID where P.startPokID = " + s.charAt(1) + " && User.name = '" + c.getUsername() + "';";
-            System.out.println(statement);
             ResultSet data = Database.get(statement);
             if (data != null && data.next()) {
                 c.setPlayer(initPlayer(c.getUsername(), data.getInt("PK_Player_ID")));
-//                System.out.println("Player initialized: " + data.getInt("PK_Player_ID"));
-                //TODO pokemon machen und so
             }
         } catch (SQLException ignored) {
         }
@@ -461,9 +452,46 @@ public class MyServer {
             Database.execute("insert into Pokemon (Message, FK_Player_ID) VALUES ('" + p.getPoke().get(i).toMsg() + "'," + p.getIdForDB() + ");");
         }
 
-        Database.execute("delete from myposition WHERE FK_PK_Player_ID = " + p.getIdForDB() + ";");
-        Database.execute("insert into myposition (FK_PK_Player_ID, FK_PK_World_ID, posX, posY) VALUES ("
-                + p.getIdForDB() + "," + p.getWorld() + "," + p.getPos().getX() + "," + p.getPos().getY() + ");");
+        final int idWorld = getServer().getWorlds().stream().filter(a -> a.getName().equals(p.getWorld())).mapToInt(World::getId).min().orElse(1);
+        Database.execute("delete from MyPosition WHERE FK_PK_Player_ID = " + p.getIdForDB() + " AND FK_PK_World_ID =" + idWorld + ";");
+        Database.execute("insert into MyPosition (FK_PK_Player_ID, FK_PK_World_ID, posX, posY) VALUES ("
+                + p.getIdForDB() + "," + idWorld + "," + (int) p.getPos().getX() + "," + (int) p.getPos().getY() + ");");
+
+        Database.execute("update Player set money =" + p.getMoney() + " where PK_Player_ID = " + p.getIdForDB() + ";");
+        Database.execute("delete from ItemToPlayer where FK_Player=" + p.getIdForDB() + ";");
+        p.getItems().forEach((key, val) -> Database.execute("insert into ItemToPlayer (Item_ID, FK_Player, quantity) VALUES (" + key + ", " + p.getIdForDB() + ", " + val + ");"));
+        System.out.println("MyServer.updateDatabase: " + "now sending to database");
+    }
+
+
+    private static Vector2D getPosFromDatabase(Player p) {
+        final int idWorld = getServer().getWorlds().stream().filter(a -> a.getName().equals(p.getWorld())).mapToInt(World::getId).min().orElse(1);
+        String st = "select * from MyPosition WHERE FK_PK_Player_ID = " + p.getIdForDB() + " AND FK_PK_World_ID =" + idWorld + ";";
+        ResultSet r = Database.get(st);
+        if (r != null) {
+            try {
+                if (r.next()) {
+                    return new Vector2D(r.getInt("posX"), r.getInt("posY"));
+                }
+            } catch (SQLException ignored) {
+            }
+        }
+        return new Vector2D();
+    }
+
+    private static List<Pokemon> getPokeFromDatabase(Player p) {
+        ResultSet r = Database.get("select * from Pokemon WHERE FK_Player_ID = " + p.getIdForDB() + ";");
+        if (r != null) {
+            List<Pokemon> res = new ArrayList<>();
+            try {
+                while (r.next()) {
+                    res.add(Pokemon.getFromMsg(r.getString("Message")));
+                }
+            } catch (SQLException ignored) {
+            }
+            return res;
+        }
+        return new ArrayList<>();
     }
 
 
@@ -492,31 +520,22 @@ public class MyServer {
      * @param c the client where the player is from
      * @param s the message from the client
      */
-    private static void doRegion(Server.ClientHandler c, String s) {
+    private static void doWorldSelect(Server.ClientHandler c, String s) {
         Matcher mRegion = Pattern.compile("n='(.*?)'[,}]").matcher(s);
         String worldName = mRegion.find() ? mRegion.group(1) : "";
         Optional<World> w = server.getWorlds().stream().filter(e -> e.getName().equals(worldName)).findFirst();
         if (w.isPresent()) {
-            c.getPlayer().setWorld(worldName);
-            c.send(MessageType.toStr(MessageType.worldSelect) + 0 + w.get().getSeed() + "," + c.getUsername());
-            sendPosUpdate(c);
-            update(c);
+            sendWorldData(c, worldName, w.get().getSeed());
         } else {
             if (c.getUsername().equals(worldName)) {
                 server.getWorlds().add(new World(worldName.hashCode(), worldName));
-                c.getPlayer().setWorld(worldName);
-                c.send(MessageType.toStr(MessageType.worldSelect) + 0 + worldName.hashCode() + "," + worldName);
-                sendPosUpdate(c);
-                update(c);
+                sendWorldData(c, worldName, worldName.hashCode());
             } else {
                 ResultSet nbr = Database.get("select * from World inner join User U on World.FK_User_ID = U.PK_User_ID where U.name='" + worldName + "';");
                 try {
                     if (nbr != null && nbr.first()) {
                         server.getWorlds().add(new World(worldName.hashCode(), worldName));
-                        c.getPlayer().setWorld(worldName);
-                        c.send(MessageType.toStr(MessageType.worldSelect) + 0 + nbr.getInt("seed") + "," + c.getUsername());
-                        sendPosUpdate(c);
-                        update(c);
+                        sendWorldData(c, worldName, nbr.getInt("seed"));
                     } else {
                         c.send(MessageType.toStr(MessageType.worldSelect) + 1);
                     }
@@ -525,13 +544,33 @@ public class MyServer {
                 }
             }
         }
-        System.out.println("MyServer.doRegion: " + c.getPlayer().getPos());
+    }
+
+    private static void sendWorldData(Server.ClientHandler c, String worldName, int nbr) {
+        c.getPlayer().setWorld(worldName);
+        c.getPlayer().setPos(getPosFromDatabase(c.getPlayer()));
+        c.send(MessageType.toStr(MessageType.worldSelect) + 0 + nbr + "," + c.getUsername());
+        sendPosUpdate(c);
+        update(c);
     }
 
     /**
      * @param c which clientHandler should be updated
      */
     private static void update(Server.ClientHandler c) {
+        server.setOnDisconnect(false, client -> {
+            if (client.getPlayer() != null) {
+                if (c.getOtherClient() != null) {
+                    synchronized (c) {
+                        doInFightChoice(c, FightGUI.FightChoice.Surrender.toString());
+                    }
+                }
+                synchronized (client.getPlayer()) {
+                    updateDatabase(client.getPlayer());
+                }
+            }
+        }, (int) c.getId());
+
 
         server.setOnUpdate(false, client -> {
             synchronized (client.getKeysPressed()) {
@@ -540,7 +579,9 @@ public class MyServer {
                 Optional<World> w = server.getWorlds().stream().filter(e -> e.getName().equals(c.getPlayer().getWorld())).findFirst();
                 w.ifPresent(world -> {
                     if (client.getPlayer().getActivity() != Player.Activity.fight) {
-                        client.getPlayer().updatePos(client, client.getKeysPressed().contains(Keys.decline), world);
+                        if (client.getPlayer().getActivity() != Player.Activity.textEvent) {
+                            client.getPlayer().updatePos(client, client.getKeysPressed().contains(Keys.decline), world);
+                        }
                         client.getPlayer().updateTextEvents(client, client.getKeysPressed(), world, server.getClients());
                         client.getPlayer().checkToStartFightInGrass(client, w.get());
                     }
@@ -549,7 +590,14 @@ public class MyServer {
                 });
             }
             sendPosUpdate(client);
-//            System.out.println("MyServer.update: " + client.getPlayer().getActivity());
+
+            if (client.getUpdateCount() % 1000 == 420) {
+                if (client.getPlayer() != null) {
+                    synchronized (client.getPlayer()) {
+                        updateDatabase(client.getPlayer());
+                    }
+                }
+            }
         }, (int) c.getId());
     }
 
@@ -571,16 +619,14 @@ public class MyServer {
         try {
             if (curPlayer == null) throw new SQLException();
             if (curPlayer.first()) {
-//                ResultSet curPos = Database.getItem("select MP.* from Player join MyPosition MP on Player.PK_Player_ID = MP.FK_PK_Player_ID join World W on W.PK_World_ID = MP.FK_PK_World_ID ");
                 skinID = (int) curPlayer.getObject("skinID");
                 money = (int) curPlayer.getObject("money");
                 idFromPlayer = (int) curPlayer.getObject("startPokID");
-//                pos.setX((Integer) curPlayer.getObject("posX"));//TODO position at world select
-//                pos.setY((Integer) curPlayer.getObject("posY"));
             } else throw new SQLException();
         } catch (SQLException ignored) {
         }
         Player p = new Player(name, pos, skinID, idFromPlayer, idForDB, money);
+        p.getPoke().addAll(getPokeFromDatabase(p));
         try {
             ResultSet itemsInDB = null;
             if (curPlayer != null) {
@@ -591,18 +637,11 @@ public class MyServer {
                     p.getItems().put(itemsInDB.getInt("Item_ID"), itemsInDB.getInt("quantity"));
                 }
             }
-            System.out.println(p.getItems());
         } catch (SQLException ignored) {
         }
-
         if (p.getPoke().size() == 0) {
-            System.out.println("MyServer.initPlayer: " + "starter created");
-            System.out.println("MyServer.initPlayer: " + idFromPlayer);
             p.getPoke().add(Pokemon.createStarter(idFromPlayer));
-//            p.getPoke().add(Pokemon.createPokemon(new Vector2D(100, 7666), World.Block.Water));
-//            p.getPoke().add(Pokemon.createPokemon(new Vector2D(100, 420), World.Block.Grass));
-//            p.getPoke().get(2).setCurHP(10);//TODO pokemon auslesen
-        } else System.out.println("MyServer.initPlayer: " + p.getPoke());
+        }
         return p;
     }
 
@@ -643,7 +682,6 @@ public class MyServer {
         int error = User.delete(name, pwd);
         if (error == 0) c.setUsername(null);
         c.send(MessageType.toStr(MessageType.delete) + error);
-        System.out.println("User-Delete request received: " + name);
     }
 
     /**
@@ -663,7 +701,6 @@ public class MyServer {
             int error = User.isCorrect(name, pwd);
             c.send(MessageType.toStr(MessageType.login) + error);
             if (error == 0) sendPlayerProfiles(c, name);
-            System.out.println("Login request received: " + name);
         }
     }
 
@@ -682,15 +719,17 @@ public class MyServer {
             try {
                 while (r.next()) {
                     String msgToSendSingle = "{";
-                    ResultSet badges = Database.get("select  count(PK_Badge_ID) as nbr from Badge inner join Player P on Badge.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID = " + r.getObject("PK_Player_ID") + ";");
-                    if (badges != null && badges.next()) msgToSendSingle += badges.getString("nbr") + ",";
                     ResultSet poke = Database.get("select count(PK_Poke_ID) as nbr from Pokemon inner join Player P on Pokemon.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID=" + r.getObject("PK_Player_ID") + ";");
-                    if (poke != null && poke.next()) msgToSendSingle += poke.getString("nbr") + "}";
+                    if (poke != null && poke.next()) msgToSendSingle += poke.getString("nbr") + ",";
+                    ResultSet badges = Database.get("select  count(PK_Badge_ID) as nbr from Badge inner join Player P on Badge.FK_Player_ID = P.PK_Player_ID where P.PK_Player_ID = " + r.getObject("PK_Player_ID") + ";");
+                    if (badges != null && badges.next()) msgToSendSingle += badges.getString("nbr") + "}";
+
                     hMap.put(r.getInt("startPokID"), msgToSendSingle);
                 }
             } catch (SQLException ignored) {
             }
             for (int i = 0; i < 3; i++) msgToSend.append(hMap.get(i) == null ? "{}" : hMap.get(i));
+            System.out.println("MyServer.sendPlayerProfiles: " + msgToSend);
             c.send(msgToSend.toString());
         }
     }

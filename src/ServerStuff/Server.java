@@ -57,6 +57,8 @@ public class Server {
 
     private final ArrayList<Consumer<ClientHandler>> onConnectForNew = new ArrayList<>();
 
+    private final ArrayList<Consumer<ClientHandler>> onDisconnectForNew = new ArrayList<>();
+
     /**
      * saves all the regions which are possible
      */
@@ -222,6 +224,25 @@ public class Server {
         }
     }
 
+
+    /**
+     * when a Client connects to the Server
+     *
+     * @param addNew if all new Clients should execute this
+     * @param ids    IDs of the OldMain which should execute it (not very useful)
+     */
+    public void setOnDisconnect(boolean addNew, Consumer<ClientHandler> c, int... ids) {
+        if (addNew) {
+            onDisconnectForNew.add(c);
+        }
+        if (ids.length == 0) {
+            clients.entrySet().stream().filter(e -> e.getValue() != null).forEach(e -> e.getValue().allOnDisconnects.add(c));
+        } else {
+            clients.entrySet().stream().filter(e -> Arrays.stream(ids).filter(val -> val == e.getKey() && e.getValue() != null).findFirst().isPresent()).forEach(e -> e.getValue().allOnDisconnects.add(c));
+        }
+    }
+
+
     /**
      * @return all IDs from the current connected clients
      */
@@ -268,6 +289,7 @@ public class Server {
         ClientHandler c = new ClientHandler(id, waitReturnTillConnected);
         c.allOnMessage.addAll(onMessageForNew);
         c.allOnConnects.addAll(onConnectForNew);
+        c.allOnDisconnects.addAll(onDisconnectForNew);
         c.allOnUpdate.addAll(onUpdateForNew);
         clients.put(id, c);
         c.allOnConnects.forEach(e -> e.accept(c));
@@ -335,6 +357,11 @@ public class Server {
          * saves all Consumer which will be accepted if the Client connects to the Server
          */
         private final ArrayList<Consumer<ClientHandler>> allOnConnects = new ArrayList<>();
+
+        /**
+         * saves all Consumer which will be accepted if the Client disconnects from the Server
+         */
+        private final ArrayList<Consumer<ClientHandler>> allOnDisconnects = new ArrayList<>();
 
         /**
          * saves all Consumer which will be accepted if the CLient receives a message
@@ -495,6 +522,7 @@ public class Server {
                 }
             } catch (IOException | ClassNotFoundException e) {
                 if (!isDisconnected) System.out.println("Connection lost: " + id);
+                allOnDisconnects.forEach(f -> f.accept(this));
                 clients.get(id).setPlayer(null);
                 clients.put(id, null);
             }
@@ -531,6 +559,7 @@ public class Server {
                 System.out.println("Connection closed: " + id);
                 isDisconnected = true;
                 clients.put(id, null);
+//                allOnDisconnects.forEach(e -> e.accept(this));
             } catch (Exception ignored) {
             }
         }

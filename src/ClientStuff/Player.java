@@ -1,5 +1,6 @@
 package ClientStuff;
 
+import Calcs.Utils;
 import Calcs.Vector2D;
 import Envir.City;
 import Envir.House;
@@ -361,7 +362,7 @@ public class Player {
     /**
      * updates the text events for the player (server)
      *
-     * @param client      the clientHandlerwf13
+     * @param client      the clientHandler
      * @param keysPressed the current keys which the client has pressed
      * @param w           the world the player is inside
      * @param clients     all players, to check if you want to talk to one of them
@@ -420,6 +421,7 @@ public class Player {
                                 .filter(a -> a.getPlayer().getActivity() == Activity.standing)
                                 .filter(a -> a.getTimeTillNextTextField() <= System.currentTimeMillis()).findFirst();
                         if (op.isPresent()) {
+                            System.out.println("Player.updateTextEvents: " + op.get().getPlayer().getActivity());
 //                            System.out.println("Player found: " + op.get().getPlayer().getName());
                             String sToQues = MessageType.toStr(MessageType.textEvent) + 0 + TextEvent.TextEventIDsTranslator.PlayersMeetQues.getId() + ",name:" + op.get().getPlayer().getName();
 //                            System.out.println(sToQues);
@@ -453,6 +455,12 @@ public class Player {
 
     public void sendPokeData(Server.ClientHandler cl, Pokemon pokeOther, boolean isAgainstPlayer) {
         String betweenPoke = "N";
+        if (cl.getPlayer().getPoke().get(0).getCurHP() == 0) {
+            Optional<Pokemon> op = cl.getPlayer().getPoke().stream().filter(a -> a.getCurHP() > 0).findFirst();
+            op.ifPresent(a -> {
+                Utils.switchObjects(cl.getPlayer().getPoke(), cl.getPlayer().getPoke().indexOf(a) - 1);
+            });
+        }
         StringBuilder sToSend = new StringBuilder(MessageType.toStr(MessageType.fightData));
         sToSend.append(betweenPoke).append(pokeOther.toMsg());
         pokemon.forEach(a -> sToSend.append("N").append(a.toMsg()));
@@ -460,7 +468,7 @@ public class Player {
     }
 
     public void checkToStartFightInGrass(Server.ClientHandler client, World w) {
-        if (hasWalkedBefore && houseEntrancePos == null && curWalked.getX() == 0 && curWalked.getY() == 0 && (w.getCities().stream().noneMatch(a -> a.isInCity(pos)) && w.getBlockEnvir((int) pos.getX(), (int) pos.getY(), false) == World.Block.Grass)) {
+        if (hasWalkedBefore && client.getPlayer().getPoke().get(0).getCurHP() > 0 && houseEntrancePos == null && curWalked.getX() == 0 && curWalked.getY() == 0 && (w.getCities().stream().noneMatch(a -> a.isInCity(pos)) && w.getBlockEnvir((int) pos.getX(), (int) pos.getY(), false) == World.Block.Grass)) {
             if (rndForPokeEncounter.nextDouble() < 0.1) {
                 Pokemon poke = Pokemon.createPokemon(pos, World.Block.Grass);
                 synchronized (this) {
